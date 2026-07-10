@@ -262,40 +262,52 @@ img{max-width:100%; display:block;}
 @media(hover:hover){ .team-btn:hover{transform:translateY(-2px);} }
 
 
-/* ===== DIGIBOARD 2.0 – helles, freundliches Cloud-Design ===== */
+/* ===== FUCHSKLASSE – TAFEL-BAUKASTEN DESIGN ===== */
 :root{
-  --akzent:#ff7a59; --akzent-dunkel:#e85d3f; --bg:#f4fbff; --karte:#ffffff;
-  --text:#25324a; --weich:#71809a; --rand:#dcecf4; --gruen:#30b875;
-  --rot:#ef6671; --gelb:#f6bd3a; --schatten:0 10px 30px rgba(48,91,120,.13);
-  --schatten-stark:0 18px 45px rgba(48,91,120,.18);
+  --akzent:#F07A2B; --akzent-dunkel:#C95B18; --bg:#F6EBD8; --karte:#FFFDF7;
+  --text:#2E342F; --weich:#756D60; --rand:#E7D7BC; --gruen:#4B9B65;
+  --rot:#D9534F; --gelb:#F2B83B; --blau:#3E7DB6;
+  --schatten:0 8px 18px rgba(46,35,22,.24); --schatten-stark:0 16px 38px rgba(46,35,22,.32);
 }
-html,body{background:#dff4ff;}
-#bruecke{background:linear-gradient(135deg,#e7f8ff 0%,#fff7e9 48%,#edfff4 100%);}
+html,body{background:#6f5034;}
+#bruecke{background:repeating-linear-gradient(90deg,#9b7650 0,#896642 60px,#a47e57 61px,#96704b 140px,#87633f 141px,#9b7650 220px);}
 #buehne{background:transparent;}
-.home-pille{background:rgba(255,255,255,.94);border:2px solid rgba(255,255,255,.9);box-shadow:var(--schatten);padding:8px 20px 8px 12px;}
-.home-titel h1{color:#ff6f4d;font-size:22px;}
-.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{background:rgba(255,255,255,.9);border:2px solid #fff;color:#33415c;text-shadow:none;box-shadow:0 6px 18px rgba(48,91,120,.12);}
-.team-btn:active,.team-btn:hover{background:#fff0e9;border-color:#ffb39f;color:#e85d3f;}
-.modul{background:rgba(255,255,255,.96);border:2px solid rgba(255,255,255,.95);border-bottom:7px solid var(--modfarbe,var(--akzent));box-shadow:var(--schatten);}
-.modul-frei{background:transparent!important;border:none!important;}
-.bereich-kopf{background:rgba(255,255,255,.88);border-bottom:1px solid #dcecf4;box-shadow:0 6px 22px rgba(48,91,120,.10);}
-.zurueck-btn,.bearbeiten-toggle,.seiten-tab,.seiten-tab-neu{box-shadow:0 5px 16px rgba(48,91,120,.12);}
-.seiten-tab.aktiv{background:linear-gradient(135deg,#ff8b6f,#ff6f4d);border-color:#ff6f4d;}
-.dash-kinder-btn{background:linear-gradient(135deg,#32c98a,#24aef0);box-shadow:0 10px 25px rgba(36,174,240,.28);}
-.werkzeug-leiste{background:rgba(255,255,255,.96);}
-.werkzeug-btn,.palette-item{background:#edf9ff;}
-#einstellungen-panel,#palette-panel,#seiten-panel{background:#fbfeff;box-shadow:0 24px 60px rgba(21,52,72,.25);}
-.e-abschnitt{border-color:#dcecf4}.e-abschnitt>button.kopf{background:#f2fbff}.e-input{background:#fff;border-color:#dcecf4;}
-.cloud-status{position:absolute;left:50%;top:15px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 6px 18px rgba(48,91,120,.13);font-size:12px;font-weight:800;color:#53637c;}
-.cloud-status .punkt{width:10px;height:10px;border-radius:50%;background:#f6bd3a}.cloud-status.online .punkt{background:#30b875;box-shadow:0 0 0 4px rgba(48,184,117,.14)}.cloud-status.fehler .punkt{background:#ef6671}.cloud-status.sync .punkt{animation:puls 1s infinite}
+.home-pille{background:#FFF9EA;border:2px solid rgba(255,255,255,.7);box-shadow:0 6px 14px rgba(43,31,18,.34);padding:7px 20px 7px 10px;transform:rotate(-1deg);}
+.home-pille:after{content:'✦';position:absolute;right:-12px;top:-10px;color:#F2B83B;font-size:23px;transform:rotate(14deg);}
+.home-titel h1{color:#E66D24;font-size:22px;}
+.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{background:#FFF9EA;border:2px solid #F5E7CC;color:#39423A;text-shadow:none;box-shadow:0 5px 12px rgba(43,31,18,.25);}
+.team-btn{position:relative;}
+.team-btn:active,.team-btn:hover{background:#FFF0D4;border-color:#F0A46E;color:#C95B18;}
+.modul{background:#FFFDF7;border:2px solid #F5E9D6;border-bottom:7px solid var(--modfarbe,var(--akzent));box-shadow:var(--schatten);}
+.modul:before{content:'';position:absolute;top:-3px;left:50%;width:58px;height:12px;transform:translateX(-50%) rotate(-1deg);background:rgba(240,221,178,.72);z-index:1;pointer-events:none;}
+.modul-frei{background:transparent!important;border:none!important;box-shadow:none!important;}
+.modul-frei:before{display:none;}
+.bereich-kopf{background:rgba(255,249,234,.94);border-bottom:4px solid #B88957;box-shadow:0 5px 14px rgba(43,31,18,.24);}
+.bereich-kopf:after{content:'🦊';font-size:28px;margin-left:2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));}
+.zurueck-btn,.bearbeiten-toggle,.seiten-tab,.seiten-tab-neu{background:#FFFDF7;box-shadow:0 4px 10px rgba(43,31,18,.18);}
+.seiten-tab.aktiv{background:var(--akzent);border-color:var(--akzent-dunkel);color:#fff;}
+.dash-kinder-btn{background:linear-gradient(135deg,#F18A36,#E86B25);border:3px solid #FFF4D8;box-shadow:0 8px 18px rgba(43,31,18,.34);}
+.dash-kinder-btn:before{content:'🌿';font-size:20px;}
+.dash-kinder-btn:after{content:'🌿';font-size:20px;transform:scaleX(-1);}
+.werkzeug-leiste{background:#FFF9EA;border-top:3px solid #D6B889;}
+.werkzeug-btn,.palette-item{background:#FFF1D8;border:2px solid #F0D6AA;}
+#einstellungen-panel,#palette-panel,#seiten-panel{background:#FFFDF7;border:4px solid #C79A63;box-shadow:0 24px 60px rgba(31,22,13,.38);position:relative;}
+#einstellungen-overlay,#seiten-overlay,#palette-overlay{backdrop-filter:blur(3px);}
+.e-abschnitt{border-color:#E7D7BC}.e-abschnitt>button.kopf{background:#FFF6E6}.e-input{background:#FFFCF5;border-color:#E7D7BC;}
+.e-schliessen,.dienst-schliessen{position:relative;z-index:20;cursor:pointer;touch-action:manipulation;}
+.cloud-status{position:absolute;left:50%;top:15px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:#FFF9EA;border:2px solid #F0DFC1;box-shadow:0 5px 12px rgba(43,31,18,.22);font-size:12px;font-weight:800;color:#675E50;}
+.cloud-status .punkt{width:10px;height:10px;border-radius:50%;background:#F2B83B}.cloud-status.online .punkt{background:#4B9B65;box-shadow:0 0 0 4px rgba(75,155,101,.16)}.cloud-status.fehler .punkt{background:#D9534F}.cloud-status.sync .punkt{animation:puls 1s infinite}
 @keyframes puls{50%{transform:scale(.55);opacity:.45}}
-#dienst-overlay{position:fixed;inset:0;z-index:150;background:linear-gradient(135deg,#e7f8ff,#fff7e9 55%,#edfff4);overflow:auto;padding:26px;}
-.dienst-kopf{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;gap:14px;background:#fff;border-radius:24px;padding:18px 22px;box-shadow:var(--schatten)}
-.dienst-kopf h1{font-family:var(--schrift-rund);margin:0;flex:1;color:#25324a}.dienst-schliessen{width:48px;height:48px;border-radius:16px;background:#edf9ff;font-size:22px}
-.dienst-hinweis{max-width:1100px;margin:0 auto 18px;text-align:center;color:#63738c;font-weight:700}
+#dienst-overlay{position:fixed;inset:0;z-index:150;background:repeating-linear-gradient(90deg,#9b7650 0,#896642 60px,#a47e57 61px,#96704b 140px,#87633f 141px,#9b7650 220px);overflow:auto;padding:26px;}
+.dienst-kopf{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;gap:14px;background:#FFF9EA;border:3px solid #E7D0A9;border-radius:24px;padding:18px 22px;box-shadow:var(--schatten)}
+.dienst-kopf h1{font-family:var(--schrift-rund);margin:0;flex:1;color:#2E342F}.dienst-schliessen{width:48px;height:48px;border-radius:16px;background:#FFF0D4;font-size:22px}
+.dienst-hinweis{max-width:1100px;margin:0 auto 18px;text-align:center;color:#FFF8E8;font-weight:800;text-shadow:0 2px 3px rgba(0,0,0,.35)}
 .dienst-raster{max-width:1100px;margin:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
-.dienst-kind{background:#fff;border-radius:24px;padding:18px;text-align:center;box-shadow:var(--schatten);border:3px solid #fff}.dienst-avatar{font-size:52px}.dienst-name{font-family:var(--schrift-rund);font-size:21px;font-weight:800;margin:6px 0}.dienst-stand{font-size:14px;color:#71809a;margin-bottom:12px}.dienst-aktionen{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dienst-aktionen button{border-radius:15px;padding:12px 8px;color:#fff;font-weight:800;font-size:13px}.dienst-gruen{background:linear-gradient(135deg,#49cf8d,#27ae6f)}.dienst-gold{background:linear-gradient(135deg,#ffd45d,#f0a91e)}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:250;background:#25324a;color:#fff;border-radius:999px;padding:12px 22px;font-weight:800;box-shadow:var(--schatten-stark);animation:toastrein .25s ease-out}@keyframes toastrein{from{transform:translate(-50%,20px);opacity:0}}
+.dienst-kind{background:#FFFDF7;border-radius:24px;padding:18px;text-align:center;box-shadow:var(--schatten);border:3px solid #F4E2C5}.dienst-avatar{font-size:52px}.dienst-name{font-family:var(--schrift-rund);font-size:21px;font-weight:800;margin:6px 0}.dienst-stand{font-size:14px;color:#756D60;margin-bottom:12px}.dienst-aktionen{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dienst-aktionen button{border-radius:15px;padding:12px 8px;color:#fff;font-weight:800;font-size:13px}.dienst-gruen{background:linear-gradient(135deg,#64B87B,#3F8F59)}.dienst-gold{background:linear-gradient(135deg,#FFD45D,#ECA51C)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:250;background:#2E342F;color:#fff;border-radius:999px;padding:12px 22px;font-weight:800;box-shadow:var(--schatten-stark);animation:toastrein .25s ease-out}@keyframes toastrein{from{transform:translate(-50%,20px);opacity:0}}
+/* Kleine Fuchs-Spuren statt Deko-Überladung */
+#home:after{content:'🐾   🐾';position:absolute;right:36px;bottom:28px;font-size:24px;letter-spacing:15px;opacity:.28;transform:rotate(-12deg);pointer-events:none;z-index:2;}
+.kinder-modus .seiten-buehne:after{content:'🦊';position:absolute;right:30px;bottom:22px;font-size:54px;opacity:.22;pointer-events:none;z-index:1;}
 
 </style>
 </head>
@@ -396,7 +408,7 @@ const MASKOTTCHEN_AUSWAHL = ["🦊","🐻","🦁","🐸","🦉","🐧","🐰","�
 
 // Hintergründe für Seiten & Homescreen – frei wählbar, siehe Hintergrund-Wähler (🎨)
 const HINTERGRUENDE = {
-  holz:   { name:"Hell & freundlich", css:"linear-gradient(135deg,#e7f8ff 0%,#fff7e9 48%,#edfff4 100%)" },
+  holz:   { name:"Holz", css:"repeating-linear-gradient(90deg,#9c7a52 0px,#8a6a45 60px,#a3805a 61px,#96754e 140px,#8a6a45 141px,#9c7a52 220px)" },
   tafel:  { name:"Kreidetafel", css:"radial-gradient(ellipse at 30% 20%, #3d5c4a 0%, #2e4a39 60%, #263f30 100%)" },
   blau:   { name:"Schreibtisch",css:"radial-gradient(ellipse at 40% 30%, #1c7a8c 0%, #14606f 70%, #0f4e5b 100%)" },
   kork:   { name:"Korkwand",    css:"radial-gradient(circle at 20% 30%, #c99a62 2px, transparent 3px), radial-gradient(circle at 70% 60%, #b98a52 2px, transparent 3px), radial-gradient(circle at 45% 80%, #c99a62 2px, transparent 3px), linear-gradient(135deg,#d1a76f,#c2955c)" },
@@ -1415,6 +1427,29 @@ function oeffneEinstellungen(){
 function schliesseEinstellungen(){ document.getElementById("einstellungen-overlay").classList.add("versteckt"); }
 document.getElementById("btn-einstellungen").onclick = oeffneEinstellungen;
 document.getElementById("btn-einstellungen-schliessen").onclick = schliesseEinstellungen;
+
+// Robustes Schließen aller Fenster: X, Klick auf den dunklen Rand und Escape.
+// stopPropagation im Panel verhindert, dass Klicks innerhalb des Fensters schließen.
+function aktiviereOverlaySchliessen(overlayId, panelId, schliessenFn){
+  const overlay = document.getElementById(overlayId);
+  const panel = document.getElementById(panelId);
+  if(!overlay || !panel) return;
+  panel.addEventListener("click", (e) => e.stopPropagation());
+  panel.addEventListener("pointerup", (e) => e.stopPropagation());
+  overlay.addEventListener("click", (e) => { if(e.target === overlay) schliessenFn(); });
+  overlay.addEventListener("pointerup", (e) => { if(e.target === overlay) schliessenFn(); });
+}
+aktiviereOverlaySchliessen("einstellungen-overlay", "einstellungen-panel", schliesseEinstellungen);
+aktiviereOverlaySchliessen("seiten-overlay", "seiten-panel", schliesseSeitenUebersicht);
+document.getElementById("palette-panel")?.addEventListener("click", (e)=>e.stopPropagation());
+document.getElementById("palette-overlay")?.addEventListener("click", (e)=>{ if(e.target===e.currentTarget) e.currentTarget.classList.add("versteckt"); });
+document.addEventListener("keydown", (e)=>{
+  if(e.key !== "Escape") return;
+  document.getElementById("einstellungen-overlay")?.classList.add("versteckt");
+  document.getElementById("seiten-overlay")?.classList.add("versteckt");
+  document.getElementById("palette-overlay")?.classList.add("versteckt");
+  document.getElementById("dienst-overlay")?.remove();
+});
 
 let offenerAbschnitt = "identitaet";
 function eAbschnitt(id, titel, inhaltFn){
