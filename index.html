@@ -199,6 +199,17 @@ img{max-width:100%; display:block;}
 .sk-karte .b > div{height:100%; border-radius:99px; background:var(--gruen); transition:width .5s;}
 .sk-karte.sk-fertig .b > div{background:var(--gelb);}
 
+/* ---------- Guten Morgen in vielen Sprachen ---------- */
+.m-morgengruss{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; gap:6px;}
+.m-morgengruss .mg-flagge{font-size:34px;}
+.m-morgengruss .mg-satz{font-family:var(--schrift-rund); font-weight:800; font-size:19px; color:var(--text); line-height:1.2;}
+.m-morgengruss .mg-sprache{font-size:12px; font-weight:700; color:var(--weich); text-transform:uppercase; letter-spacing:.5px;}
+.m-morgengruss .mg-knopfreihe{display:flex; gap:6px; margin-top:4px;}
+.m-morgengruss button{border:none; border-radius:999px; font-weight:800; font-size:13px; padding:8px 16px; background:var(--akzent); color:#fff;}
+.m-morgengruss button.mg-shuffle{background:#fff; color:var(--akzent); border:2px solid var(--akzent); padding:8px 12px;}
+.m-morgengruss button:active{transform:scale(.94);}
+.m-morgengruss .mg-hinweis{font-size:10.5px; color:var(--weich); margin-top:2px;}
+
 .m-aufgaben ul{list-style:none; margin:0; padding:0;}
 .m-aufgaben li{display:flex; gap:8px; align-items:center; padding:4px 0; font-size:15px;}
 .m-aufgaben input[type=checkbox]{width:20px; height:20px;}
@@ -363,7 +374,7 @@ function neuesModul(typ, x=60, y=60){
     text:[280,160], bild:[280,210], video:[360,220], webseite:[400,280], pdf:[360,280],
     aufgaben:[260,240], timer:[200,180], stoppuhr:[190,170], uhr:[160,160], ampel:[120,240],
     punkte:[260,240], zufallsgenerator:[250,230], wuerfel:[190,200], qrcode:[200,240],
-    lautstaerke:[230,170], smiley:[190,190], info:[250,200], sternenkinder:[330,440],
+    lautstaerke:[230,170], smiley:[190,190], info:[250,200], sternenkinder:[330,440], morgengruss:[260,210],
   };
   const [w,h] = groessen[typ] || [300,240];
   const daten = {
@@ -385,6 +396,7 @@ function neuesModul(typ, x=60, y=60){
     smiley:{ arten:["😀","😐","😢","😡","😴"], index:0 },
     info:{ art:"stundenplan" },
     sternenkinder:{ titel:"Unsere Sternenkinder", punkteProStern:5, zielSterne:5 },
+    morgengruss:{},
   }[typ] || {};
   return { id:neueId(), typ, x, y, w, h, z:1, daten };
 }
@@ -716,6 +728,7 @@ const MODUL_TYPEN = {
   uhr:{name:"Uhr",emoji:"🕒"}, ampel:{name:"Ampel",emoji:"🚦"}, punkte:{name:"Punkte-System",emoji:"⭐"},
   zufallsgenerator:{name:"Zufallsgenerator",emoji:"🎡"}, wuerfel:{name:"Würfel",emoji:"🎲"},
   qrcode:{name:"QR-Code",emoji:"🔳"}, lautstaerke:{name:"Lautstärke",emoji:"🔊"}, smiley:{name:"Smiley-Anzeige",emoji:"😊"}, info:{name:"Info-Anzeige (automatisch)",emoji:"📌"}, sternenkinder:{name:"Sternenkinder (Belohnung)",emoji:"🌟"},
+  morgengruss:{name:"Guten Morgen (Sprachen)",emoji:"🌍"},
 };
 
 function baueModulElement(seite, mod){
@@ -815,6 +828,7 @@ function renderModulInhalt(inhalt, mod, seite){
     case "smiley": return renderSmiley(inhalt, mod, bearbeitbar);
     case "info": return renderInfo(inhalt, mod, bearbeitbar);
     case "sternenkinder": return renderSternenkinder(inhalt, mod, bearbeitbar);
+    case "morgengruss": return renderMorgengruss(inhalt, mod, bearbeitbar);
   }
 }
 
@@ -1530,6 +1544,89 @@ setInterval(() => {
     }
   });
 }, 8000);
+
+/* ============================================================
+   11c) GUTEN MORGEN IN VIELEN SPRACHEN
+   Wechselt automatisch einmal pro Woche zu einer neuen Sprache
+   (stabiler Wochen-Zufall, ändert sich also nicht bei jedem
+   Neuladen). Über 🔊 wird der Satz per Sprachausgabe des Geräts
+   vorgelesen – dafür ist keine Internetverbindung nötig.
+   ============================================================ */
+const MORGENGRUESSE = [
+  { sprache:"Deutsch", satz:"Guten Morgen", lang:"de-DE", flagge:"🇩🇪" },
+  { sprache:"Englisch", satz:"Good morning", lang:"en-GB", flagge:"🇬🇧" },
+  { sprache:"Französisch", satz:"Bonjour", lang:"fr-FR", flagge:"🇫🇷" },
+  { sprache:"Spanisch", satz:"Buenos días", lang:"es-ES", flagge:"🇪🇸" },
+  { sprache:"Italienisch", satz:"Buongiorno", lang:"it-IT", flagge:"🇮🇹" },
+  { sprache:"Portugiesisch", satz:"Bom dia", lang:"pt-PT", flagge:"🇵🇹" },
+  { sprache:"Niederländisch", satz:"Goedemorgen", lang:"nl-NL", flagge:"🇳🇱" },
+  { sprache:"Polnisch", satz:"Dzień dobry", lang:"pl-PL", flagge:"🇵🇱" },
+  { sprache:"Russisch", satz:"Доброе утро", lang:"ru-RU", flagge:"🇷🇺" },
+  { sprache:"Türkisch", satz:"Günaydın", lang:"tr-TR", flagge:"🇹🇷" },
+  { sprache:"Arabisch", satz:"صباح الخير", lang:"ar-SA", flagge:"🇸🇦" },
+  { sprache:"Griechisch", satz:"Καλημέρα", lang:"el-GR", flagge:"🇬🇷" },
+  { sprache:"Schwedisch", satz:"God morgon", lang:"sv-SE", flagge:"🇸🇪" },
+  { sprache:"Dänisch", satz:"Godmorgen", lang:"da-DK", flagge:"🇩🇰" },
+  { sprache:"Finnisch", satz:"Huomenta", lang:"fi-FI", flagge:"🇫🇮" },
+  { sprache:"Ungarisch", satz:"Jó reggelt", lang:"hu-HU", flagge:"🇭🇺" },
+  { sprache:"Tschechisch", satz:"Dobré ráno", lang:"cs-CZ", flagge:"🇨🇿" },
+  { sprache:"Rumänisch", satz:"Bună dimineața", lang:"ro-RO", flagge:"🇷🇴" },
+  { sprache:"Ukrainisch", satz:"Добрий ранок", lang:"uk-UA", flagge:"🇺🇦" },
+  { sprache:"Japanisch", satz:"おはようございます", lang:"ja-JP", flagge:"🇯🇵" },
+  { sprache:"Chinesisch", satz:"早上好", lang:"zh-CN", flagge:"🇨🇳" },
+  { sprache:"Koreanisch", satz:"좋은 아침이에요", lang:"ko-KR", flagge:"🇰🇷" },
+  { sprache:"Hindi", satz:"सुप्रभात", lang:"hi-IN", flagge:"🇮🇳" },
+  { sprache:"Vietnamesisch", satz:"Chào buổi sáng", lang:"vi-VN", flagge:"🇻🇳" },
+  { sprache:"Hebräisch", satz:"בוקר טוב", lang:"he-IL", flagge:"🇮🇱" },
+  { sprache:"Persisch", satz:"صبح بخیر", lang:"fa-IR", flagge:"🇮🇷" },
+  { sprache:"Suaheli", satz:"Habari za asubuhi", lang:"sw-KE", flagge:"🇰🇪" },
+  { sprache:"Kroatisch", satz:"Dobro jutro", lang:"hr-HR", flagge:"🇭🇷" },
+];
+
+function woechentlicherSeed(){
+  const d = new Date();
+  const jahresanfang = new Date(d.getFullYear(),0,1);
+  const tage = Math.floor((d - jahresanfang) / 86400000);
+  const woche = Math.ceil((tage + jahresanfang.getDay() + 1) / 7);
+  return d.getFullYear() * 100 + woche;
+}
+
+function morgengrussVorlesen(gruss){
+  if(!("speechSynthesis" in window)){ alert("Sprachausgabe wird von diesem Browser leider nicht unterstützt."); return; }
+  window.speechSynthesis.cancel(); // vorherige Ansage abbrechen, falls noch aktiv
+  const utterance = new SpeechSynthesisUtterance(gruss.satz);
+  utterance.lang = gruss.lang;
+  utterance.rate = 0.9; // etwas langsamer – gut verständlich für Kinder
+  window.speechSynthesis.speak(utterance);
+}
+
+function renderMorgengruss(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);";
+    hinweis.textContent = "Wechselt automatisch jede Woche zu einer neuen Sprache (aktuell "+MORGENGRUESSE.length+" Sprachen hinterlegt). Mit 🔀 kann man zwischendurch auch selbst eine andere Sprache hören.";
+    inhalt.appendChild(hinweis);
+    return;
+  }
+  const index = mod._manuellerIndex !== undefined ? mod._manuellerIndex : (woechentlicherSeed() % MORGENGRUESSE.length);
+  const gruss = MORGENGRUESSE[index];
+  const wrap = document.createElement("div"); wrap.className="m-morgengruss";
+  wrap.innerHTML = `
+    <div class="mg-flagge">${gruss.flagge}</div>
+    <div class="mg-satz">${escapeHtml(gruss.satz)}</div>
+    <div class="mg-sprache">${escapeHtml(gruss.sprache)}</div>
+    <div class="mg-knopfreihe">
+      <button class="mg-hoeren">🔊 Anhören</button>
+      <button class="mg-shuffle" title="Andere Sprache ausprobieren">🔀</button>
+    </div>`;
+  wrap.querySelector(".mg-hoeren").onclick = () => morgengrussVorlesen(gruss);
+  wrap.querySelector(".mg-shuffle").onclick = () => {
+    let neuerIndex;
+    do { neuerIndex = Math.floor(Math.random()*MORGENGRUESSE.length); } while(neuerIndex === index && MORGENGRUESSE.length > 1);
+    mod._manuellerIndex = neuerIndex;
+    renderModulInhalt(inhalt, mod, bearbeitbar);
+  };
+  inhalt.appendChild(wrap);
+}
 
 /* ============================================================
    12) INFO-ANZEIGE: liest automatisch aus den gemeinsamen
