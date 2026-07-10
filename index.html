@@ -1,1501 +1,1487 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Digitale Klassentafel – Die Füchse</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-/* ============================================================
-   DIGITALE KLASSENTAFEL – "Die Füchse"
-   Reines HTML5 / CSS3 / JavaScript (ES6) – ohne Frameworks.
-   Aufbau: Homescreen-Dashboard -> 4 Team-Bereiche + Kinder-Bereich
-   Jeder Bereich hat beliebig viele Seiten mit frei platzierbaren
-   und größenveränderbaren Modulen (Uhr, Timer, Ampel, Spiele ...).
-   Alle Daten werden in localStorage gespeichert (gerätelokal).
-   ============================================================ */
-
-:root{
-  --akzent:#E8722A;
-  --akzent-dunkel:#C25A18;
-  --bg:#FFF8EE;
-  --karte:#FFFFFF;
-  --text:#3A332C;
-  --weich:#8A7F72;
-  --rand:#EFE2CE;
-  --gruen:#3E8E5A;
-  --rot:#D64545;
-  --gelb:#D9A400;
-  --radius-gross:26px;
-  --radius-mittel:18px;
-  --radius-klein:12px;
-  --schatten:0 6px 20px rgba(58,51,44,.14);
-  --schatten-stark:0 12px 34px rgba(58,51,44,.22);
-  --schrift-rund:'Baloo 2','Comic Sans MS',cursive,sans-serif;
-  --schrift-klar:'Quicksand','Segoe UI',sans-serif;
-}
-*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
-html,body{height:100%; margin:0; overflow:hidden; background:#20211f;}
-body{font-family:var(--schrift-klar); color:var(--text);}
-button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
-input,textarea,select{font-family:inherit; font-size:16px; user-select:text;}
-img{max-width:100%; display:block;}
-.versteckt{display:none !important;}
-::-webkit-scrollbar{width:8px; height:8px;}
-::-webkit-scrollbar-thumb{background:#D8C9AE; border-radius:8px;}
-
-/* ---------- Grund-Layout: skalierbare Bühne für konsistentes Layout ---------- */
-#bruecke{position:fixed; inset:0; overflow:hidden; background:#20211f; display:flex; align-items:center; justify-content:center;}
-#buehne-wrapper{position:relative; width:1600px; height:900px; transform-origin:center center; flex-shrink:0;}
-#buehne{position:absolute; inset:0; background:var(--bg); overflow:hidden; border-radius:6px; box-shadow:0 0 60px rgba(0,0,0,.5);}
-
-.ansicht{position:absolute; inset:0; overflow:hidden;}
-.ansicht.aus{display:none !important;}
-
-/* ---------- Homescreen ---------- */
-#home{display:flex; flex-direction:column; padding:26px 34px; height:100%;}
-.home-kopf{display:flex; align-items:center; gap:16px; margin-bottom:14px;}
-.home-maskottchen{font-size:56px; animation:hopp 2.6s ease-in-out infinite;}
-@keyframes hopp{0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-8px) rotate(-4deg)}}
-.home-titel{flex:1;}
-.home-titel h1{font-family:var(--schrift-rund); font-size:34px; font-weight:800; color:var(--akzent); margin:0;}
-.home-titel .datum{color:var(--weich); font-weight:700; font-size:16px; text-transform:capitalize;}
-.home-uhr-mini{display:flex; align-items:center; gap:10px; background:#fff; border-radius:999px; padding:8px 20px; box-shadow:var(--schatten);}
-.home-uhr-mini .zeit{font-size:26px; font-weight:800; font-variant-numeric:tabular-nums;}
-.zahnrad-btn{width:52px; height:52px; border-radius:16px; background:#fff; font-size:24px; box-shadow:var(--schatten); flex-shrink:0;}
-
-.team-reihe{display:flex; gap:8px; flex-shrink:0;}
-.team-btn{background:#fff; border:none; border-radius:14px; padding:0 16px; height:48px; text-align:center; box-shadow:var(--schatten); transition:transform .12s; font-weight:700; font-size:14px; color:var(--text); white-space:nowrap; flex-shrink:0;}
-.team-btn:active{transform:scale(.94);}
-
-.home-buehne{flex:1; position:relative; overflow:hidden; border-radius:var(--radius-mittel); box-shadow:var(--schatten); min-height:0;}
-.home-buehne.bearbeitbar{background-image:linear-gradient(#00000009 1px, transparent 1px), linear-gradient(90deg,#00000009 1px, transparent 1px); background-size:40px 40px;}
-.dash-geburtstag .foto{width:56px; height:56px; border-radius:50%; object-fit:cover; border:3px solid var(--gelb); flex-shrink:0;}
-.dash-geburtstag .foto-platzhalter{width:56px; height:56px; border-radius:50%; background:#FFF3D0; display:grid; place-items:center; font-size:28px; flex-shrink:0;}
-.dash-kinder-btn{position:absolute; left:50%; bottom:18px; transform:translateX(-50%); z-index:40; background:linear-gradient(135deg,var(--akzent),var(--akzent-dunkel)); color:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; gap:12px; font-family:var(--schrift-rund); font-size:22px; font-weight:800; box-shadow:var(--schatten-stark); padding:14px 32px;}
-.dash-kinder-btn .icon{font-size:30px; animation:hopp 2s ease-in-out infinite;}
-
-/* ---------- Hintergrund-Wähler (Seiten & Homescreen) ---------- */
-.hg-leiste{position:absolute; top:10px; left:10px; z-index:22; background:#fff; border-radius:14px; padding:8px; display:flex; gap:6px; box-shadow:var(--schatten); align-items:center;}
-.hg-swatch{width:30px; height:30px; border-radius:9px; border:3px solid transparent; flex-shrink:0;}
-.hg-swatch.aktiv{border-color:var(--akzent);}
-.hg-url{width:120px; font-size:12px; padding:6px 8px; border-radius:8px; border:1px solid var(--rand);}
-
-@media (max-width:900px){
-  .team-reihe{flex-wrap:wrap; justify-content:flex-end;}
-}
-
-/* ---------- Bereichs-Ansicht (Team & Kinder teilen sich das Grundgerüst) ---------- */
-#bereich{display:flex; flex-direction:column; height:100%;}
-.bereich-kopf{display:flex; align-items:center; gap:12px; padding:16px 22px; background:rgba(255,255,255,.7); backdrop-filter:blur(6px); z-index:20;}
-.zurueck-btn{width:48px; height:48px; border-radius:14px; background:#fff; box-shadow:var(--schatten); font-size:22px;}
-.bereich-titel{font-family:var(--schrift-rund); font-weight:800; font-size:22px; color:var(--akzent); flex:1;}
-.seiten-leiste{display:flex; gap:6px; overflow-x:auto; max-width:44vw; padding:2px;}
-.seiten-tab{padding:9px 16px; border-radius:999px; background:#fff; font-weight:700; font-size:14px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,.08); border:2px solid transparent;}
-.seiten-tab.aktiv{background:var(--akzent); color:#fff; border-color:var(--akzent-dunkel);}
-.seiten-tab-neu{padding:9px 14px; border-radius:999px; background:#fff; font-weight:800; color:var(--akzent); border:2px dashed var(--akzent);}
-.bearbeiten-toggle{width:48px; height:48px; border-radius:14px; background:#fff; box-shadow:var(--schatten); font-size:20px;}
-.bearbeiten-toggle.an{background:var(--akzent); color:#fff;}
-
-.seiten-buehne{flex:1; position:relative; overflow:hidden; touch-action:pan-y;}
-.seite{position:absolute; inset:0; transition:transform .34s cubic-bezier(.22,.8,.3,1), opacity .34s; }
-.seite.bearbeitbar{background-image:linear-gradient(#00000009 1px, transparent 1px), linear-gradient(90deg,#00000009 1px, transparent 1px); background-size:40px 40px;}
-
-.seiten-punkte{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:7px; z-index:15;}
-.seiten-punkt{width:9px; height:9px; border-radius:50%; background:#ffffff88;}
-.seiten-punkt.aktiv{background:var(--akzent); width:24px; border-radius:6px;}
-
-.pfeil-nav{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:64px; background:#ffffffcc; border-radius:16px; font-size:22px; z-index:18; display:flex; align-items:center; justify-content:center; box-shadow:var(--schatten);}
-.pfeil-links{left:10px;} .pfeil-rechts{right:10px;}
-
-/* ---------- Werkzeugleiste im Bearbeiten-Modus ---------- */
-.werkzeug-leiste{position:absolute; left:0; right:0; bottom:0; background:#fff; box-shadow:0 -6px 20px rgba(0,0,0,.15); padding:10px 14px; display:flex; gap:8px; overflow-x:auto; z-index:25;}
-.werkzeug-btn{flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 10px; border-radius:12px; background:#FFF6E9; font-size:11px; font-weight:700; min-width:64px;}
-.werkzeug-btn .e{font-size:22px;}
-.seite-verwalten-leiste{position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:22;}
-.seite-verwalten-leiste button{background:#fff; box-shadow:var(--schatten); border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700;}
-
-/* ---------- Module ---------- */
-.modul{position:absolute; background:var(--karte); border-radius:16px; box-shadow:var(--schatten); overflow:hidden; display:flex; flex-direction:column;}
-.modul-bearbeitbar{outline:3px dashed var(--akzent); outline-offset:2px;}
-.modul-inhalt{flex:1; min-height:0; overflow:auto; padding:14px; position:relative;}
-.modul-griff{position:absolute; top:4px; left:4px; width:34px; height:26px; background:#3A332C; border-radius:8px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; z-index:5; cursor:grab;}
-.modul-loeschen{position:absolute; top:4px; right:4px; width:26px; height:26px; background:var(--rot); border-radius:8px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; z-index:5;}
-.modul-groesse{position:absolute; bottom:2px; right:2px; width:24px; height:24px; z-index:5; cursor:nwse-resize;}
-.modul-groesse::after{content:''; position:absolute; right:5px; bottom:5px; width:12px; height:12px; border-right:4px solid var(--akzent); border-bottom:4px solid var(--akzent); border-radius:0 0 4px 0;}
-
-/* Modul-Typ-spezifische Innereien */
-.m-titel{font-weight:800; font-size:16px; margin-bottom:6px; color:var(--akzent);}
-.m-text{font-size:16px; line-height:1.5; white-space:pre-wrap;}
-.m-bild img, .m-video video, .m-video iframe, .m-webseite iframe, .m-pdf iframe{width:100%; height:100%; border:none; border-radius:8px; object-fit:contain;}
-.m-bild figcaption{font-size:12px; color:var(--weich); text-align:center; margin-top:4px;}
-.m-leer-hinweis{color:var(--weich); font-size:14px; text-align:center; padding:14px;}
-
-.m-uhr-analog{width:100%; height:100%; display:grid; place-items:center;}
-.m-uhr-digital{font-size:clamp(28px,6vw,54px); font-weight:800; font-variant-numeric:tabular-nums; text-align:center; display:flex; align-items:center; justify-content:center; height:100%;}
-
-.m-timer{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; text-align:center;}
-.m-timer .anzeige{font-size:clamp(30px,7vw,54px); font-weight:800; font-variant-numeric:tabular-nums;}
-.m-timer .knopfreihe{display:flex; gap:6px; flex-wrap:wrap; justify-content:center;}
-.m-timer button, .m-stoppuhr button{background:var(--akzent); color:#fff; font-weight:800; border-radius:999px; padding:8px 16px; font-size:14px;}
-.m-timer button.stop, .m-stoppuhr button.stop{background:#fff; color:var(--akzent); border:2px solid var(--akzent);}
-
-.m-ampel{height:100%; display:grid; place-items:center;}
-.m-ampel .gehaeuse{background:#2b2b2b; border-radius:20px; padding:12px; display:flex; flex-direction:column; gap:10px;}
-.m-ampel .licht{width:15%; aspect-ratio:1; min-width:28px; border-radius:50%; background:#4a4a4a;}
-.m-ampel .licht.an-rot{background:var(--rot); box-shadow:0 0 20px var(--rot);}
-.m-ampel .licht.an-gelb{background:var(--gelb); box-shadow:0 0 20px var(--gelb);}
-.m-ampel .licht.an-gruen{background:var(--gruen); box-shadow:0 0 20px var(--gruen);}
-
-.m-punkte table{width:100%; border-collapse:collapse; font-size:14px;}
-.m-punkte td{padding:5px 4px; border-bottom:1px solid var(--rand);}
-.m-punkte .stellknopf{width:26px; height:26px; background:#FFF3E6; border-radius:8px; font-weight:800;}
-.m-punkte input[type=text]{width:100%; border:none; background:transparent; font-weight:700;}
-
-.m-wuerfel{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
-.m-wuerfel .augen{font-size:clamp(40px,10vw,90px);}
-
-.m-rad{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
-.m-rad .radflaeche{position:relative; width:min(180px,80%); aspect-ratio:1;}
-.m-rad svg{width:100%; height:100%;}
-.m-rad .gewinner{font-weight:800; font-size:15px; min-height:20px;}
-
-.m-qr{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center;}
-.m-qr img{border-radius:8px; border:6px solid #fff; box-shadow:var(--schatten);}
-
-.m-lautstaerke{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;}
-.m-lautstaerke .balken-huelle{width:70%; height:18px; background:#F1E6D2; border-radius:999px; overflow:hidden;}
-.m-lautstaerke .balken{height:100%; width:0%; background:var(--gruen); transition:width .12s, background .2s;}
-.m-lautstaerke .status{font-weight:800; font-size:15px;}
-
-.m-smiley{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
-.m-smiley .aktuell{font-size:clamp(44px,10vw,80px);}
-
-.m-aufgaben ul{list-style:none; margin:0; padding:0;}
-.m-aufgaben li{display:flex; gap:8px; align-items:center; padding:4px 0; font-size:15px;}
-.m-aufgaben input[type=checkbox]{width:20px; height:20px;}
-.m-aufgaben li.erledigt span{text-decoration:line-through; color:var(--weich);}
-
-/* ---------- Kinder-Bereich: eigenes, verspieltes Design ---------- */
-.kinder-modus{--akzent:#F08A3C;}
-.kinder-modus #buehne{background:linear-gradient(180deg,#FFF4E0,#FFE8C2);}
-.kinder-modus .bereich-titel{font-size:26px;}
-.kinder-modus .modul{border-radius:26px; border:4px solid #fff;}
-.kinder-modus .m-titel{font-size:19px;}
-.kinder-modus .m-text{font-size:19px;}
-.kinder-gitter{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; height:100%; align-content:start;}
-.kinder-kachel{background:#fff; border-radius:20px; padding:14px 8px; text-align:center; box-shadow:var(--schatten);}
-.kinder-kachel .icon{font-size:36px;}
-.kinder-kachel .txt{font-weight:800; font-size:15px; margin-top:4px;}
-.kinder-einstiegs-btn{position:fixed; opacity:0; width:1px; height:1px;} /* Gear für Kinder-Bereich bewusst unauffällig, siehe JS (langes Drücken) */
-
-/* ---------- Einstellungen (Modal) ---------- */
-#einstellungen-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:100;}
-#einstellungen-panel{background:#fff; width:min(640px,92vw); max-height:88vh; overflow-y:auto; border-radius:24px; padding:22px;}
-#einstellungen-panel h2{font-family:var(--schrift-rund); color:var(--akzent); margin:0 0 14px;}
-.e-abschnitt{border:2px solid var(--rand); border-radius:16px; margin-bottom:12px; overflow:hidden;}
-.e-abschnitt > button.kopf{width:100%; text-align:left; padding:14px 16px; font-weight:800; font-size:16px; display:flex; justify-content:space-between; background:#FFFBF3;}
-.e-abschnitt .inhalt{padding:0 16px 16px;}
-.e-label{font-weight:700; font-size:13px; color:var(--weich); display:block; margin:8px 0 4px;}
-.e-input{width:100%; padding:11px 12px; border-radius:12px; border:2px solid var(--rand); background:#FFFCF6; margin-bottom:6px;}
-.e-btn{border:none; background:var(--akzent); color:#fff; font-weight:800; border-radius:12px; padding:10px 16px; font-size:14px;}
-.e-btn.sekundaer{background:#fff; color:var(--akzent); border:2px solid var(--akzent);}
-.e-farbe-swatch{width:34px; height:34px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.2); display:inline-block; margin:2px;}
-.e-farbe-swatch.aktiv{border-color:var(--text);}
-.e-schliessen{position:absolute; top:14px; right:16px; font-size:22px; background:#F1E6D2; width:36px; height:36px; border-radius:50%;}
-.e-zeile{display:flex; gap:6px; align-items:center; margin-bottom:6px;}
-.e-zeile input{flex:1;}
-.e-geb-foto{width:34px; height:34px; border-radius:50%; object-fit:cover; background:#eee; flex-shrink:0;}
-
-/* ---------- Modul-Palette (beim Hinzufügen im Bearbeiten-Modus) ---------- */
-#palette-overlay{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:90; display:flex; align-items:flex-end; justify-content:center;}
-#palette-panel{background:#fff; width:100%; max-width:700px; border-radius:24px 24px 0 0; padding:18px; max-height:70vh; overflow-y:auto;}
-.palette-raster{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
-.palette-item{background:#FFF6E9; border-radius:14px; padding:12px 6px; text-align:center; font-size:12px; font-weight:700;}
-.palette-item .e{font-size:26px; display:block; margin-bottom:4px;}
-
-/* ---------- Seiten-Übersicht (Overlay) ---------- */
-#seiten-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:95; display:flex; align-items:center; justify-content:center;}
-#seiten-panel{background:#fff; border-radius:20px; padding:20px; width:min(500px,90vw); max-height:80vh; overflow-y:auto;}
-.seiten-liste-item{display:flex; align-items:center; gap:8px; padding:10px; border-radius:12px; background:#FFFBF3; margin-bottom:8px;}
-.seiten-liste-item input{flex:1; border:none; background:transparent; font-weight:700;}
-
-@media(hover:hover){ .team-btn:hover{transform:translateY(-2px);} }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Die Füchse – Digitale Unterrichtstafel</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow-x: hidden; }
+    body { font-family: 'Baloo 2', 'Comic Sans MS', cursive, sans-serif; color: #3A332C; background: #FFF7EC; }
+    #root { min-height: 100vh; }
+  </style>
 </head>
 <body>
-<div id="bruecke">
-  <div id="buehne-wrapper">
-    <div id="buehne">
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
 
-      <!-- ========== HOMESCREEN ========== -->
-      <section id="home" class="ansicht">
-        <div class="home-kopf">
-          <div class="home-maskottchen" id="home-maskottchen">🦊</div>
-          <div class="home-titel">
-            <h1 id="home-klassenname">Die Füchse</h1>
-            <div class="datum" id="home-datum">Montag, 1. Januar</div>
-          </div>
-          <div class="team-reihe" id="team-reihe"><!-- 3 dezente Team-Buttons, JS generiert --></div>
-          <div class="home-uhr-mini"><span class="zeit" id="home-uhrzeit">--:--</span></div>
-          <button class="bearbeiten-toggle" id="btn-home-bearbeiten" title="Karten verschieben/verändern">✏️</button>
-          <button class="zahnrad-btn" id="btn-einstellungen" title="Einstellungen">⚙️</button>
-        </div>
-
-        <div class="home-buehne" id="home-buehne">
-          <!-- Frei verschiebbare, größenveränderbare Karten – JS generiert -->
-        </div>
-
-        <button class="dash-kinder-btn" id="btn-kinder">
-          <span class="icon">🦊</span> Für euch Kinder <span class="icon">🦊</span>
-        </button>
-      </section>
-
-      <!-- ========== BEREICH (Team & Kinder gemeinsam genutzt) ========== -->
-      <section id="bereich" class="ansicht aus">
-        <div class="bereich-kopf">
-          <button class="zurueck-btn" id="btn-zurueck-home">←</button>
-          <div class="bereich-titel" id="bereich-titel">Bereich</div>
-          <div class="seiten-leiste" id="seiten-leiste"></div>
-          <button class="bearbeiten-toggle" id="btn-bearbeiten" title="Bearbeiten">✏️</button>
-        </div>
-        <div class="seiten-buehne" id="seiten-buehne">
-          <!-- Seiten werden hier per JS eingefügt -->
-          <button class="pfeil-nav pfeil-links" id="pfeil-links">‹</button>
-          <button class="pfeil-nav pfeil-rechts" id="pfeil-rechts">›</button>
-          <div class="seiten-punkte" id="seiten-punkte"></div>
-        </div>
-      </section>
-
-    </div>
-  </div>
-</div>
-
-<!-- ========== EINSTELLUNGEN (Modal) ========== -->
-<div id="einstellungen-overlay" class="versteckt">
-  <div id="einstellungen-panel">
-    <button class="e-schliessen" id="btn-einstellungen-schliessen">✕</button>
-    <h2>⚙️ Einstellungen</h2>
-    <div id="einstellungen-inhalt"><!-- JS generiert Abschnitte --></div>
-  </div>
-</div>
-
-<!-- ========== MODUL-PALETTE ========== -->
-<div id="palette-overlay" class="versteckt">
-  <div id="palette-panel">
-    <h2 style="font-family:var(--schrift-rund); color:var(--akzent); margin:0 0 12px;">Modul hinzufügen</h2>
-    <div class="palette-raster" id="palette-raster"></div>
-  </div>
-</div>
-
-<!-- ========== SEITEN-ÜBERSICHT ========== -->
-<div id="seiten-overlay" class="versteckt">
-  <div id="seiten-panel">
-    <h2 style="font-family:var(--schrift-rund); color:var(--akzent); margin:0 0 12px;">Seiten verwalten</h2>
-    <div id="seiten-liste-inhalt"></div>
-    <button class="e-btn" id="btn-seite-hinzufuegen" style="width:100%; margin-top:8px;">+ Neue Seite</button>
-    <button class="e-btn sekundaer" id="btn-seiten-fertig" style="width:100%; margin-top:8px;">Fertig</button>
-  </div>
-</div>
-
-<script>
 /* ============================================================
-   1) DATENMODELL & PERSISTENZ
-   Alles liegt in einem einzigen "daten"-Objekt, das nach jeder
-   Änderung komplett in localStorage gespeichert wird. Das hält
-   die App einfach: eine Quelle der Wahrheit, ein Speicherplatz.
+   DIGITALE TAFEL – BAUKASTEN  ·  "Die Füchse"
+   – Mehrere Tafelansichten (Seiten 1–8, oben rechts umschaltbar)
+   – Hintergrund pro Seite wählbar (Holz, Kreidetafel, Kork …)
+   – Elemente (Uhr, Ampel, Timer, Geburtstag, Notiz …) werden am
+     Handy erstellt und auf der Tafel frei verschoben
+   – Kinder-Bereich: eigener Vollbild-Bereich zum Stöbern
    ============================================================ */
-const SPEICHER_SCHLUESSEL = "klassentafel-fuchs-v1";
-const WOCHENTAGE = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
-const FARBPALETTE = ["#E8722A","#3E8E5A","#3B82C4","#C94F6D","#D9A400","#8B5CB8","#189E96","#E85D5D"];
-const MASKOTTCHEN_AUSWAHL = ["🦊","🐻","🦁","🐸","🦉","🐧","🐰","🐨","🐯","🦋","🐬","🦔"];
 
-// Hintergründe für Seiten & Homescreen – frei wählbar, siehe Hintergrund-Wähler (🎨)
+const STORAGE_KEY = "tafel-baukasten-v1";
+const TAGE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
+
+const MASKOTTCHEN = ["🦊","🐻","🦁","🐸","🦉","🐧","🐰","🐨","🐯","🦋","🐬","🦔"];
+const FARBEN = ["#E8722A","#3E8E5A","#3B82C4","#C94F6D","#D9A400","#8B5CB8","#189E96","#E85D5D"];
+const FACH_FARBEN = ["#E8722A","#3E8E5A","#3B82C4","#C94F6D","#8B5CB8","#189E96","#D9A400","#E85D5D"];
+
 const HINTERGRUENDE = {
-  holz:   { name:"Holz",        css:"repeating-linear-gradient(90deg,#9c7a52 0px,#8a6a45 60px,#a3805a 61px,#96754e 140px,#8a6a45 141px,#9c7a52 220px)" },
-  tafel:  { name:"Kreidetafel", css:"radial-gradient(ellipse at 30% 20%, #3d5c4a 0%, #2e4a39 60%, #263f30 100%)" },
-  blau:   { name:"Schreibtisch",css:"radial-gradient(ellipse at 40% 30%, #1c7a8c 0%, #14606f 70%, #0f4e5b 100%)" },
-  kork:   { name:"Korkwand",    css:"radial-gradient(circle at 20% 30%, #c99a62 2px, transparent 3px), radial-gradient(circle at 70% 60%, #b98a52 2px, transparent 3px), radial-gradient(circle at 45% 80%, #c99a62 2px, transparent 3px), linear-gradient(135deg,#d1a76f,#c2955c)" },
-  papier: { name:"Papier",      css:"linear-gradient(#fdf8ee 96%, #e8ddc8 100%)" },
-  nacht:  { name:"Nachthimmel", css:"radial-gradient(circle at 80% 10%, #4a5a8a 0%, #232b4a 40%, #151a30 100%)" },
+  holz:   { name: "Holz",        css: "repeating-linear-gradient(90deg,#9c7a52 0px,#8a6a45 60px,#a3805a 61px,#96754e 140px,#8a6a45 141px,#9c7a52 220px)" },
+  tafel:  { name: "Kreidetafel", css: "radial-gradient(ellipse at 30% 20%, #3d5c4a 0%, #2e4a39 60%, #263f30 100%)" },
+  blau:   { name: "Schreibtisch",css: "radial-gradient(ellipse at 40% 30%, #1c7a8c 0%, #14606f 70%, #0f4e5b 100%)" },
+  kork:   { name: "Korkwand",    css: "radial-gradient(circle at 20% 30%, #c99a62 2px, transparent 3px), radial-gradient(circle at 70% 60%, #b98a52 2px, transparent 3px), radial-gradient(circle at 45% 80%, #c99a62 2px, transparent 3px), linear-gradient(135deg,#d1a76f,#c2955c)" },
+  papier: { name: "Papier",      css: "linear-gradient(#fdf8ee 96%, #e8ddc8 100%)" },
+  nacht:  { name: "Nachthimmel", css: "radial-gradient(circle at 80% 10%, #4a5a8a 0%, #232b4a 40%, #151a30 100%)" },
 };
 
-// Eindeutige IDs ohne externe Bibliothek
-function neueId(){ return Math.random().toString(36).slice(2,10); }
+const neueId = () => Math.random().toString(36).slice(2, 9);
 
-// Eine neue, leere Seite mit Namen
-function neueSeite(name){ return { id: neueId(), name, module: [], hintergrund:"holz", eigenerHintergrund:"" }; }
-
-// Ein neues Modul mit typabhängigen Standarddaten und Startgröße/-position
-function neuesModul(typ, x=60, y=60){
-  const groessen = {
-    text:[360,220], bild:[340,260], video:[420,260], webseite:[460,320], pdf:[420,320],
-    aufgaben:[320,300], timer:[260,240], stoppuhr:[240,220], uhr:[220,220], ampel:[160,320],
-    punkte:[320,300], zufallsgenerator:[300,260], wuerfel:[240,260], qrcode:[240,300],
-    lautstaerke:[280,220], smiley:[240,240], info:[320,260],
-  };
-  const [w,h] = groessen[typ] || [300,240];
-  const daten = {
-    text:{ titel:"Notiz", inhalt:"Hier steht euer Text …" },
-    bild:{ url:"", unterschrift:"" },
-    video:{ url:"" },
-    webseite:{ url:"" },
-    pdf:{ url:"", titel:"Arbeitsblatt" },
-    aufgaben:{ titel:"Aufgaben", punkte:[{text:"Seite 12 lesen", erledigt:false}] },
-    timer:{ presets:[1,5,10] },
-    stoppuhr:{},
-    uhr:{ digital:false },
-    ampel:{ stand:"gruen" },
-    punkte:{ titel:"Punkte", zeilen:[{name:"Team A", punkte:0},{name:"Team B", punkte:0}] },
-    zufallsgenerator:{ eintraege:[], quelle:"eigene" },
-    wuerfel:{ anzahl:1 },
-    qrcode:{ text:"https://example.com" },
-    lautstaerke:{ schwelle:60 },
-    smiley:{ arten:["😀","😐","😢","😡","😴"], index:0 },
-    info:{ art:"stundenplan" },
-  }[typ] || {};
-  return { id:neueId(), typ, x, y, w, h, z:1, daten };
-}
-
-// Vier feste Team-Bereiche + Kinder-Bereich, jeweils mit ihren eigenen Seiten
-function standardBereich(seitenNamen){
-  return { seiten: seitenNamen.map((n) => neueSeite(n)), seiteIndex:0 };
-}
-
-const STANDARD_DATEN = {
-  einstellungen:{
-    klassenname:"Die Füchse",
-    maskottchen:"🦊",
-    farbe:"#E8722A",
-    namen:{ lehrerin1:"Frau Wetsch", lehrerin2:"Frau Terlinden", erzieher:"Freizeit", ergaenzung:"offen" },
-  },
-  stundenplan:{
-    Montag:["Deutsch","Mathe","Sport","Musik"], Dienstag:["Mathe","Deutsch","Sachunterricht","Kunst"],
-    Mittwoch:["Deutsch","Mathe","Religion","Sport"], Donnerstag:["Mathe","Deutsch","Sachunterricht","Musik"],
-    Freitag:["Deutsch","Mathe","Klassenrat"],
-  },
-  essensplan:{
-    Montag:"Nudeln mit Tomatensoße", Dienstag:"Kartoffelsuppe", Mittwoch:"Fischstäbchen mit Püree",
-    Donnerstag:"Gemüsereis", Freitag:"Pizza mit Salat",
-  },
-  nachtisch:{ Montag:"Joghurt", Dienstag:"Obst", Mittwoch:"Pudding", Donnerstag:"Kekse", Freitag:"Eis" },
-  geburtstage:[ /* {name, monat, tag, foto} */ ],
-  besonderheiten:[ /* {text} - gilt für "heute", einfache Liste */ ],
-  mitteilungen:"",
-  wetter:{ icon:"☀️", text:"Sonnig" },
-  ziele:["Wir hören einander zu.","Wir räumen unseren Platz auf."],
-  klassenregeln:["Wir sind leise, wenn jemand spricht.","Wir gehen in der Zweierreihe.","Wir sind nett zueinander."],
-  schueler:[
-    {name:"Anna",punkte:8},{name:"Ben",punkte:5},{name:"Clara",punkte:11},
-    {name:"David",punkte:3},{name:"Emma",punkte:9},{name:"Finn",punkte:6},
-  ],
-  countdown:{ ziel:"", bezeichnung:"Sommerferien" },
-
-  bereiche:{
-    home: standardBereich(["Start"]),
-    lehrerin1: standardBereich(["Tagesplan","Deutsch","Mathematik","Sachunterricht","Übungen","Spiele","Medien"]),
-    lehrerin2: standardBereich(["Tagesplan","Deutsch","Mathematik","Sachunterricht","Übungen","Spiele","Medien"]),
-    erzieher: standardBereich(["Freizeitangebote","Spiele","Bewegung","Kreativangebote","Regeln","Belohnungssystem","Abschlusskreis"]),
-    ergaenzung: standardBereich(["Meine Seite"]),
-    kinder: standardBereich(["Heute","Geburtstage","Spiele & Regeln","Sterne","Wie fühlst du dich?"]),
-  },
+/* ---------- Element-Typen (Werkzeugkasten) ---------- */
+const ELEMENT_TYPEN = {
+  uhr:        { name: "Uhr",              emoji: "🕒" },
+  timer:      { name: "Timer",            emoji: "⏳" },
+  notiz:      { name: "Notiz / Regeln",   emoji: "📝" },
+  ampel:      { name: "Ampel",            emoji: "🚦" },
+  geburtstag: { name: "Geburtstag",       emoji: "🎂" },
+  stundenplan:{ name: "Stundenplan heute",emoji: "📅" },
+  essen:      { name: "Essen heute",      emoji: "🍽️" },
+  punkte:     { name: "Punkte-Liste",     emoji: "⭐" },
+  gruppen:    { name: "Gruppen",          emoji: "👥" },
+  bild:       { name: "Bild",             emoji: "🖼️" },
+  wuerfel:    { name: "Würfel",           emoji: "🎲" },
+  gluecksrad: { name: "Glücksrad",        emoji: "🎡" },
+  quiz:       { name: "Quiz",             emoji: "❓" },
+  rechnen:    { name: "Kopfrechnen-Blitz",emoji: "🧮" },
+  galgen:     { name: "Wörter raten",     emoji: "🔤" },
+  sternchallenge: { name: "Sternen-Challenge", emoji: "🌟" },
+  ehrenwand:      { name: "Ehrenwand (nur positiv)", emoji: "🏅" },
 };
 
-// Startinhalt der Homescreen-Bühne: freistehende, frei verschiebbare Karten
-// (Begrüßung, Ampel, Uhr, Stundenplan, Geburtstage, Wetter, Besonderheiten) –
-// wie im gewünschten Vorbild, statt eines starren Tabellen-Rasters.
-(function fuelleHomeStandard(){
-  const h = STANDARD_DATEN.bereiche.home.seiten[0];
-  h.hintergrund = "holz";
-  const hinzu = (typ, x, y, w, h_) => { const m = neuesModul(typ, x, y); if(w) m.w=w; if(h_) m.h=h_; return m; };
-
-  const begruessung = hinzu("text", 40, 30, 460, 210);
-  begruessung.daten = { titel:"Guten Morgen! ☀️", inhalt:"Heute wird ein toller Tag.\nDenkt an eure Hausaufgaben." };
-  h.module.push(begruessung);
-
-  const ampel = hinzu("ampel", 540, 30, 170, 340);
-  h.module.push(ampel);
-
-  const uhr = hinzu("uhr", 1340, 20, 200, 200);
-  h.module.push(uhr);
-
-  const stundenplan = hinzu("info", 40, 270, 460, 300); stundenplan.daten.art = "stundenplan";
-  h.module.push(stundenplan);
-
-  const geburtstage = hinzu("info", 760, 30, 340, 220); geburtstage.daten.art = "geburtstage";
-  h.module.push(geburtstage);
-
-  const wetter = hinzu("info", 760, 270, 340, 180); wetter.daten.art = "wetter";
-  h.module.push(wetter);
-
-  const besonderheiten = hinzu("info", 1140, 230, 380, 220); besonderheiten.daten.art = "besonderheiten";
-  h.module.push(besonderheiten);
-})();
-
-// Startinhalt für die Kinder-Seiten: automatische Info-Module, die live aus den
-// Einstellungen gespeist werden (Essen, Stundenplan, Geburtstage ...). So muss
-// das Team nichts doppelt eintragen – der Kinder-Bereich zeigt einfach dieselben
-// Daten, nur besonders groß und kindgerecht aufbereitet.
-(function fuelleKinderStandard(){
-  const k = STANDARD_DATEN.bereiche.kinder;
-  const setzeInfo = (seiteIdx, art, x, y, w, h) => {
-    const m = neuesModul("info", x, y); m.daten.art = art; if(w) m.w=w; if(h) m.h=h;
-    k.seiten[seiteIdx].module.push(m);
-  };
-  // Seite 0 "Heute": Essen, Nachtisch, Stundenplan, Wetter im Überblick
-  setzeInfo(0,"essen",40,40,360,220);
-  setzeInfo(0,"nachtisch",420,40,300,220);
-  setzeInfo(0,"stundenplan",40,280,360,260);
-  setzeInfo(0,"wetter",420,280,300,180);
-  // Seite 1 "Geburtstage"
-  setzeInfo(1,"geburtstage",60,60,420,260);
-  // Seite 2 "Spiele & Regeln": Regeln + Ziel + Besonderheiten
-  setzeInfo(2,"regeln",40,40,380,300);
-  setzeInfo(2,"ziel",440,40,300,180);
-  setzeInfo(2,"besonderheiten",440,240,300,220);
-  const rad = neuesModul("zufallsgenerator",760,40); rad.w=280; rad.h=320; rad.daten.quelle="kinder"; k.seiten[2].module.push(rad);
-  // Seite 3 "Sterne": Punktestand als Info-Anzeige
-  setzeInfo(3,"sterne",60,60,500,360);
-  // Seite 4 "Wie fühlst du dich?": Smiley + Countdown
-  const smiley = neuesModul("smiley",100,80); smiley.w=280; smiley.h=260; k.seiten[4].module.push(smiley);
-  setzeInfo(4,"countdown",440,80,320,220);
-})();
-
-let daten = null; // wird beim Start geladen
-
-function datenLaden(){
-  try{
-    const roh = localStorage.getItem(SPEICHER_SCHLUESSEL);
-    if(roh){
-      const geladen = JSON.parse(roh);
-      // Tiefe Zusammenführung reicht hier flach, solange Struktur stabil bleibt
-      daten = { ...JSON.parse(JSON.stringify(STANDARD_DATEN)), ...geladen };
-      // Fehlende Unterobjekte auffüllen (falls App aktualisiert wurde)
-      daten.einstellungen = { ...STANDARD_DATEN.einstellungen, ...(geladen.einstellungen||{}) };
-      daten.bereiche = { ...STANDARD_DATEN.bereiche, ...(geladen.bereiche||{}) };
-      return;
-    }
-  }catch(e){ console.warn("Konnte gespeicherte Daten nicht lesen, starte neu.", e); }
-  daten = JSON.parse(JSON.stringify(STANDARD_DATEN));
-}
-
-let speicherTimer = null;
-function datenSpeichern(){
-  clearTimeout(speicherTimer);
-  speicherTimer = setTimeout(() => {
-    try{ localStorage.setItem(SPEICHER_SCHLUESSEL, JSON.stringify(daten)); }
-    catch(e){ console.error("Speichern fehlgeschlagen (localStorage voll?)", e); }
-  }, 150); // kurze Verzögerung, damit schnelle Änderungen (Ziehen) nicht jedes Pixel schreiben
-}
-
-function heutigerWochentagName(){
-  const namen = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
-  return namen[new Date().getDay()];
-}
-
-/* ============================================================
-   2) SKALIERBARE BÜHNE
-   Alle Module werden in einem festen 1600×900-Koordinatensystem
-   platziert. Dieses wird per CSS-Transform auf jede Bildschirm-
-   größe skaliert – dadurch sieht das Layout auf iPhone, Android
-   und Smartboard identisch aus, nur eben größer oder kleiner.
-   ============================================================ */
-const BUEHNE_BREITE = 1600, BUEHNE_HOEHE = 900;
-let buehnenSkala = 1;
-
-function buehneSkalieren(){
-  const bw = window.innerWidth, bh = window.innerHeight;
-  buehnenSkala = Math.min(bw / BUEHNE_BREITE, bh / BUEHNE_HOEHE);
-  document.getElementById("buehne-wrapper").style.transform = `scale(${buehnenSkala})`;
-}
-window.addEventListener("resize", buehneSkalieren);
-
-/* ============================================================
-   3) ANSICHTEN WECHSELN (Home / Bereich / …)
-   ============================================================ */
-let aktuellerBereichSchluessel = null; // z.B. "lehrerin1" oder "kinder"
-let bearbeitenModus = false;
-
-function zeigeAnsicht(name){
-  document.querySelectorAll(".ansicht").forEach((el) => el.classList.add("aus"));
-  document.getElementById(name).classList.remove("aus");
-}
-
-function oeffneBereich(schluessel){
-  aktuellerBereichSchluessel = schluessel;
-  bearbeitenModus = false;
-  const bereichEl = document.getElementById("bereich");
-  bereichEl.classList.toggle("kinder-modus", schluessel === "kinder");
-  renderBereichKopf();
-  renderSeiten();
-  zeigeAnsicht("bereich");
-}
-
-function schliesseBereich(){
-  aktuellerBereichSchluessel = null;
-  bearbeitenModus = false;
-  zeigeAnsicht("home");
-  renderHome();
-}
-
-const BEREICH_TITEL = {
-  lehrerin1:() => daten.einstellungen.namen.lehrerin1,
-  lehrerin2:() => daten.einstellungen.namen.lehrerin2,
-  erzieher:() => daten.einstellungen.namen.erzieher,
-  ergaenzung:() => daten.einstellungen.namen.ergaenzung,
-  kinder:() => "🦊 Für euch Kinder",
-};
-
-function renderBereichKopf(){
-  document.getElementById("bereich-titel").textContent = BEREICH_TITEL[aktuellerBereichSchluessel]();
-  document.getElementById("btn-bearbeiten").classList.toggle("an", bearbeitenModus);
-  const bereich = daten.bereiche[aktuellerBereichSchluessel];
-  const leiste = document.getElementById("seiten-leiste");
-  leiste.innerHTML = "";
-  bereich.seiten.forEach((seite, i) => {
-    const tab = document.createElement("button");
-    tab.className = "seiten-tab" + (i === bereich.seiteIndex ? " aktiv" : "");
-    tab.textContent = seite.name;
-    tab.onclick = () => { bereich.seiteIndex = i; renderBereichKopf(); renderSeiten(); };
-    leiste.appendChild(tab);
-  });
-  const neu = document.createElement("button");
-  neu.className = "seiten-tab-neu";
-  neu.textContent = "☰";
-  neu.title = "Seiten verwalten";
-  neu.onclick = oeffneSeitenUebersicht;
-  leiste.appendChild(neu);
-}
-
-/* ============================================================
-   4) SEITEN-NAVIGATION: Wischen, Pfeiltasten, Punkte-Anzeige
-   ============================================================ */
-function renderSeiten(){
-  const bereich = daten.bereiche[aktuellerBereichSchluessel];
-  const buehneEl = document.getElementById("seiten-buehne");
-  // Alte Seiten-DIVs entfernen (Pfeile/Punkte bleiben erhalten, da separat)
-  buehneEl.querySelectorAll(".seite").forEach((el) => el.remove());
-
-  bereich.seiten.forEach((seite, i) => {
-    const seiteEl = document.createElement("div");
-    seiteEl.className = "seite" + (bearbeitenModus ? " bearbeitbar" : "");
-    seiteEl.dataset.index = i;
-    seiteEl.style.transform = `translateX(${(i - bereich.seiteIndex) * 100}%)`;
-    seiteEl.style.opacity = i === bereich.seiteIndex ? "1" : "0.001";
-    seiteEl.style.background = seite.eigenerHintergrund ? `url(${seite.eigenerHintergrund}) center/cover no-repeat` : (HINTERGRUENDE[seite.hintergrund]||HINTERGRUENDE.papier).css;
-    seite.module.slice().sort((a,b)=>a.z-b.z).forEach((mod) => seiteEl.appendChild(baueModulElement(seite, mod)));
-    if(bearbeitenModus){
-      seiteEl.appendChild(baueHintergrundLeiste(seite, renderSeiten));
-      const verwalten = document.createElement("div");
-      verwalten.className = "seite-verwalten-leiste";
-      verwalten.innerHTML = `<button data-akt="umbenennen">✏️ ${escapeHtml(seite.name)}</button><button data-akt="loeschen">🗑️</button>`;
-      verwalten.querySelector('[data-akt="umbenennen"]').onclick = () => {
-        const neuerName = prompt("Neuer Seitenname:", seite.name);
-        if(neuerName && neuerName.trim()){ seite.name = neuerName.trim(); datenSpeichern(); renderBereichKopf(); renderSeiten(); }
-      };
-      verwalten.querySelector('[data-akt="loeschen"]').onclick = () => {
-        if(bereich.seiten.length <= 1){ alert("Der Bereich braucht mindestens eine Seite."); return; }
-        if(!confirm(`Seite "${seite.name}" wirklich löschen?`)) return;
-        bereich.seiten.splice(i,1);
-        bereich.seiteIndex = Math.max(0, bereich.seiteIndex - (bereich.seiteIndex>=i?1:0));
-        datenSpeichern(); renderBereichKopf(); renderSeiten();
-      };
-      seiteEl.appendChild(verwalten);
-    }
-    buehneEl.appendChild(seiteEl);
-  });
-
-  // Punkte-Anzeige
-  const punkte = document.getElementById("seiten-punkte");
-  punkte.innerHTML = "";
-  bereich.seiten.forEach((_, i) => {
-    const p = document.createElement("div");
-    p.className = "seiten-punkt" + (i === bereich.seiteIndex ? " aktiv" : "");
-    punkte.appendChild(p);
-  });
-  document.getElementById("pfeil-links").style.visibility = bereich.seiteIndex > 0 ? "visible":"hidden";
-  document.getElementById("pfeil-rechts").style.visibility = bereich.seiteIndex < bereich.seiten.length-1 ? "visible":"hidden";
-
-  // Werkzeugleiste im Bearbeiten-Modus ein-/ausblenden
-  let werkzeug = document.querySelector(".werkzeug-leiste");
-  if(bearbeitenModus && !werkzeug){ werkzeug = baueWerkzeugLeiste(); buehneEl.appendChild(werkzeug); }
-  if(!bearbeitenModus && werkzeug){ werkzeug.remove(); }
-}
-
-function geheZuSeite(neuerIndex){
-  const bereich = daten.bereiche[aktuellerBereichSchluessel];
-  if(neuerIndex < 0 || neuerIndex >= bereich.seiten.length) return;
-  bereich.seiteIndex = neuerIndex;
-  datenSpeichern();
-  renderBereichKopf();
-  renderSeiten();
-}
-
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-
-/* Wischen (Touch) */
-(function wischNavigation(){
-  const buehneEl = document.getElementById("seiten-buehne");
-  let startX = null, startY = null, wischt = false;
-  buehneEl.addEventListener("touchstart", (e) => {
-    if(e.target.closest(".modul")) return; // Modul-Interaktion hat Vorrang
-    startX = e.touches[0].clientX; startY = e.touches[0].clientY; wischt = true;
-  }, {passive:true});
-  buehneEl.addEventListener("touchend", (e) => {
-    if(!wischt || startX===null) return; wischt = false;
-    const dx = e.changedTouches[0].clientX - startX, dy = e.changedTouches[0].clientY - startY;
-    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
-      const bereich = daten.bereiche[aktuellerBereichSchluessel];
-      geheZuSeite(bereich.seiteIndex + (dx < 0 ? 1 : -1));
-    }
-  }, {passive:true});
-})();
-
-/* Pfeiltasten */
-document.addEventListener("keydown", (e) => {
-  if(document.getElementById("bereich").classList.contains("aus")) return;
-  if(document.getElementById("einstellungen-overlay").classList.contains("versteckt") === false) return;
-  const bereich = daten.bereiche[aktuellerBereichSchluessel];
-  if(e.key === "ArrowRight") geheZuSeite(bereich.seiteIndex+1);
-  if(e.key === "ArrowLeft") geheZuSeite(bereich.seiteIndex-1);
+const neuesElement = (typ) => ({
+  id: neueId(), typ, x: 30 + Math.random() * 20, y: 25 + Math.random() * 20,
+  daten:
+    typ === "notiz"      ? { titel: "Regeln ☝️", text: "Hier steht euer Text …" } :
+    typ === "geburtstag" ? { name: "", fotoUrl: "" } :
+    typ === "gruppen"    ? { anzahl: 2 } :
+    typ === "bild"       ? { url: "" } :
+    typ === "ampel"      ? { stand: "gruen" } :
+    typ === "uhr"        ? { digital: false } :
+    typ === "wuerfel"    ? { anzahl: 1 } :
+    typ === "gluecksrad" ? { nutzeNamen: true, eintraege: [] } :
+    typ === "quiz"       ? { fragen: [
+        { frage: "Wie viele Beine hat eine Spinne?", antworten: ["6", "8", "10"], richtig: 1 },
+        { frage: "Welcher Planet ist der Sonne am nächsten?", antworten: ["Merkur", "Mars", "Venus"], richtig: 0 },
+      ] } :
+    typ === "rechnen"    ? { raum: 20 } :
+    typ === "galgen"     ? { woerter: ["FUCHS", "SCHULE", "REGENBOGEN"] } : {},
 });
-document.getElementById("pfeil-links").onclick = () => geheZuSeite(daten.bereiche[aktuellerBereichSchluessel].seiteIndex-1);
-document.getElementById("pfeil-rechts").onclick = () => geheZuSeite(daten.bereiche[aktuellerBereichSchluessel].seiteIndex+1);
 
-/* ============================================================
-   5) MODUL-ENGINE: Rahmen, Ziehen (Drag) & Größe ändern (Resize)
-   ============================================================ */
-const MODUL_TYPEN = {
-  text:{name:"Text",emoji:"📝"}, bild:{name:"Bild",emoji:"🖼️"}, video:{name:"Video",emoji:"🎬"},
-  webseite:{name:"Webseite",emoji:"🌐"}, pdf:{name:"PDF / Arbeitsblatt",emoji:"📄"},
-  aufgaben:{name:"Aufgaben",emoji:"✅"}, timer:{name:"Timer",emoji:"⏳"}, stoppuhr:{name:"Stoppuhr",emoji:"⏱️"},
-  uhr:{name:"Uhr",emoji:"🕒"}, ampel:{name:"Ampel",emoji:"🚦"}, punkte:{name:"Punkte-System",emoji:"⭐"},
-  zufallsgenerator:{name:"Zufallsgenerator",emoji:"🎡"}, wuerfel:{name:"Würfel",emoji:"🎲"},
-  qrcode:{name:"QR-Code",emoji:"🔳"}, lautstaerke:{name:"Lautstärke",emoji:"🔊"}, smiley:{name:"Smiley-Anzeige",emoji:"😊"}, info:{name:"Info-Anzeige (automatisch)",emoji:"📌"},
+/* ---------- Standarddaten ---------- */
+const STANDARD_DATEN = {
+  klassenname: "Die Füchse",
+  maskottchen: "🦊",
+  farbe: "#E8722A",
+  stundenplan: {
+    Montag: ["Deutsch","Mathe","Sport","Musik"], Dienstag: ["Mathe","Deutsch","Sachunterricht","Kunst"],
+    Mittwoch: ["Deutsch","Mathe","Religion","Sport"], Donnerstag: ["Mathe","Deutsch","Sachunterricht","Musik"],
+    Freitag: ["Deutsch","Mathe","Klassenrat"],
+  },
+  essensplan: {
+    Montag: "Nudeln mit Tomatensoße", Dienstag: "Kartoffelsuppe", Mittwoch: "Fischstäbchen mit Püree",
+    Donnerstag: "Gemüsereis", Freitag: "Pizza mit Salat",
+  },
+  schueler: [
+    { name: "Anna", punkte: 8 }, { name: "Ben", punkte: 5 }, { name: "Clara", punkte: 11 },
+    { name: "David", punkte: 3 }, { name: "Emma", punkte: 9 }, { name: "Finn", punkte: 6 },
+  ],
+  ziele: ["Wir hören einander zu.", "Wir räumen unseren Platz auf."],
+  belohnung: {
+    punkteProStern: 5,
+    wochenBelohnung: "Extra-Pause am Freitag 🎉",
+    kategorien: ["🤫 Leise gearbeitet", "🍽️ Toll in der Mensa", "🚶 Super Zweierreihe"],
+    spruecheLob: ["Super gemacht!", "Klasse Einsatz!", "Echt stark!", "Weiter so!", "Toll gemacht!", "Du glänzt! ✨", "Ihr macht das großartig!"],
+  },
+  galerie: [],
+  seitenGalerie: [],
+  seiten: [
+    {
+      id: neueId(), name: "Morgen", hintergrund: "holz", eigenerHintergrund: "",
+      elemente: [
+        { id: neueId(), typ: "uhr", x: 78, y: 8, daten: { digital: false } },
+        { id: neueId(), typ: "notiz", x: 6, y: 8, daten: { titel: "Guten Morgen! ☀️", text: "Heute wird ein toller Tag.\nDenkt an eure Hausaufgaben." } },
+        { id: neueId(), typ: "ampel", x: 48, y: 12, daten: { stand: "gruen" } },
+        { id: neueId(), typ: "stundenplan", x: 6, y: 52, daten: {} },
+      ],
+    },
+    { id: neueId(), name: "Arbeit", hintergrund: "tafel", eigenerHintergrund: "", elemente: [
+      { id: neueId(), typ: "timer", x: 8, y: 12, daten: {} },
+      { id: neueId(), typ: "notiz", x: 40, y: 12, daten: { titel: "Arbeitsauftrag ✍️", text: "1. Lest Seite 12\n2. Bearbeitet Aufgabe 3\n3. Vergleicht mit dem Partner" } },
+    ] },
+  ],
 };
 
-function baueModulElement(seite, mod){
-  const el = document.createElement("div");
-  el.className = "modul" + (bearbeitenModus ? " modul-bearbeitbar" : "");
-  el.style.left = mod.x+"px"; el.style.top = mod.y+"px";
-  el.style.width = mod.w+"px"; el.style.height = mod.h+"px";
-  el.style.zIndex = mod.z || 1;
-  el.dataset.id = mod.id;
+/* ---------- Speicher: localStorage (gerätelokal, funktioniert offline) ---------- */
+async function ladeDaten() {
+  try {
+    const roh = localStorage.getItem(STORAGE_KEY);
+    if (roh) return { ...STANDARD_DATEN, ...JSON.parse(roh) };
+  } catch (e) { /* noch nichts gespeichert */ }
+  return STANDARD_DATEN;
+}
+async function speichereDaten(d) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+  catch (e) { console.error("Speichern fehlgeschlagen", e); }
+}
 
-  const inhalt = document.createElement("div");
-  inhalt.className = "modul-inhalt";
-  renderModulInhalt(inhalt, mod, seite);
-  el.appendChild(inhalt);
+const heuteName = () => TAGE[new Date().getDay() - 1] || "Montag";
+const fachFarbe = (f) => { let h = 0; for (let i = 0; i < f.length; i++) h = (h * 31 + f.charCodeAt(i)) % 997; return FACH_FARBEN[h % FACH_FARBEN.length]; };
 
-  if(bearbeitenModus){
-    const griff = document.createElement("div"); griff.className="modul-griff"; griff.textContent="✥"; el.appendChild(griff);
-    const loeschen = document.createElement("div"); loeschen.className="modul-loeschen"; loeschen.textContent="✕";
-    loeschen.onclick = (e) => { e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); renderSeiten(); } };
-    el.appendChild(loeschen);
-    const resize = document.createElement("div"); resize.className="modul-groesse"; el.appendChild(resize);
-    machDragbar(el, mod, griff);
-    machResizebar(el, mod, resize);
+/* ---------- Tages-Zufall: gleiche Reihenfolge den ganzen Tag, morgen neu ---------- */
+function heutigerSeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function seededShuffle(array, seed) {
+  const arr = [...array];
+  let s = seed || 1;
+  const zufall = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(zufall() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return el;
-}
-
-/* Ziehen: Pointer Events funktionieren einheitlich für Maus & Touch */
-function machDragbar(el, mod, griff){
-  let start=null;
-  griff.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    griff.setPointerCapture(e.pointerId);
-    start = { px:e.clientX, py:e.clientY, mx:mod.x, my:mod.y };
-    mod.z = naechsteZ();
-  });
-  griff.addEventListener("pointermove", (e) => {
-    if(!start) return;
-    const dx = (e.clientX - start.px) / buehnenSkala, dy = (e.clientY - start.py) / buehnenSkala;
-    mod.x = Math.max(0, Math.min(BUEHNE_BREITE - mod.w, start.mx + dx));
-    mod.y = Math.max(0, Math.min(BUEHNE_HOEHE - mod.h, start.my + dy));
-    el.style.left = mod.x+"px"; el.style.top = mod.y+"px"; el.style.zIndex = mod.z;
-  });
-  const ende = () => { if(start){ start=null; datenSpeichern(); } };
-  griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
-}
-
-function machResizebar(el, mod, griff){
-  let start=null;
-  griff.addEventListener("pointerdown", (e) => {
-    e.preventDefault(); e.stopPropagation();
-    griff.setPointerCapture(e.pointerId);
-    start = { px:e.clientX, py:e.clientY, mw:mod.w, mh:mod.h };
-  });
-  griff.addEventListener("pointermove", (e) => {
-    if(!start) return;
-    const dx=(e.clientX-start.px)/buehnenSkala, dy=(e.clientY-start.py)/buehnenSkala;
-    mod.w = Math.max(140, Math.min(BUEHNE_BREITE-mod.x, start.mw+dx));
-    mod.h = Math.max(120, Math.min(BUEHNE_HOEHE-mod.y, start.mh+dy));
-    el.style.width = mod.w+"px"; el.style.height = mod.h+"px";
-  });
-  const ende = () => { if(start){ start=null; datenSpeichern(); } };
-  griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
-}
-
-function naechsteZ(){
-  let max=1;
-  Object.values(daten.bereiche).forEach((b)=>b.seiten.forEach((s)=>s.module.forEach((m)=>{ if(m.z>max) max=m.z; })));
-  return max+1;
+  return arr;
 }
 
 /* ============================================================
-   6) MODUL-INHALTE (je nach Typ)
+   HAUPT-KOMPONENTE
    ============================================================ */
-function renderModulInhalt(inhalt, mod, seite){
-  inhalt.innerHTML = "";
-  inhalt.className = "modul-inhalt m-"+mod.typ;
-  const bearbeitbar = bearbeitenModus;
-  switch(mod.typ){
-    case "text": return renderText(inhalt, mod, bearbeitbar);
-    case "bild": return renderBild(inhalt, mod, bearbeitbar);
-    case "video": return renderVideo(inhalt, mod, bearbeitbar);
-    case "webseite": return renderWebseite(inhalt, mod, bearbeitbar);
-    case "pdf": return renderPdf(inhalt, mod, bearbeitbar);
-    case "aufgaben": return renderAufgaben(inhalt, mod, bearbeitbar);
-    case "timer": return renderTimer(inhalt, mod);
-    case "stoppuhr": return renderStoppuhr(inhalt, mod);
-    case "uhr": return renderUhrModul(inhalt, mod, bearbeitbar);
-    case "ampel": return renderAmpel(inhalt, mod, bearbeitbar);
-    case "punkte": return renderPunkte(inhalt, mod, bearbeitbar);
-    case "zufallsgenerator": return renderZufallsrad(inhalt, mod, bearbeitbar);
-    case "wuerfel": return renderWuerfel(inhalt, mod);
-    case "qrcode": return renderQr(inhalt, mod, bearbeitbar);
-    case "lautstaerke": return renderLautstaerke(inhalt, mod, bearbeitbar);
-    case "smiley": return renderSmiley(inhalt, mod, bearbeitbar);
-    case "info": return renderInfo(inhalt, mod, bearbeitbar);
-  }
-}
+function TafelBaukasten() {
+  const [daten, setDaten] = useState(null);
+  const [modus, setModus] = useState("tafel");
+  const datenRef = useRef(null);
 
-function feldBearbeitbar(wert, aendern, mehrzeilig){
-  const el = document.createElement(mehrzeilig ? "textarea" : "input");
-  el.value = wert; el.className="e-input"; el.style.margin="0 0 4px";
-  el.addEventListener("input", () => { aendern(el.value); datenSpeichern(); });
-  el.addEventListener("pointerdown", (e) => e.stopPropagation());
-  return el;
-}
+  useEffect(() => {
+    ladeDaten().then((d) => { setDaten(d); datenRef.current = d; });
+  }, []);
 
-/* --- Text / Notiz --- */
-function renderText(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    inhalt.appendChild(feldBearbeitbar(mod.daten.titel, (v)=>mod.daten.titel=v));
-    const ta = feldBearbeitbar(mod.daten.inhalt, (v)=>mod.daten.inhalt=v, true);
-    ta.style.height="calc(100% - 40px)";
-    inhalt.appendChild(ta);
-  } else {
-    const t = document.createElement("div"); t.className="m-titel"; t.textContent=mod.daten.titel;
-    const p = document.createElement("div"); p.className="m-text"; p.textContent=mod.daten.inhalt;
-    inhalt.append(t,p);
-  }
-}
+  // Tafel: alle 3 s nach Handy-Änderungen schauen (schneller als vorher)
+  useEffect(() => {
+    if (modus !== "tafel") return;
+    const t = setInterval(async () => {
+      const neu = await ladeDaten();
+      if (JSON.stringify(neu) !== JSON.stringify(datenRef.current)) { setDaten(neu); datenRef.current = neu; }
+    }, 3000);
+    return () => clearInterval(t);
+  }, [modus]);
 
-/* --- Bild --- */
-function renderBild(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    inhalt.appendChild(feldBearbeitbarMitLabel("Bild-Link (URL)", mod.daten.url, (v)=>{mod.daten.url=v; renderModulInhalt(inhalt,mod,seiteVon(mod));}));
-    inhalt.appendChild(feldBearbeitbarMitLabel("Unterschrift", mod.daten.unterschrift, (v)=>mod.daten.unterschrift=v));
-    return;
-  }
-  if(!mod.daten.url){ inhalt.innerHTML = '<div class="m-leer-hinweis">🖼️ Bild-Link im Bearbeiten-Modus eintragen</div>'; return; }
-  const fig = document.createElement("figure"); fig.style.margin="0"; fig.style.height="100%";
-  const img = document.createElement("img"); img.src = mod.daten.url; img.style.height = mod.daten.unterschrift? "calc(100% - 18px)":"100%";
-  fig.appendChild(img);
-  if(mod.daten.unterschrift){ const cap=document.createElement("figcaption"); cap.textContent=mod.daten.unterschrift; fig.appendChild(cap); }
-  inhalt.appendChild(fig);
-}
+  const aktualisiere = useCallback((update) => {
+    setDaten((alt) => {
+      const neu = typeof update === "function" ? update(alt) : { ...alt, ...update };
+      datenRef.current = neu; speichereDaten(neu); return neu;
+    });
+  }, []);
 
-/* --- Video (erkennt YouTube automatisch, sonst direkte Videodatei) --- */
-function renderVideo(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){ inhalt.appendChild(feldBearbeitbarMitLabel("Video-Link (YouTube oder .mp4)", mod.daten.url, (v)=>{mod.daten.url=v;})); return; }
-  if(!mod.daten.url){ inhalt.innerHTML='<div class="m-leer-hinweis">🎬 Video-Link im Bearbeiten-Modus eintragen</div>'; return; }
-  const ytMatch = mod.daten.url.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{6,})/);
-  if(ytMatch){
-    const ifr = document.createElement("iframe");
-    ifr.src = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
-    ifr.allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"; ifr.allowFullscreen=true;
-    inhalt.appendChild(ifr);
-  } else {
-    const v = document.createElement("video"); v.src=mod.daten.url; v.controls=true; inhalt.appendChild(v);
-  }
-}
+  if (!daten) return <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "sans-serif", fontSize: 22 }}>Tafel wird geladen …</div>;
 
-/* --- Webseite (iframe – manche Seiten blockieren das Einbetten) --- */
-function renderWebseite(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){ inhalt.appendChild(feldBearbeitbarMitLabel("Webseiten-Link", mod.daten.url, (v)=>{mod.daten.url=v;})); return; }
-  if(!mod.daten.url){ inhalt.innerHTML='<div class="m-leer-hinweis">🌐 Link im Bearbeiten-Modus eintragen</div>'; return; }
-  const ifr = document.createElement("iframe"); ifr.src = mod.daten.url; inhalt.appendChild(ifr);
-}
-
-/* --- PDF / Arbeitsblatt --- */
-function renderPdf(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    inhalt.appendChild(feldBearbeitbarMitLabel("Titel", mod.daten.titel, (v)=>mod.daten.titel=v));
-    inhalt.appendChild(feldBearbeitbarMitLabel("PDF-Link (URL)", mod.daten.url, (v)=>{mod.daten.url=v;}));
-    return;
-  }
-  if(!mod.daten.url){ inhalt.innerHTML='<div class="m-leer-hinweis">📄 PDF-Link im Bearbeiten-Modus eintragen</div>'; return; }
-  const ifr = document.createElement("iframe"); ifr.src = mod.daten.url; inhalt.appendChild(ifr);
-  const oeffnen = document.createElement("a"); oeffnen.href=mod.daten.url; oeffnen.target="_blank"; oeffnen.textContent="In neuem Tab öffnen ↗";
-  oeffnen.style.cssText="position:absolute; bottom:6px; right:10px; font-size:11px; background:#fff; padding:3px 8px; border-radius:8px;";
-  inhalt.style.position="relative"; inhalt.appendChild(oeffnen);
-}
-
-/* --- Aufgaben / Checkliste --- */
-function renderAufgaben(inhalt, mod, bearbeitbar){
-  const t = document.createElement("div"); t.className="m-titel";
-  if(bearbeitbar){ t.appendChild(feldBearbeitbar(mod.daten.titel,(v)=>mod.daten.titel=v)); } else { t.textContent = mod.daten.titel; }
-  inhalt.appendChild(t);
-  const ul = document.createElement("ul");
-  mod.daten.punkte.forEach((p, i) => {
-    const li = document.createElement("li"); li.className = p.erledigt?"erledigt":"";
-    const cb = document.createElement("input"); cb.type="checkbox"; cb.checked=p.erledigt;
-    cb.onchange = () => { p.erledigt = cb.checked; datenSpeichern(); li.className = p.erledigt?"erledigt":""; };
-    const span = document.createElement("span"); span.textContent = p.text;
-    li.append(cb, span);
-    if(bearbeitbar){
-      const del = document.createElement("button"); del.textContent="✕"; del.style.marginLeft="auto"; del.style.fontSize="12px";
-      del.onclick=()=>{ mod.daten.punkte.splice(i,1); datenSpeichern(); renderModulInhalt(inhalt,mod,seite); };
-      li.appendChild(del);
-    }
-    ul.appendChild(li);
-  });
-  inhalt.appendChild(ul);
-  if(bearbeitbar){
-    const neu = document.createElement("button"); neu.className="e-btn sekundaer"; neu.style.marginTop="6px"; neu.style.fontSize="12px"; neu.textContent="+ Aufgabe";
-    neu.onclick = () => { const txt = prompt("Neue Aufgabe:"); if(txt){ mod.daten.punkte.push({text:txt, erledigt:false}); datenSpeichern(); renderModulInhalt(inhalt,mod,seite); } };
-    inhalt.appendChild(neu);
-  }
-}
-
-function feldBearbeitbarMitLabel(label, wert, aendern){
-  const wrap = document.createElement("div");
-  const l = document.createElement("div"); l.className="e-label"; l.style.margin="0 0 3px"; l.textContent=label;
-  const feld = feldBearbeitbar(wert, aendern);
-  wrap.append(l, feld);
-  return wrap;
-}
-
-function seiteVon(mod){
-  for(const b of Object.values(daten.bereiche)) for(const s of b.seiten) if(s.module.includes(mod)) return s;
-  return null;
+  return (
+    <div style={{ fontFamily: "'Baloo 2','Comic Sans MS',cursive,sans-serif", color: "#3A332C" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap');
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        button { font-family: inherit; cursor: pointer; }
+        input, textarea, select { font-family: inherit; font-size: 16px; }
+        @keyframes einblenden { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+        @keyframes spotlightPop { 0%{opacity:0; transform:scale(.75) translateY(14px)} 60%{opacity:1; transform:scale(1.04) translateY(0)} 100%{opacity:1; transform:scale(1) translateY(0)} }
+        @keyframes schweben { 0%{opacity:0; transform:translateY(0) scale(.8)} 15%{opacity:1} 100%{opacity:0; transform:translateY(-46px) scale(1.15)} }
+        @keyframes glanz { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.18)} }
+        .einblenden { animation: einblenden .3s ease both; }
+      `}</style>
+      {modus === "tafel"
+        ? <Tafel daten={daten} aktualisiere={aktualisiere} zurVerwaltung={() => setModus("verwaltung")} />
+        : <Verwaltung daten={daten} aktualisiere={aktualisiere} zurTafel={() => setModus("tafel")} />}
+    </div>
+  );
 }
 
 /* ============================================================
-   7) INTERAKTIVE MODULE
+   TAFEL (Smartboard)
    ============================================================ */
+function Tafel({ daten, aktualisiere, zurVerwaltung }) {
+  const [seiteIdx, setSeiteIdx] = useState(0);
+  const [kinderBereich, setKinderBereich] = useState(false);
+  const flaecheRef = useRef(null);
+  const seite = daten.seiten[Math.min(seiteIdx, daten.seiten.length - 1)];
+  const hg = seite.eigenerHintergrund
+    ? { css: `url(${seite.eigenerHintergrund}) center/cover no-repeat` }
+    : (HINTERGRUENDE[seite.hintergrund] || HINTERGRUENDE.holz);
 
-/* --- Uhr (analog / digital) --- */
-const laufendeUhren = new Set();
-function renderUhrModul(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    const btn = document.createElement("button"); btn.className="e-btn sekundaer";
-    btn.textContent = mod.daten.digital ? "→ Analoge Uhr" : "→ Digitale Uhr";
-    btn.onclick = () => { mod.daten.digital = !mod.daten.digital; datenSpeichern(); renderModulInhalt(inhalt,mod); };
-    inhalt.appendChild(btn); return;
+  const setzePosition = (elId, x, y) => aktualisiere((d) => ({
+    ...d,
+    seiten: d.seiten.map((s) => s.id !== seite.id ? s : {
+      ...s, elemente: s.elemente.map((el) => el.id === elId ? { ...el, x, y } : el),
+    }),
+  }));
+  const setzeElementDaten = (elId, patch) => aktualisiere((d) => ({
+    ...d,
+    seiten: d.seiten.map((s) => s.id !== seite.id ? s : {
+      ...s, elemente: s.elemente.map((el) => el.id === elId ? { ...el, daten: { ...el.daten, ...patch } } : el),
+    }),
+  }));
+
+  if (kinderBereich) return <KinderBereich daten={daten} schliessen={() => setKinderBereich(false)} />;
+
+  return (
+    <div ref={flaecheRef} style={{ position: "fixed", inset: 0, background: hg.css, overflow: "hidden", touchAction: "none" }}>
+      {/* Seitenwahl oben rechts */}
+      <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 50 }}>
+        {daten.seiten.map((s, i) => (
+          <button key={s.id} onClick={() => setSeiteIdx(i)} title={s.name} style={{
+            width: 46, height: 46, borderRadius: 12, fontSize: 20, fontWeight: 800, border: "none",
+            background: i === seiteIdx ? daten.farbe : "rgba(255,255,255,.92)",
+            color: i === seiteIdx ? "#fff" : "#3A332C", boxShadow: "0 3px 8px rgba(0,0,0,.25)",
+          }}>{i + 1}</button>
+        ))}
+        <button onClick={zurVerwaltung} title="Verwaltung (Handy)" style={{
+          width: 46, height: 46, borderRadius: 12, fontSize: 20, border: "none",
+          background: "rgba(255,255,255,.92)", boxShadow: "0 3px 8px rgba(0,0,0,.25)",
+        }}>⚙️</button>
+      </div>
+
+      {/* Klassen-Ecke oben links */}
+      <div style={{
+        position: "absolute", top: 14, left: 14, zIndex: 50, display: "flex", alignItems: "center", gap: 10,
+        background: "rgba(255,255,255,.92)", padding: "8px 16px", borderRadius: 999, boxShadow: "0 3px 8px rgba(0,0,0,.25)",
+      }}>
+        <span style={{ fontSize: 30 }}>{daten.maskottchen}</span>
+        <span style={{ fontWeight: 800, fontSize: 20, color: daten.farbe }}>{daten.klassenname}</span>
+      </div>
+
+      {/* Kinder-Bereich-Knopf unten rechts */}
+      <button onClick={() => setKinderBereich(true)} style={{
+        position: "absolute", bottom: 18, right: 18, zIndex: 50, border: "none", borderRadius: 999,
+        padding: "14px 26px", fontSize: 22, fontWeight: 800, background: daten.farbe, color: "#fff",
+        boxShadow: "0 5px 14px rgba(0,0,0,.3)",
+      }}>{daten.maskottchen} Für euch Kinder</button>
+
+      {/* Elemente */}
+      {seite.elemente.map((el) => (
+        <ZiehbaresElement key={el.id} el={el} flaecheRef={flaecheRef} speicherePos={setzePosition}>
+          <Element el={el} daten={daten} setzeElementDaten={setzeElementDaten} />
+        </ZiehbaresElement>
+      ))}
+
+      {seite.elemente.length === 0 && (
+        <div style={{
+          position: "absolute", inset: 0, display: "grid", placeItems: "center",
+          color: "rgba(255,255,255,.85)", fontSize: 26, fontWeight: 700, textAlign: "center", padding: 30,
+        }}>Diese Tafel ist noch leer.<br />Am Handy (⚙️) Elemente hinzufügen.</div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Ziehen per Finger ---------- */
+function ZiehbaresElement({ el, flaecheRef, speicherePos, children }) {
+  const [pos, setPos] = useState({ x: el.x, y: el.y });
+  const zieht = useRef(null);
+  useEffect(() => { setPos({ x: el.x, y: el.y }); }, [el.x, el.y]);
+
+  const start = (e) => {
+    if (e.target.closest("button, input, textarea, select")) return;
+    const r = flaecheRef.current.getBoundingClientRect();
+    zieht.current = { dx: e.clientX - r.left - (pos.x / 100) * r.width, dy: e.clientY - r.top - (pos.y / 100) * r.height };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const bewege = (e) => {
+    if (!zieht.current) return;
+    const r = flaecheRef.current.getBoundingClientRect();
+    const x = Math.min(92, Math.max(0, ((e.clientX - r.left - zieht.current.dx) / r.width) * 100));
+    const y = Math.min(90, Math.max(0, ((e.clientY - r.top - zieht.current.dy) / r.height) * 100));
+    setPos({ x, y });
+  };
+  const ende = () => { if (zieht.current) { zieht.current = null; speicherePos(el.id, pos.x, pos.y); } };
+
+  return (
+    <div
+      onPointerDown={start} onPointerMove={bewege} onPointerUp={ende} onPointerCancel={ende}
+      style={{ position: "absolute", left: `${pos.x}%`, top: `${pos.y}%`, cursor: "grab", zIndex: 10, userSelect: "none" }}
+    >{children}</div>
+  );
+}
+
+/* ---------- Einzelne Elemente ---------- */
+function Element({ el, daten, setzeElementDaten }) {
+  switch (el.typ) {
+    case "uhr": return <ElUhr digital={el.daten.digital} />;
+    case "timer": return <ElTimer farbe={daten.farbe} />;
+    case "notiz": return <ElNotiz d={el.daten} />;
+    case "ampel": return <ElAmpel stand={el.daten.stand} umschalten={(s) => setzeElementDaten(el.id, { stand: s })} />;
+    case "geburtstag": return <ElGeburtstag d={el.daten} farbe={daten.farbe} />;
+    case "stundenplan": return <ElStundenplanHeute daten={daten} />;
+    case "essen": return <ElEssenHeute daten={daten} />;
+    case "punkte": return <ElPunkte daten={daten} />;
+    case "gruppen": return <ElGruppen daten={daten} anzahl={el.daten.anzahl || 2} />;
+    case "bild": return <ElBild d={el.daten} />;
+    case "wuerfel": return <ElWuerfel d={el.daten} farbe={daten.farbe} />;
+    case "gluecksrad": return <ElGluecksrad d={el.daten} daten={daten} />;
+    case "quiz": return <ElQuiz d={el.daten} farbe={daten.farbe} />;
+    case "rechnen": return <ElRechnen d={el.daten} farbe={daten.farbe} />;
+    case "galgen": return <ElGalgen d={el.daten} farbe={daten.farbe} />;
+    case "sternchallenge": return <ElSternChallenge daten={daten} />;
+    case "ehrenwand": return <ElEhrenwand daten={daten} />;
+    default: return null;
   }
-  if(mod.daten.digital){
-    inhalt.classList.add("m-uhr-digital");
-    inhalt.textContent = uhrzeitText();
-  } else {
-    inhalt.innerHTML = `<svg viewBox="0 0 100 100" class="m-uhr-analog"><circle cx="50" cy="50" r="47" fill="#fff" stroke="#3A332C" stroke-width="2.5"/>${[...Array(12)].map((_,i)=>`<line x1="50" y1="8" x2="50" y2="${i%3===0?16:12}" stroke="#3A332C" stroke-width="${i%3===0?3:1.5}" transform="rotate(${i*30} 50 50)"/>`).join("")}<line class="zeiger-h" x1="50" y1="50" x2="50" y2="27" stroke="#3A332C" stroke-width="4" stroke-linecap="round"/><line class="zeiger-m" x1="50" y1="50" x2="50" y2="17" stroke="#3A332C" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="50" r="3" fill="var(--akzent)"/></svg>`;
-  }
-  laufendeUhren.add(inhalt);
-}
-function uhrzeitText(){ const d=new Date(); return d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
-setInterval(() => {
-  const jetzt = new Date();
-  document.querySelectorAll(".m-uhr-digital").forEach((el) => el.textContent = uhrzeitText());
-  document.querySelectorAll(".m-uhr-analog .zeiger-h").forEach((el) => el.setAttribute("transform", `rotate(${(jetzt.getHours()%12)*30+jetzt.getMinutes()/2} 50 50)`));
-  document.querySelectorAll(".m-uhr-analog .zeiger-m").forEach((el) => el.setAttribute("transform", `rotate(${jetzt.getMinutes()*6} 50 50)`));
-  const mini = document.getElementById("home-uhrzeit"); if(mini) mini.textContent = uhrzeitText();
-}, 1000);
-
-/* --- Timer (Countdown) --- */
-function renderTimer(inhalt, mod){
-  if(!mod._rest) mod._rest = 0;
-  inhalt.innerHTML = `<div class="m-timer"><div class="anzeige">${formatZeit(mod._rest)}</div><div class="knopfreihe">
-    ${(mod.daten.presets||[1,5,10]).map((m)=>`<button data-m="${m}">${m} min</button>`).join("")}
-    <button class="stop" data-akt="stop">■</button></div></div>`;
-  inhalt.querySelectorAll("[data-m]").forEach((b) => b.onclick = () => { mod._rest = Number(b.dataset.m)*60; mod._laeuft=true; });
-  inhalt.querySelector('[data-akt="stop"]').onclick = () => { mod._laeuft=false; mod._rest=0; inhalt.querySelector(".anzeige").textContent=formatZeit(0); };
-}
-function formatZeit(sek){ const m=String(Math.floor(sek/60)).padStart(2,"0"), s=String(sek%60).padStart(2,"0"); return `${m}:${s}`; }
-setInterval(() => {
-  document.querySelectorAll(".modul").forEach((el) => {
-    const mod = findeModulById(el.dataset.id);
-    if(mod && mod.typ==="timer" && mod._laeuft && mod._rest>0){
-      mod._rest--; const az = el.querySelector(".anzeige"); if(az) az.textContent = formatZeit(mod._rest);
-      if(mod._rest<=0) mod._laeuft=false;
-    }
-  });
-}, 1000);
-
-/* --- Stoppuhr (zählt hoch) --- */
-function renderStoppuhr(inhalt, mod){
-  if(mod._sek===undefined) mod._sek=0;
-  inhalt.innerHTML = `<div class="m-timer"><div class="anzeige">${formatZeit(mod._sek)}</div><div class="knopfreihe">
-    <button data-akt="start">▶ Start</button><button class="stop" data-akt="reset">↺ Reset</button></div></div>`;
-  inhalt.querySelector('[data-akt="start"]').onclick = (e) => { mod._laeuft = !mod._laeuft; e.target.textContent = mod._laeuft? "⏸ Pause":"▶ Start"; };
-  inhalt.querySelector('[data-akt="reset"]').onclick = () => { mod._sek=0; mod._laeuft=false; inhalt.querySelector(".anzeige").textContent=formatZeit(0); inhalt.querySelector('[data-akt="start"]').textContent="▶ Start"; };
-}
-setInterval(() => {
-  document.querySelectorAll(".modul").forEach((el) => {
-    const mod = findeModulById(el.dataset.id);
-    if(mod && mod.typ==="stoppuhr" && mod._laeuft){ mod._sek++; const az=el.querySelector(".anzeige"); if(az) az.textContent=formatZeit(mod._sek); }
-  });
-}, 1000);
-
-function findeModulById(id){
-  for(const b of Object.values(daten.bereiche)) for(const s of b.seiten){ const m=s.module.find((m)=>m.id===id); if(m) return m; }
-  return null;
 }
 
-/* --- Ampel --- */
-function renderAmpel(inhalt, mod, bearbeitbar){
-  inhalt.innerHTML = `<div class="gehaeuse">
-    <div class="licht ${mod.daten.stand==='rot'?'an-rot':''}" data-f="rot"></div>
-    <div class="licht ${mod.daten.stand==='gelb'?'an-gelb':''}" data-f="gelb"></div>
-    <div class="licht ${mod.daten.stand==='gruen'?'an-gruen':''}" data-f="gruen"></div></div>`;
-  inhalt.querySelectorAll("[data-f]").forEach((el) => el.onclick = () => { mod.daten.stand = el.dataset.f; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); });
+const kartenStil = {
+  background: "rgba(255,255,255,.97)", borderRadius: 16, boxShadow: "0 6px 16px rgba(0,0,0,.25)", padding: 16,
+};
+
+function ElUhr({ digital }) {
+  const [jetzt, setJetzt] = useState(new Date());
+  useEffect(() => { const t = setInterval(() => setJetzt(new Date()), 1000); return () => clearInterval(t); }, []);
+  if (digital) return (
+    <div style={{ ...kartenStil, borderRadius: 999, padding: "14px 28px", fontSize: 40, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
+      {jetzt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+    </div>
+  );
+  const s = jetzt.getSeconds() * 6, m = jetzt.getMinutes() * 6 + s / 60, h = (jetzt.getHours() % 12) * 30 + m / 12;
+  return (
+    <div style={{ ...kartenStil, borderRadius: "50%", width: 150, height: 150, padding: 10 }}>
+      <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+        <circle cx="50" cy="50" r="47" fill="#fff" stroke="#3A332C" strokeWidth="2.5" />
+        {[...Array(12)].map((_, i) => (
+          <line key={i} x1="50" y1="8" x2="50" y2={i % 3 === 0 ? 16 : 12} stroke="#3A332C" strokeWidth={i % 3 === 0 ? 3 : 1.5}
+            transform={`rotate(${i * 30} 50 50)`} />
+        ))}
+        <line x1="50" y1="50" x2="50" y2="27" stroke="#3A332C" strokeWidth="4" strokeLinecap="round" transform={`rotate(${h} 50 50)`} />
+        <line x1="50" y1="50" x2="50" y2="17" stroke="#3A332C" strokeWidth="2.5" strokeLinecap="round" transform={`rotate(${m} 50 50)`} />
+        <line x1="50" y1="52" x2="50" y2="14" stroke="#E8722A" strokeWidth="1.5" strokeLinecap="round" transform={`rotate(${s} 50 50)`} />
+        <circle cx="50" cy="50" r="3" fill="#E8722A" />
+      </svg>
+    </div>
+  );
 }
 
-/* --- Punkte-System (frei nutzbar, z. B. Team-Punkte) --- */
-function renderPunkte(inhalt, mod, bearbeitbar){
-  const wrap = document.createElement("div");
-  const titel = document.createElement("div"); titel.className="m-titel";
-  if(bearbeitbar) titel.appendChild(feldBearbeitbar(mod.daten.titel,(v)=>mod.daten.titel=v)); else titel.textContent=mod.daten.titel;
-  wrap.appendChild(titel);
-  const tab = document.createElement("table");
-  mod.daten.zeilen.forEach((z, i) => {
-    const tr = document.createElement("tr");
-    const tdName = document.createElement("td");
-    if(bearbeitbar){ const inp=document.createElement("input"); inp.type="text"; inp.value=z.name; inp.oninput=()=>{z.name=inp.value; datenSpeichern();}; tdName.appendChild(inp); }
-    else tdName.textContent = z.name;
-    const tdMinus=document.createElement("td"); const bMinus=document.createElement("button"); bMinus.className="stellknopf"; bMinus.textContent="−";
-    bMinus.onclick=()=>{ z.punkte=Math.max(0,z.punkte-1); datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); }; tdMinus.appendChild(bMinus);
-    const tdWert=document.createElement("td"); tdWert.style.fontWeight="800"; tdWert.style.textAlign="center"; tdWert.textContent=z.punkte;
-    const tdPlus=document.createElement("td"); const bPlus=document.createElement("button"); bPlus.className="stellknopf"; bPlus.textContent="+";
-    bPlus.onclick=()=>{ z.punkte++; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); }; tdPlus.appendChild(bPlus);
-    tr.append(tdName,tdMinus,tdWert,tdPlus);
-    if(bearbeitbar){ const tdDel=document.createElement("td"); const bDel=document.createElement("button"); bDel.textContent="🗑️"; bDel.onclick=()=>{mod.daten.zeilen.splice(i,1); datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar);}; tdDel.appendChild(bDel); tr.appendChild(tdDel); }
-    tab.appendChild(tr);
-  });
-  wrap.appendChild(tab);
-  if(bearbeitbar){
-    const neu=document.createElement("button"); neu.className="e-btn sekundaer"; neu.style.fontSize="12px"; neu.style.marginTop="6px"; neu.textContent="+ Zeile";
-    neu.onclick=()=>{ mod.daten.zeilen.push({name:"Neu",punkte:0}); datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
-    wrap.appendChild(neu);
-  }
-  inhalt.appendChild(wrap);
+function ElTimer({ farbe }) {
+  const [rest, setRest] = useState(0);
+  const [läuft, setLäuft] = useState(false);
+  useEffect(() => {
+    if (!läuft || rest <= 0) return;
+    const t = setTimeout(() => { setRest((r) => r - 1); if (rest === 1) setLäuft(false); }, 1000);
+    return () => clearTimeout(t);
+  }, [läuft, rest]);
+  const mm = String(Math.floor(rest / 60)).padStart(2, "0"), ss = String(rest % 60).padStart(2, "0");
+  return (
+    <div style={{ ...kartenStil, borderRadius: "50%", width: 190, height: 190, display: "grid", placeItems: "center", textAlign: "center" }}>
+      <div>
+        <div style={{ fontSize: 42, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: läuft && rest <= 10 ? "#D64545" : "#3A332C" }}>{mm}:{ss}</div>
+        <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap", marginTop: 6 }}>
+          {[1, 5, 10].map((m) => (
+            <button key={m} onClick={() => { setRest(m * 60); setLäuft(true); }} style={{
+              border: "none", background: farbe, color: "#fff", fontWeight: 800, borderRadius: 999, padding: "5px 10px", fontSize: 14,
+            }}>{m}′</button>
+          ))}
+          <button onClick={() => { setLäuft(false); setRest(0); }} style={{
+            border: `2px solid ${farbe}`, background: "#fff", color: farbe, fontWeight: 800, borderRadius: 999, padding: "5px 10px", fontSize: 14,
+          }}>■</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-/* --- Würfel --- */
-function renderWuerfel(inhalt, mod){
-  const gesichter=["","⚀","⚁","⚂","⚃","⚄","⚅"];
-  if(!mod._augen) mod._augen = Array.from({length:mod.daten.anzahl||1},()=>6);
-  inhalt.innerHTML = `<div class="m-wuerfel"><div class="augen">${mod._augen.map((a)=>gesichter[a]).join(" ")}</div><button class="e-btn">Würfeln!</button></div>`;
-  inhalt.querySelector("button").onclick = (e) => {
-    if(mod._laeuft) return; mod._laeuft=true; let n=0;
-    const iv = setInterval(() => {
-      mod._augen = Array.from({length:mod.daten.anzahl||1},()=>1+Math.floor(Math.random()*6));
-      inhalt.querySelector(".augen").textContent = mod._augen.map((a)=>gesichter[a]).join(" ");
-      if(++n>10){ clearInterval(iv); mod._laeuft=false; }
+function ElNotiz({ d }) {
+  return (
+    <div style={{ ...kartenStil, maxWidth: 340, minWidth: 220 }}>
+      {d.titel && <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 6 }}>{d.titel}</div>}
+      <div style={{ fontSize: 18, fontWeight: 600, whiteSpace: "pre-wrap", lineHeight: 1.45 }}>{d.text}</div>
+    </div>
+  );
+}
+
+function ElAmpel({ stand, umschalten }) {
+  const farben = { rot: "#E23B3B", gelb: "#F0C420", gruen: "#57C25B" };
+  return (
+    <div style={{ background: "#2b2b2b", borderRadius: 20, padding: 12, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 6px 16px rgba(0,0,0,.35)" }}>
+      {["rot", "gelb", "gruen"].map((f) => (
+        <button key={f} onClick={() => umschalten(f)} style={{
+          width: 52, height: 52, borderRadius: "50%", border: "none",
+          background: stand === f ? farben[f] : "#4a4a4a",
+          boxShadow: stand === f ? `0 0 22px ${farben[f]}` : "none", transition: "all .25s",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+function ElGeburtstag({ d, farbe }) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{
+        width: 170, height: 170, borderRadius: "50%", overflow: "hidden",
+        border: `8px solid ${farbe}`, boxShadow: "0 6px 20px rgba(0,0,0,.35)", background: "#fff",
+        display: "grid", placeItems: "center",
+      }}>
+        {d.fotoUrl
+          ? <img src={d.fotoUrl} alt={d.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <span style={{ fontSize: 70 }}>🎂</span>}
+      </div>
+      <div style={{
+        marginTop: -20, fontWeight: 800, fontSize: 26, color: "#fff",
+        textShadow: "0 2px 6px rgba(0,0,0,.6)",
+      }}>🎉 {d.name || "Happy Birthday"} 🎉</div>
+    </div>
+  );
+}
+
+function ElStundenplanHeute({ daten }) {
+  const heute = heuteName();
+  return (
+    <div style={{ ...kartenStil, minWidth: 230 }}>
+      <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 8 }}>📅 {heute}</div>
+      <div style={{ display: "grid", gap: 6 }}>
+        {(daten.stundenplan[heute] || []).map((f, i) => (
+          <div key={i} style={{ background: fachFarbe(f), color: "#fff", fontWeight: 700, padding: "8px 12px", borderRadius: 10, fontSize: 17 }}>{i + 1}. {f}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ElEssenHeute({ daten }) {
+  return (
+    <div style={{ ...kartenStil, maxWidth: 300 }}>
+      <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 4 }}>🍽️ Essen heute</div>
+      <div style={{ fontSize: 19, fontWeight: 600 }}>{daten.essensplan[heuteName()] || "—"}</div>
+    </div>
+  );
+}
+
+function ElPunkte({ daten }) {
+  const top = [...daten.schueler].sort((a, b) => b.punkte - a.punkte).slice(0, 5);
+  const medaillen = ["🥇", "🥈", "🥉", "4.", "5."];
+  return (
+    <div style={{ ...kartenStil, minWidth: 220 }}>
+      <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 8 }}>⭐ Punkte-Stand</div>
+      {top.map((s, i) => (
+        <div key={s.name} style={{ display: "flex", justifyContent: "space-between", gap: 14, fontSize: 18, fontWeight: 700, padding: "4px 0" }}>
+          <span>{medaillen[i]} {s.name}</span><span>{s.punkte}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ElGruppen({ daten, anzahl }) {
+  const [gruppen, setGruppen] = useState(null);
+  const mischen = () => {
+    const namen = daten.schueler.map((s) => s.name).sort(() => Math.random() - 0.5);
+    const g = Array.from({ length: anzahl }, () => []);
+    namen.forEach((n, i) => g[i % anzahl].push(n));
+    setGruppen(g);
+  };
+  return (
+    <div style={{ ...kartenStil, minWidth: 240 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        {(gruppen || Array.from({ length: anzahl }, () => [])).map((g, i) => (
+          <div key={i} style={{ minWidth: 100 }}>
+            <div style={{ fontWeight: 800, textAlign: "center", marginBottom: 4 }}>Gruppe {i + 1}</div>
+            {g.map((n) => <div key={n} style={{ background: "#F1E9DC", borderRadius: 8, padding: "4px 10px", marginBottom: 4, fontWeight: 600, textAlign: "center" }}>{n}</div>)}
+            {g.length === 0 && <div style={{ color: "#B4A895", textAlign: "center" }}>—</div>}
+          </div>
+        ))}
+      </div>
+      <button onClick={mischen} style={{ marginTop: 8, width: "100%", border: "none", background: "#3A4A7A", color: "#fff", fontWeight: 800, borderRadius: 10, padding: "8px 0", fontSize: 16 }}>Gruppen mischen</button>
+    </div>
+  );
+}
+
+function ElBild({ d }) {
+  return d.url
+    ? <img src={d.url} alt="" style={{ maxWidth: 340, maxHeight: 280, borderRadius: 14, boxShadow: "0 6px 16px rgba(0,0,0,.3)" }} />
+    : <div style={{ ...kartenStil, color: "#8A7F72" }}>🖼️ Bild-Link am Handy eintragen</div>;
+}
+
+/* ---------- SPIELE ---------- */
+const zufall = (n) => Math.floor(Math.random() * (n + 1));
+
+function ElWuerfel({ d, farbe }) {
+  const anzahl = d.anzahl || 1;
+  const [augen, setAugen] = useState(Array.from({ length: anzahl }, () => 6));
+  const [läuft, setLäuft] = useState(false);
+  useEffect(() => { setAugen(Array.from({ length: anzahl }, () => 6)); }, [anzahl]);
+  const gesichter = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+  const würfeln = () => {
+    if (läuft) return;
+    setLäuft(true);
+    let n = 0;
+    const t = setInterval(() => {
+      setAugen(Array.from({ length: anzahl }, () => 1 + zufall(5)));
+      if (++n > 10) { clearInterval(t); setLäuft(false); }
     }, 80);
   };
+  const summe = augen.reduce((a, b) => a + b, 0);
+  return (
+    <div style={{ ...kartenStil, textAlign: "center", minWidth: 170 }}>
+      <div style={{ fontSize: 88, lineHeight: 1, color: "#3A332C", letterSpacing: 6 }}>
+        {augen.map((a, i) => <span key={i}>{gesichter[a]}</span>)}
+      </div>
+      {anzahl > 1 && <div style={{ fontWeight: 800, fontSize: 22, marginTop: 2 }}>Summe: {summe}</div>}
+      <button onClick={würfeln} style={{
+        marginTop: 8, border: "none", background: farbe, color: "#fff", fontWeight: 800,
+        borderRadius: 999, padding: "10px 24px", fontSize: 18,
+      }}>{läuft ? "…" : "Würfeln!"}</button>
+    </div>
+  );
 }
 
-/* --- Zufallsgenerator: drehendes Glücksrad --- */
-const RAD_FARBEN = ["#E8722A","#3E8E5A","#3B82C4","#C94F6D","#8B5CB8","#189E96","#D9A400","#E85D5D"];
-function renderZufallsrad(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    const umschalt = document.createElement("button"); umschalt.className="e-btn sekundaer"; umschalt.style.marginBottom="8px";
-    umschalt.textContent = mod.daten.quelle==="kinder" ? "Nutzt: Kinder-Liste (umschalten)" : "Nutzt: eigene Einträge (umschalten)";
-    umschalt.onclick = () => { mod.daten.quelle = mod.daten.quelle==="kinder" ? "eigene" : "kinder"; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
-    inhalt.appendChild(umschalt);
-    if(mod.daten.quelle!=="kinder"){
-      inhalt.appendChild(feldBearbeitbarMitLabel("Einträge (einer pro Zeile – z. B. Namen oder Aufgaben)", (mod.daten.eintraege||[]).join("\n"),
-        (v)=>{ mod.daten.eintraege = v.split("\n").map(x=>x.trim()).filter(Boolean); }, true));
-    } else {
-      const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);"; hinweis.textContent="Nutzt automatisch die Namen aus ⚙️ Einstellungen → Kinder & Punkte.";
-      inhalt.appendChild(hinweis);
-    }
-    return;
-  }
-  const eintraege = mod.daten.quelle==="kinder" ? (daten.schueler||[]).map(s=>s.name) : (mod.daten.eintraege||[]);
-  const wrap = document.createElement("div"); wrap.className="m-rad";
-  if(eintraege.length<2){ wrap.innerHTML='<div class="m-leer-hinweis">🎡 Mind. 2 Einträge im Bearbeiten-Modus eintragen</div>'; inhalt.appendChild(wrap); return; }
-  const n = eintraege.length, seg = 360/n;
-  const pfade = eintraege.map((txt,i)=>{
-    const a1=i*seg*Math.PI/180, a2=(i+1)*seg*Math.PI/180;
-    const x1=50+48*Math.cos(a1-Math.PI/2), y1=50+48*Math.sin(a1-Math.PI/2);
-    const x2=50+48*Math.cos(a2-Math.PI/2), y2=50+48*Math.sin(a2-Math.PI/2);
-    const mid=(i+0.5)*seg*Math.PI/180, tx=50+30*Math.cos(mid-Math.PI/2), ty=50+30*Math.sin(mid-Math.PI/2);
-    return `<path d="M50 50 L${x1} ${y1} A48 48 0 ${seg>180?1:0} 1 ${x2} ${y2} Z" fill="${RAD_FARBEN[i%RAD_FARBEN.length]}" stroke="#fff" stroke-width="0.8"/><text x="${tx}" y="${ty}" fill="#fff" font-size="${n>8?5:6.5}" font-weight="800" text-anchor="middle" dominant-baseline="middle">${escapeHtml(txt.length>8?txt.slice(0,7)+"…":txt)}</text>`;
-  }).join("");
-  wrap.innerHTML = `<div class="radflaeche"><svg viewBox="0 0 100 100" style="transform:rotate(0deg); transition:transform 4s cubic-bezier(.15,.7,.15,1)">${pfade}<circle cx="50" cy="50" r="7" fill="#3A332C"/></svg></div><div class="gewinner"></div><button class="e-btn">Drehen!</button>`;
-  const svg = wrap.querySelector("svg"), gewinnerEl = wrap.querySelector(".gewinner");
-  wrap.querySelector("button").onclick = () => {
-    const ziel = Math.floor(Math.random()*n);
-    const rot = 360*5 + (360-(ziel*seg+seg/2));
-    svg.style.transform = `rotate(${rot}deg)`;
-    gewinnerEl.textContent = "";
-    setTimeout(() => gewinnerEl.textContent = "🎉 " + eintraege[ziel], 4100);
+function ElGluecksrad({ d, daten }) {
+  const eintraege = d.nutzeNamen
+    ? daten.schueler.map((s) => s.name)
+    : (d.eintraege || []).filter(Boolean);
+  const [drehung, setDrehung] = useState(0);
+  const [gewinner, setGewinner] = useState(null);
+  const [dreht, setDreht] = useState(false);
+  const n = Math.max(eintraege.length, 1);
+  const seg = 360 / n;
+  const rad = (g) => ((g - 90) * Math.PI) / 180;
+
+  const drehen = () => {
+    if (dreht || eintraege.length < 2) return;
+    setDreht(true); setGewinner(null);
+    const ziel = zufall(n - 1) % n;
+    const zielRotation = 360 * 5 + (360 - (ziel * seg + seg / 2));
+    setDrehung((alt) => alt - (alt % 360) + zielRotation);
+    setTimeout(() => { setGewinner(eintraege[ziel]); setDreht(false); }, 4300);
   };
-  inhalt.appendChild(wrap);
+
+  return (
+    <div style={{ ...kartenStil, textAlign: "center", padding: 14 }}>
+      <div style={{ position: "relative", width: 210, height: 210, margin: "0 auto" }}>
+        <div style={{
+          position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", zIndex: 5,
+          width: 0, height: 0, borderLeft: "12px solid transparent", borderRight: "12px solid transparent",
+          borderTop: "20px solid #3A332C",
+        }} />
+        <div style={{
+          width: "100%", height: "100%",
+          transform: `rotate(${drehung}deg)`,
+          transition: dreht ? "transform 4.2s cubic-bezier(.15,.7,.15,1)" : "none",
+        }}>
+          <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+            {eintraege.length < 2 ? (
+              <circle cx="50" cy="50" r="48" fill="#F1E9DC" />
+            ) : eintraege.map((e, i) => {
+              const a1 = i * seg, a2 = (i + 1) * seg;
+              const x1 = 50 + 48 * Math.cos(rad(a1)), y1 = 50 + 48 * Math.sin(rad(a1));
+              const x2 = 50 + 48 * Math.cos(rad(a2)), y2 = 50 + 48 * Math.sin(rad(a2));
+              const mitte = a1 + seg / 2;
+              const tx = 50 + 30 * Math.cos(rad(mitte)), ty = 50 + 30 * Math.sin(rad(mitte));
+              return (
+                <g key={i}>
+                  <path d={`M50 50 L${x1} ${y1} A48 48 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z`}
+                    fill={FACH_FARBEN[i % FACH_FARBEN.length]} stroke="#fff" strokeWidth="0.8" />
+                  <text x={tx} y={ty} fill="#fff" fontSize={n > 10 ? 5 : 6.5} fontWeight="800"
+                    textAnchor="middle" dominantBaseline="middle"
+                    transform={`rotate(${mitte} ${tx} ${ty})`}>
+                    {e.length > 9 ? e.slice(0, 8) + "…" : e}
+                  </text>
+                </g>
+              );
+            })}
+            <circle cx="50" cy="50" r="7" fill="#3A332C" />
+          </svg>
+        </div>
+      </div>
+      <div style={{ minHeight: 34, fontWeight: 800, fontSize: 24, marginTop: 4 }}>
+        {gewinner && <>🎉 {gewinner} 🎉</>}
+      </div>
+      <button onClick={drehen} style={{
+        border: "none", background: "#8B5CB8", color: "#fff", fontWeight: 800,
+        borderRadius: 999, padding: "10px 26px", fontSize: 18,
+      }}>{dreht ? "Es dreht sich …" : "Drehen!"}</button>
+      {eintraege.length < 2 && <div style={{ marginTop: 8, color: "#8A7F72", fontSize: 14, fontWeight: 600 }}>Mindestens 2 Einträge am Handy eintragen.</div>}
+    </div>
+  );
 }
 
-/* --- QR-Code (per externer, kostenloser Bild-API erzeugt – Smartboard braucht Internet) --- */
-function renderQr(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){ inhalt.appendChild(feldBearbeitbarMitLabel("Text oder Link", mod.daten.text, (v)=>{mod.daten.text=v; renderModulInhalt(inhalt,mod,bearbeitbar);})); return; }
-  const url = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data="+encodeURIComponent(mod.daten.text||"");
-  inhalt.innerHTML = `<div class="m-qr"><img src="${url}" alt="QR-Code" width="140" height="140"><div style="font-size:12px;color:var(--weich);word-break:break-all;max-width:90%;text-align:center;">${escapeHtml(mod.daten.text||"")}</div></div>`;
+function ElQuiz({ d, farbe }) {
+  const fragen = (d.fragen || []).filter((f) => f.frage);
+  const [idx, setIdx] = useState(0);
+  const [wahl, setWahl] = useState(null);
+  const [punkte, setPunkte] = useState(0);
+  if (fragen.length === 0) return <div style={{ ...kartenStil, color: "#8A7F72" }}>❓ Quizfragen am Handy eintragen</div>;
+  const f = fragen[idx % fragen.length];
+  const richtig = wahl !== null && wahl === f.richtig;
+  const weiter = () => { setWahl(null); setIdx((i) => (i + 1) % fragen.length); };
+  return (
+    <div style={{ ...kartenStil, width: 360, maxWidth: "85vw" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", color: "#8A7F72", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+        <span>❓ Frage {(idx % fragen.length) + 1} / {fragen.length}</span>
+        <span>⭐ {punkte}</span>
+      </div>
+      <div style={{ fontWeight: 800, fontSize: 22, marginBottom: 12 }}>{f.frage}</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {f.antworten.map((a, i) => {
+          let bg = "#F1E9DC", fg = "#3A332C";
+          if (wahl !== null) {
+            if (i === f.richtig) { bg = "#57C25B"; fg = "#fff"; }
+            else if (i === wahl) { bg = "#E23B3B"; fg = "#fff"; }
+          }
+          return (
+            <button key={i} onClick={() => {
+              if (wahl !== null) return;
+              setWahl(i);
+              if (i === f.richtig) setPunkte((p) => p + 1);
+            }} style={{
+              border: "none", borderRadius: 12, padding: "12px 14px", fontSize: 19,
+              fontWeight: 700, textAlign: "left", background: bg, color: fg, transition: "all .2s",
+            }}>{String.fromCharCode(65 + i)}) {a}</button>
+          );
+        })}
+      </div>
+      <div style={{ minHeight: 30, fontWeight: 800, fontSize: 19, marginTop: 8 }}>
+        {wahl !== null && (richtig ? "🎉 Richtig, super!" : "Leider falsch – grün ist richtig.")}
+      </div>
+      {wahl !== null && (
+        <button onClick={weiter} style={{
+          width: "100%", border: "none", background: farbe, color: "#fff", fontWeight: 800,
+          borderRadius: 12, padding: "11px 0", fontSize: 18,
+        }}>Nächste Frage →</button>
+      )}
+    </div>
+  );
 }
 
-/* --- Lautstärke-Anzeige (Mikrofon-basiert, mit manuellem Fallback) --- */
-function renderLautstaerke(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    inhalt.appendChild(feldBearbeitbarMitLabel("Schwellenwert (0-100) – ab wann 'zu laut'", String(mod.daten.schwelle), (v)=>mod.daten.schwelle=Number(v)||60));
-    return;
-  }
-  inhalt.innerHTML = `<div class="m-lautstaerke"><div class="balken-huelle"><div class="balken"></div></div><div class="status">Mikrofon wird angefragt …</div></div>`;
-  starteLautstaerkeMessung(inhalt, mod);
-}
-async function starteLautstaerkeMessung(inhalt, mod){
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const quelle = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser(); analyser.fftSize=512;
-    quelle.connect(analyser);
-    const daten8 = new Uint8Array(analyser.frequencyBinCount);
-    const balken = inhalt.querySelector(".balken"), status = inhalt.querySelector(".status");
-    if(!balken) { stream.getTracks().forEach(t=>t.stop()); return; } // Modul wurde inzwischen neu gerendert
-    function schleife(){
-      if(!document.body.contains(inhalt)){ stream.getTracks().forEach(t=>t.stop()); return; }
-      analyser.getByteFrequencyData(daten8);
-      const mittel = daten8.reduce((a,b)=>a+b,0)/daten8.length;
-      const proz = Math.min(100, Math.round(mittel*1.4));
-      balken.style.width = proz+"%";
-      const schwelle = mod.daten.schwelle||60;
-      if(proz > schwelle){ balken.style.background="var(--rot)"; status.textContent="Zu laut! 🙉"; }
-      else if(proz > schwelle*0.6){ balken.style.background="var(--gelb)"; status.textContent="Etwas leiser bitte"; }
-      else { balken.style.background="var(--gruen)"; status.textContent="Schön leise 👍"; }
-      requestAnimationFrame(schleife);
-    }
-    schleife();
-  }catch(e){
-    const status = inhalt.querySelector(".status");
-    if(status) status.textContent = "🎤 Kein Mikrofonzugriff – bitte in den Browser-Einstellungen erlauben.";
-  }
-}
-
-/* --- Smiley-Anzeige (Stimmungsbarometer) --- */
-function renderSmiley(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    inhalt.appendChild(feldBearbeitbarMitLabel("Smileys (je eines, mit Leerzeichen getrennt)", (mod.daten.arten||[]).join(" "), (v)=>{mod.daten.arten=v.split(/\s+/).filter(Boolean);}));
-    return;
-  }
-  const arten = mod.daten.arten && mod.daten.arten.length ? mod.daten.arten : ["😀","😐","😢","😡","😴"];
-  mod.daten.index = mod.daten.index||0;
-  inhalt.innerHTML = `<div class="m-smiley"><div class="aktuell">${arten[mod.daten.index % arten.length]}</div><div style="font-size:13px;color:var(--weich);">Antippen zum Wechseln</div></div>`;
-  inhalt.querySelector(".aktuell").onclick = () => { mod.daten.index=(mod.daten.index+1)%arten.length; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
-}
-
-/* ============================================================
-   8) WERKZEUGLEISTE (Modul hinzufügen im Bearbeiten-Modus)
-   ============================================================ */
-/* ---------- Hintergrund-Wähler: für Homescreen & jede Bereichs-Seite nutzbar ---------- */
-function baueHintergrundLeiste(seite, aufRenderFn){
-  const leiste = document.createElement("div"); leiste.className="hg-leiste";
-  Object.entries(HINTERGRUENDE).forEach(([schl,info]) => {
-    const sw = document.createElement("button"); sw.className="hg-swatch"+((seite.hintergrund===schl && !seite.eigenerHintergrund)?" aktiv":"");
-    sw.style.background = info.css; sw.title = info.name;
-    sw.onclick = () => { seite.hintergrund = schl; seite.eigenerHintergrund=""; datenSpeichern(); aufRenderFn(); };
-    leiste.appendChild(sw);
-  });
-  const url = document.createElement("input"); url.className="hg-url"; url.placeholder="eigenes Bild (URL)"; url.value=seite.eigenerHintergrund||"";
-  url.onpointerdown = (e) => e.stopPropagation();
-  url.oninput = () => { seite.eigenerHintergrund = url.value.trim(); datenSpeichern(); };
-  url.onchange = () => aufRenderFn();
-  leiste.appendChild(url);
-  return leiste;
-}
-
-function baueWerkzeugLeiste(){
-  const leiste = document.createElement("div"); leiste.className="werkzeug-leiste";
-  Object.entries(MODUL_TYPEN).forEach(([typ,info]) => {
-    const btn = document.createElement("button"); btn.className="werkzeug-btn";
-    btn.innerHTML = `<span class="e">${info.emoji}</span>${info.name}`;
-    btn.onclick = () => {
-      const bereich = daten.bereiche[aktuellerBereichSchluessel];
-      const seite = bereich.seiten[bereich.seiteIndex];
-      const mod = neuesModul(typ, 80+Math.random()*120, 80+Math.random()*80);
-      mod.z = naechsteZ();
-      seite.module.push(mod);
-      datenSpeichern(); renderSeiten();
-    };
-    leiste.appendChild(btn);
-  });
-  return leiste;
-}
-
-document.getElementById("btn-bearbeiten").onclick = () => {
-  bearbeitenModus = !bearbeitenModus;
-  renderBereichKopf(); renderSeiten();
-};
-
-/* ============================================================
-   9) SEITEN-ÜBERSICHT (Overlay zum Verwalten aller Seiten)
-   ============================================================ */
-function oeffneSeitenUebersicht(){
-  const bereich = daten.bereiche[aktuellerBereichSchluessel];
-  const liste = document.getElementById("seiten-liste-inhalt");
-  liste.innerHTML = "";
-  bereich.seiten.forEach((seite, i) => {
-    const zeile = document.createElement("div"); zeile.className="seiten-liste-item";
-    const inp = document.createElement("input"); inp.value = seite.name;
-    inp.oninput = () => { seite.name = inp.value; datenSpeichern(); };
-    const geheZu = document.createElement("button"); geheZu.textContent="👁️"; geheZu.title="Anzeigen";
-    geheZu.onclick = () => { bereich.seiteIndex = i; datenSpeichern(); renderBereichKopf(); renderSeiten(); schliesseSeitenUebersicht(); };
-    const del = document.createElement("button"); del.textContent="🗑️";
-    del.onclick = () => {
-      if(bereich.seiten.length<=1){ alert("Mindestens eine Seite muss bleiben."); return; }
-      if(!confirm(`"${seite.name}" wirklich löschen?`)) return;
-      bereich.seiten.splice(i,1); bereich.seiteIndex=Math.min(bereich.seiteIndex, bereich.seiten.length-1);
-      datenSpeichern(); renderBereichKopf(); renderSeiten(); oeffneSeitenUebersicht();
-    };
-    zeile.append(inp, geheZu, del);
-    liste.appendChild(zeile);
-  });
-  document.getElementById("seiten-overlay").classList.remove("versteckt");
-}
-function schliesseSeitenUebersicht(){ document.getElementById("seiten-overlay").classList.add("versteckt"); }
-document.getElementById("btn-seiten-fertig").onclick = schliesseSeitenUebersicht;
-document.getElementById("btn-seite-hinzufuegen").onclick = () => {
-  const bereich = daten.bereiche[aktuellerBereichSchluessel];
-  const name = prompt("Name der neuen Seite:", "Neue Seite");
-  if(!name) return;
-  bereich.seiten.push(neueSeite(name));
-  bereich.seiteIndex = bereich.seiten.length-1;
-  datenSpeichern(); renderBereichKopf(); renderSeiten(); oeffneSeitenUebersicht();
-};
-
-/* ============================================================
-   10) HOMESCREEN / DASHBOARD
-   ============================================================ */
-const TEAM_ROLLEN = [
-  {schluessel:"lehrerin2"},
-  {schluessel:"lehrerin1"},
-  {schluessel:"erzieher"},
-];
-
-function renderHome(){
-  document.getElementById("home-maskottchen").textContent = daten.einstellungen.maskottchen;
-  document.getElementById("home-klassenname").textContent = daten.einstellungen.klassenname;
-  document.documentElement.style.setProperty("--akzent", daten.einstellungen.farbe);
-  document.getElementById("home-datum").textContent = new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
-
-  // Team-Buttons (klein & dezent, wie die frühere Seitenzahlen-Reihe)
-  const reihe = document.getElementById("team-reihe"); reihe.innerHTML="";
-  TEAM_ROLLEN.forEach((r) => {
-    const btn = document.createElement("button"); btn.className="team-btn";
-    btn.textContent = daten.einstellungen.namen[r.schluessel];
-    btn.onclick = () => oeffneBereich(r.schluessel);
-    reihe.appendChild(btn);
-  });
-
-  renderHomeBuehne();
-}
-
-/* Der Homescreen ist intern einfach ein Bereich mit dem Schlüssel "home" und
-   genau einer Seite ("Start") – dadurch lassen sich Uhr, Ampel, Stundenplan
-   & Co. genau wie in den Team-Bereichen frei verschieben, vergrößern,
-   verkleinern und löschen, statt in einem festen Raster zu stecken. */
-function renderHomeBuehne(){
-  aktuellerBereichSchluessel = "home";
-  document.getElementById("btn-home-bearbeiten").classList.toggle("an", bearbeitenModus);
-  const seite = daten.bereiche.home.seiten[0];
-  const buehneEl = document.getElementById("home-buehne");
-  buehneEl.innerHTML = "";
-  buehneEl.classList.toggle("bearbeitbar", bearbeitenModus);
-  const hg = seite.eigenerHintergrund ? `url(${seite.eigenerHintergrund}) center/cover no-repeat` : (HINTERGRUENDE[seite.hintergrund]||HINTERGRUENDE.holz).css;
-  buehneEl.style.background = hg;
-
-  seite.module.slice().sort((a,b)=>a.z-b.z).forEach((mod) => buehneEl.appendChild(baueModulElement(seite, mod)));
-
-  if(bearbeitenModus){
-    buehneEl.appendChild(baueHintergrundLeiste(seite, renderHomeBuehne));
-    buehneEl.appendChild(baueWerkzeugLeiste());
-  }
-}
-
-document.getElementById("btn-home-bearbeiten").onclick = () => {
-  bearbeitenModus = !bearbeitenModus;
-  document.getElementById("btn-home-bearbeiten").classList.toggle("an", bearbeitenModus);
-  renderHomeBuehne();
-};
-
-document.getElementById("btn-kinder").onclick = () => oeffneBereich("kinder");
-document.getElementById("btn-zurueck-home").onclick = schliesseBereich;
-
-/* ============================================================
-   11) EINSTELLUNGEN (globales Modal)
-   ============================================================ */
-function oeffneEinstellungen(){
-  renderEinstellungen();
-  document.getElementById("einstellungen-overlay").classList.remove("versteckt");
-}
-function schliesseEinstellungen(){ document.getElementById("einstellungen-overlay").classList.add("versteckt"); }
-document.getElementById("btn-einstellungen").onclick = oeffneEinstellungen;
-document.getElementById("btn-einstellungen-schliessen").onclick = schliesseEinstellungen;
-
-let offenerAbschnitt = "identitaet";
-function eAbschnitt(id, titel, inhaltFn){
-  const box = document.createElement("div"); box.className="e-abschnitt";
-  const kopf = document.createElement("button"); kopf.className="kopf";
-  kopf.innerHTML = `<span>${titel}</span><span>${offenerAbschnitt===id?"▲":"▼"}</span>`;
-  kopf.onclick = () => { offenerAbschnitt = offenerAbschnitt===id? null : id; renderEinstellungen(); };
-  box.appendChild(kopf);
-  if(offenerAbschnitt===id){ const inhalt=document.createElement("div"); inhalt.className="inhalt"; inhaltFn(inhalt); box.appendChild(inhalt); }
-  return box;
-}
-
-function renderEinstellungen(){
-  const root = document.getElementById("einstellungen-inhalt");
-  root.innerHTML = "";
-
-  root.appendChild(eAbschnitt("identitaet","🦊 Klasse, Maskottchen & Farbe", (inhalt) => {
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Klassenname", daten.einstellungen.klassenname, (v)=>{daten.einstellungen.klassenname=v; datenSpeichern(); renderHome();}));
-    const mLabel=document.createElement("div"); mLabel.className="e-label"; mLabel.textContent="Maskottchen"; inhalt.appendChild(mLabel);
-    const mRaster=document.createElement("div"); mRaster.style.cssText="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px;";
-    MASKOTTCHEN_AUSWAHL.forEach((m)=>{ const b=document.createElement("button"); b.textContent=m; b.style.cssText=`font-size:24px;padding:6px;border-radius:10px;background:#FFFCF6;border:2px solid ${daten.einstellungen.maskottchen===m?"var(--akzent)":"var(--rand)"}`;
-      b.onclick=()=>{daten.einstellungen.maskottchen=m; datenSpeichern(); renderHome(); renderEinstellungen();}; mRaster.appendChild(b); });
-    inhalt.appendChild(mRaster);
-    const fLabel=document.createElement("div"); fLabel.className="e-label"; fLabel.textContent="Farbe"; inhalt.appendChild(fLabel);
-    FARBPALETTE.forEach((f)=>{ const sw=document.createElement("span"); sw.className="e-farbe-swatch"+(daten.einstellungen.farbe===f?" aktiv":""); sw.style.background=f;
-      sw.onclick=()=>{daten.einstellungen.farbe=f; datenSpeichern(); renderHome(); renderEinstellungen();}; inhalt.appendChild(sw); });
-  }));
-
-  root.appendChild(eAbschnitt("team","👥 Namen des Team", (inhalt) => {
-    [["lehrerin2","1. Button (z. B. Klassenlehrerin)"],["lehrerin1","2. Button (z. B. Klassenlehrerin)"],["erzieher","3. Button (z. B. Freizeit/Erzieher)"]].forEach(([schl,label])=>{
-      inhalt.appendChild(feldBearbeitbarMitLabelGlobal(label, daten.einstellungen.namen[schl], (v)=>{daten.einstellungen.namen[schl]=v; datenSpeichern(); renderHome();}));
-    });
-  }));
-
-  root.appendChild(eAbschnitt("stundenplan","📅 Stundenplan", (inhalt) => {
-    WOCHENTAGE.forEach((t)=>{
-      inhalt.appendChild(feldBearbeitbarMitLabelGlobal(t+" (Fächer mit Komma trennen)", (daten.stundenplan[t]||[]).join(", "),
-        (v)=>{ daten.stundenplan[t]=v.split(",").map(x=>x.trim()).filter(Boolean); datenSpeichern(); renderHome(); }));
-    });
-  }));
-
-  root.appendChild(eAbschnitt("essen","🍽️ Essens- & Nachtischplan", (inhalt) => {
-    WOCHENTAGE.forEach((t)=>{
-      inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Essen "+t, daten.essensplan[t]||"", (v)=>{daten.essensplan[t]=v; datenSpeichern();}));
-      inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Nachtisch "+t, daten.nachtisch[t]||"", (v)=>{daten.nachtisch[t]=v; datenSpeichern();}));
-    });
-  }));
-
-  root.appendChild(eAbschnitt("geburtstage","🎂 Geburtstage", (inhalt) => {
-    (daten.geburtstage||[]).forEach((g,i)=>{
-      const z=document.createElement("div"); z.className="e-zeile";
-      const foto=document.createElement("img"); foto.className="e-geb-foto"; if(g.foto) foto.src=g.foto;
-      const name=document.createElement("input"); name.value=g.name; name.placeholder="Name"; name.oninput=()=>{g.name=name.value; datenSpeichern();};
-      const tag=document.createElement("input"); tag.type="number"; tag.value=g.tag; tag.style.width="54px"; tag.placeholder="Tag"; tag.oninput=()=>{g.tag=Number(tag.value); datenSpeichern();};
-      const monat=document.createElement("input"); monat.type="number"; monat.value=g.monat; monat.style.width="54px"; monat.placeholder="Monat"; monat.oninput=()=>{g.monat=Number(monat.value); datenSpeichern();};
-      const fotoUrl=document.createElement("input"); fotoUrl.value=g.foto||""; fotoUrl.placeholder="Foto-URL"; fotoUrl.oninput=()=>{g.foto=fotoUrl.value; foto.src=fotoUrl.value; datenSpeichern();};
-      const del=document.createElement("button"); del.textContent="🗑️"; del.onclick=()=>{daten.geburtstage.splice(i,1); datenSpeichern(); renderEinstellungen(); renderHome();};
-      z.append(foto,name,tag,monat,fotoUrl,del); inhalt.appendChild(z);
-    });
-    const neu=document.createElement("button"); neu.className="e-btn"; neu.style.width="100%"; neu.textContent="+ Geburtstagskind";
-    neu.onclick=()=>{ daten.geburtstage=daten.geburtstage||[]; daten.geburtstage.push({name:"",tag:1,monat:1,foto:""}); datenSpeichern(); renderEinstellungen(); };
-    inhalt.appendChild(neu);
-  }));
-
-  root.appendChild(eAbschnitt("besonderheiten","🎉 Besonderheiten heute", (inhalt) => {
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Eine Besonderheit pro Zeile", (daten.besonderheiten||[]).map(b=>b.text).join("\n"),
-      (v)=>{ daten.besonderheiten = v.split("\n").map(x=>x.trim()).filter(Boolean).map(text=>({text})); datenSpeichern(); renderHome(); }, true));
-  }));
-
-  root.appendChild(eAbschnitt("wetter","🌤️ Wetter", (inhalt) => {
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Icon (Emoji)", daten.wetter.icon, (v)=>{daten.wetter.icon=v; datenSpeichern(); renderHome();}));
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Text", daten.wetter.text, (v)=>{daten.wetter.text=v; datenSpeichern(); renderHome();}));
-  }));
-
-  root.appendChild(eAbschnitt("mitteilungen","📢 Mitteilungen", (inhalt) => {
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Text für die Startseite", daten.mitteilungen, (v)=>{daten.mitteilungen=v; datenSpeichern(); renderHome();}, true));
-  }));
-
-  root.appendChild(eAbschnitt("regelnziele","🎯 Ziele & Klassenregeln", (inhalt) => {
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Ziele der Woche (eine pro Zeile)", (daten.ziele||[]).join("\n"), (v)=>{daten.ziele=v.split("\n").map(x=>x.trim()).filter(Boolean); datenSpeichern();}, true));
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Klassenregeln (eine pro Zeile)", (daten.klassenregeln||[]).join("\n"), (v)=>{daten.klassenregeln=v.split("\n").map(x=>x.trim()).filter(Boolean); datenSpeichern();}, true));
-  }));
-
-  root.appendChild(eAbschnitt("kinder","⭐ Kinder & Punkte", (inhalt) => {
-    (daten.schueler||[]).forEach((s,i)=>{
-      const z=document.createElement("div"); z.className="e-zeile";
-      const name=document.createElement("input"); name.value=s.name; name.oninput=()=>{s.name=name.value; datenSpeichern();};
-      const punkte=document.createElement("input"); punkte.type="number"; punkte.value=s.punkte; punkte.style.width="70px"; punkte.oninput=()=>{s.punkte=Number(punkte.value)||0; datenSpeichern();};
-      const del=document.createElement("button"); del.textContent="🗑️"; del.onclick=()=>{daten.schueler.splice(i,1); datenSpeichern(); renderEinstellungen();};
-      z.append(name,punkte,del); inhalt.appendChild(z);
-    });
-    const neu=document.createElement("button"); neu.className="e-btn"; neu.style.width="100%"; neu.textContent="+ Kind hinzufügen";
-    neu.onclick=()=>{ daten.schueler.push({name:"Neues Kind",punkte:0}); datenSpeichern(); renderEinstellungen(); };
-    inhalt.appendChild(neu);
-  }));
-
-  root.appendChild(eAbschnitt("countdown","🎈 Countdown", (inhalt) => {
-    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Bezeichnung (z. B. 'Sommerferien')", daten.countdown.bezeichnung, (v)=>{daten.countdown.bezeichnung=v; datenSpeichern();}));
-    const dLabel=document.createElement("div"); dLabel.className="e-label"; dLabel.textContent="Zieldatum"; inhalt.appendChild(dLabel);
-    const dInp=document.createElement("input"); dInp.type="date"; dInp.className="e-input"; dInp.value=daten.countdown.ziel||"";
-    dInp.oninput=()=>{daten.countdown.ziel=dInp.value; datenSpeichern();}; inhalt.appendChild(dInp);
-  }));
-
-  root.appendChild(eAbschnitt("daten","💾 Daten", (inhalt) => {
-    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:13px;color:var(--weich);margin-bottom:10px;";
-    hinweis.textContent="Alle Daten liegen nur auf diesem Gerät (lokal gespeichert). Mit den Knöpfen unten könnt ihr sie sichern oder auf einem anderen Gerät wiederherstellen.";
-    inhalt.appendChild(hinweis);
-    const exportBtn=document.createElement("button"); exportBtn.className="e-btn"; exportBtn.style.width="100%"; exportBtn.style.marginBottom="8px"; exportBtn.textContent="⬇️ Sicherung herunterladen";
-    exportBtn.onclick=datenExportieren; inhalt.appendChild(exportBtn);
-    const importInp=document.createElement("input"); importInp.type="file"; importInp.accept="application/json"; importInp.style.marginBottom="8px";
-    importInp.onchange=(e)=>datenImportieren(e.target.files[0]); inhalt.appendChild(importInp);
-    const resetBtn=document.createElement("button"); resetBtn.className="e-btn sekundaer"; resetBtn.style.width="100%"; resetBtn.textContent="⚠️ Alles zurücksetzen";
-    resetBtn.onclick=()=>{ if(confirm("Wirklich ALLE Daten löschen und neu starten?")){ localStorage.removeItem(SPEICHER_SCHLUESSEL); location.reload(); } };
-    inhalt.appendChild(resetBtn);
-  }));
-}
-
-function feldBearbeitbarMitLabelGlobal(label, wert, aendern, mehrzeilig){
-  const wrap=document.createElement("div");
-  const l=document.createElement("label"); l.className="e-label"; l.textContent=label;
-  const feld=document.createElement(mehrzeilig?"textarea":"input"); feld.className="e-input"; feld.value=wert;
-  if(mehrzeilig) feld.style.minHeight="80px";
-  feld.oninput=()=>aendern(feld.value);
-  wrap.append(l,feld); return wrap;
-}
-
-function datenExportieren(){
-  const blob = new Blob([JSON.stringify(daten,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href=url; a.download="klassentafel-sicherung.json"; a.click();
-  URL.revokeObjectURL(url);
-}
-function datenImportieren(datei){
-  if(!datei) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try{
-      const geladen = JSON.parse(reader.result);
-      daten = { ...JSON.parse(JSON.stringify(STANDARD_DATEN)), ...geladen };
-      datenSpeichern(); renderHome(); renderEinstellungen();
-      alert("Daten erfolgreich geladen!");
-    }catch(e){ alert("Diese Datei konnte nicht gelesen werden."); }
+function ElRechnen({ d, farbe }) {
+  const neueAufgabe = () => {
+    const raum = d.raum || 20;
+    const op = ["+", "−", "·"][zufall(2)];
+    let a, b, erg;
+    if (op === "·") { a = 2 + zufall(8); b = 2 + zufall(8); erg = a * b; }
+    else if (op === "+") { a = 1 + zufall(raum - 2); b = 1 + zufall(raum - a - 1 > 0 ? raum - a - 1 : 1); erg = a + b; }
+    else { a = 2 + zufall(raum - 2); b = 1 + zufall(a - 1); erg = a - b; }
+    return { a, b, op, erg };
   };
-  reader.readAsText(datei);
+  const [auf, setAuf] = useState(neueAufgabe);
+  const [zeig, setZeig] = useState(false);
+  return (
+    <div style={{ ...kartenStil, textAlign: "center", minWidth: 250 }}>
+      <div style={{ color: "#8A7F72", fontWeight: 700, fontSize: 14 }}>🧮 Kopfrechnen bis {d.raum || 20}</div>
+      <div style={{ fontSize: 52, fontWeight: 800, margin: "6px 0" }}>
+        {auf.a} {auf.op} {auf.b} = {zeig ? <span style={{ color: "#3E8E5A" }}>{auf.erg}</span> : "?"}
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+        <button onClick={() => setZeig(true)} style={{
+          border: "none", background: "#3E8E5A", color: "#fff", fontWeight: 800,
+          borderRadius: 999, padding: "10px 20px", fontSize: 17,
+        }}>Antwort</button>
+        <button onClick={() => { setAuf(neueAufgabe()); setZeig(false); }} style={{
+          border: "none", background: farbe, color: "#fff", fontWeight: 800,
+          borderRadius: 999, padding: "10px 20px", fontSize: 17,
+        }}>Neue Aufgabe</button>
+      </div>
+    </div>
+  );
+}
+
+function ElGalgen({ d, farbe }) {
+  const woerter = (d.woerter || []).map((w) => w.trim().toUpperCase()).filter(Boolean);
+  const [wort, setWort] = useState("");
+  const [geraten, setGeraten] = useState([]);
+  useEffect(() => { if (!wort && woerter.length) setWort(woerter[zufall(woerter.length - 1)]); }, [woerter.length]);
+  if (woerter.length === 0) return <div style={{ ...kartenStil, color: "#8A7F72" }}>🔤 Wörter am Handy eintragen</div>;
+
+  const falsche = geraten.filter((b) => !wort.includes(b));
+  const leben = 6 - falsche.length;
+  const gewonnen = wort && [...wort].every((z) => z === " " || z === "-" || geraten.includes(z));
+  const verloren = leben <= 0;
+  const neu = () => { setWort(woerter[zufall(woerter.length - 1)]); setGeraten([]); };
+
+  return (
+    <div style={{ ...kartenStil, width: 380, maxWidth: "88vw", textAlign: "center" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, marginBottom: 8 }}>
+        <span>🔤 Wörter raten</span>
+        <span>{"❤️".repeat(Math.max(0, leben))}{"🖤".repeat(6 - Math.max(0, leben))}</span>
+      </div>
+      <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 6, marginBottom: 10, minHeight: 44 }}>
+        {[...wort].map((z, i) =>
+          z === " " ? "  " : (geraten.includes(z) || verloren)
+            ? <span key={i} style={{ color: verloren && !geraten.includes(z) ? "#E23B3B" : "#3A332C" }}>{z}</span>
+            : <span key={i}>_</span>
+        ).map((el, i) => <span key={i} style={{ margin: "0 2px" }}>{el}</span>)}
+      </div>
+      {!gewonnen && !verloren && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(8,1fr)", gap: 4 }}>
+          {[..."ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ"].map((b) => (
+            <button key={b} disabled={geraten.includes(b)}
+              onClick={() => setGeraten((g) => [...g, b])}
+              style={{
+                border: "none", borderRadius: 8, padding: "7px 0", fontWeight: 800, fontSize: 16,
+                background: geraten.includes(b) ? (wort.includes(b) ? "#57C25B" : "#E5DCCB") : "#F1E9DC",
+                color: geraten.includes(b) && wort.includes(b) ? "#fff" : "#3A332C",
+                opacity: geraten.includes(b) && !wort.includes(b) ? 0.4 : 1,
+              }}>{b}</button>
+          ))}
+        </div>
+      )}
+      {(gewonnen || verloren) && (
+        <div style={{ fontWeight: 800, fontSize: 22, margin: "6px 0" }}>
+          {gewonnen ? "🎉 Gewonnen, super!" : "😿 Verloren – das Wort steht oben."}
+        </div>
+      )}
+      <button onClick={neu} style={{
+        marginTop: 8, border: "none", background: farbe, color: "#fff", fontWeight: 800,
+        borderRadius: 999, padding: "10px 24px", fontSize: 17,
+      }}>Neues Wort</button>
+    </div>
+  );
+}
+
+function ElSternChallenge({ daten }) {
+  const b = daten.belohnung || {};
+  const pps = Math.max(1, b.punkteProStern || 5);
+  const kinder = [...daten.schueler].sort((x, y) => y.punkte - x.punkte);
+  const champions = kinder.filter((k) => Math.floor(k.punkte / pps) >= 5).length;
+
+  return (
+    <div style={{
+      ...kartenStil, width: 760, maxWidth: "94vw", maxHeight: "80vh", overflowY: "auto",
+      background: "linear-gradient(180deg, #FFFDF7 0%, #FFF6E3 100%)",
+    }}>
+      {/* Kopf */}
+      <div style={{ textAlign: "center", marginBottom: 10 }}>
+        <div style={{ fontWeight: 800, fontSize: 28 }}>🌟 Unsere Sternen-Challenge 🌟</div>
+        {b.wochenBelohnung && (
+          <div style={{
+            display: "inline-block", marginTop: 6, background: "#FFE9A8", border: "2px solid #D9A400",
+            borderRadius: 999, padding: "6px 18px", fontWeight: 800, fontSize: 18,
+          }}>🏆 5 Sterne = {b.wochenBelohnung}</div>
+        )}
+        {(b.kategorien || []).length > 0 && (
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
+            {b.kategorien.map((k, i) => (
+              <span key={i} style={{
+                background: "#fff", border: "2px solid #E5DCCB", borderRadius: 999,
+                padding: "4px 12px", fontWeight: 700, fontSize: 14, color: "#8A7F72",
+              }}>{k}</span>
+            ))}
+          </div>
+        )}
+        {champions > 0 && (
+          <div style={{ marginTop: 8, fontWeight: 800, fontSize: 17, color: "#3E8E5A" }}>
+            🎉 Schon {champions} {champions === 1 ? "Kind hat" : "Kinder haben"} alle 5 Sterne geschafft!
+          </div>
+        )}
+      </div>
+
+      {/* Kinder-Raster */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
+        {kinder.map((k, idx) => {
+          const sterne = Math.min(5, Math.floor(k.punkte / pps));
+          const fertig = sterne >= 5;
+          const rest = k.punkte % pps;
+          const fortschritt = fertig ? 1 : rest / pps;
+          return (
+            <div key={k.name + idx} style={{
+              borderRadius: 14, padding: "10px 10px 8px", textAlign: "center",
+              background: fertig ? "linear-gradient(180deg,#FFF3C4,#FFE28A)" : "#fff",
+              border: fertig ? "3px solid #D9A400" : "2px solid #EFE6D5",
+              boxShadow: fertig ? "0 0 14px rgba(217,164,0,.45)" : "0 2px 5px rgba(0,0,0,.06)",
+            }}>
+              <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {fertig && "👑 "}{k.name}
+              </div>
+              <div style={{ fontSize: 17, letterSpacing: 1 }}>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <span key={i} style={{ opacity: i < sterne ? 1 : 0.25 }}>⭐</span>
+                ))}
+              </div>
+              <div style={{ background: "#EFE6D5", borderRadius: 999, height: 8, marginTop: 5, overflow: "hidden" }}>
+                <div style={{
+                  width: `${fortschritt * 100}%`, height: "100%", borderRadius: 999,
+                  background: fertig ? "#D9A400" : "#3E8E5A", transition: "width .5s ease",
+                }} />
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#8A7F72", marginTop: 3 }}>
+                {fertig ? "Geschafft! 🎉" : `Noch ${pps - rest} bis zum ${sterne + 1}. Stern`}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {kinder.length === 0 && (
+        <div style={{ textAlign: "center", color: "#8A7F72", fontWeight: 600, padding: 20 }}>
+          Noch keine Kinder eingetragen – am Handy unter „Kinder & Punkte" hinzufügen.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- EHRENWAND: rein positive, rotierende Highscore-Anzeige ---------- */
+const WACHSTUMS_BADGES = ["🌱", "🌿", "🍀", "🌟", "👑"];
+
+function ElEhrenwand({ daten }) {
+  const b = daten.belohnung || {};
+  const pps = Math.max(1, b.punkteProStern || 5);
+  const sprueche = (b.spruecheLob && b.spruecheLob.length)
+    ? b.spruecheLob
+    : ["Super gemacht!", "Klasse Einsatz!", "Echt stark!", "Weiter so!", "Toll gemacht!", "Du glänzt! ✨"];
+
+  const seed = heutigerSeed();
+  // Reihenfolge ist NICHT nach Punkten sortiert, sondern täglich neu gemischt –
+  // so steht nicht immer dasselbe Kind oben. Nur Kinder mit mind. 1 Punkt erscheinen.
+  const gemischt = seededShuffle(daten.schueler || [], seed).filter((k) => k.punkte > 0);
+
+  const [spot, setSpot] = useState(0);
+  useEffect(() => {
+    if (gemischt.length === 0) return;
+    const t = setInterval(() => setSpot((i) => (i + 1) % gemischt.length), 4500);
+    return () => clearInterval(t);
+  }, [gemischt.length]);
+
+  const idx = gemischt.length ? spot % gemischt.length : 0;
+  const spotKind = gemischt[idx];
+  const spotSpruch = sprueche[(idx + seed) % sprueche.length];
+  const funken = [...Array(6)];
+
+  return (
+    <div style={{
+      width: 780, maxWidth: "94vw", maxHeight: "82vh", overflowY: "auto",
+      background: "linear-gradient(165deg, #FFF9EC 0%, #FFF1D2 100%)",
+      borderRadius: 22, boxShadow: "0 10px 30px rgba(0,0,0,.28)", padding: 20,
+    }}>
+      <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <div style={{ fontWeight: 800, fontSize: 28 }}>🏅 Unsere Ehrenwand</div>
+        <div style={{ color: "#8A7F72", fontWeight: 700, fontSize: 14 }}>Jeder, der hier steht, hat sich das verdient! ✨</div>
+      </div>
+
+      {/* Spotlight: ein Kind nach dem anderen bekommt seinen großen Moment */}
+      {gemischt.length > 0 ? (
+        <div style={{ position: "relative", display: "grid", placeItems: "center", marginBottom: 20, minHeight: 150 }}>
+          {funken.map((_, i) => (
+            <span key={i} style={{
+              position: "absolute", left: `${12 + i * 14}%`, top: "70%", fontSize: 20,
+              animation: `schweben ${2.6 + (i % 3) * 0.5}s ease-in ${i * 0.4}s infinite`,
+            }}>✨</span>
+          ))}
+          <div key={spotKind.name + idx} style={{
+            position: "relative", textAlign: "center", background: "linear-gradient(180deg,#FFE9A8,#FFD873)",
+            border: "4px solid #D9A400", borderRadius: 20, padding: "18px 40px",
+            boxShadow: "0 0 30px rgba(217,164,0,.55)", animation: "spotlightPop .6s cubic-bezier(.2,.8,.2,1) both, glanz 2.4s ease-in-out 0.6s infinite",
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#8A6400", letterSpacing: 1 }}>HEUTE IM RAMPENLICHT</div>
+            <div style={{ fontSize: 34, fontWeight: 800, margin: "2px 0" }}>{spotKind.name}</div>
+            <div style={{ fontSize: 18 }}>
+              {WACHSTUMS_BADGES.map((emoji, i) => (
+                <span key={i} style={{ opacity: i < Math.min(5, Math.floor(spotKind.punkte / pps)) ? 1 : 0.25, marginRight: 2 }}>{emoji}</span>
+              ))}
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 17, marginTop: 4 }}>{spotSpruch}</div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ textAlign: "center", color: "#8A7F72", fontWeight: 700, padding: 24 }}>
+          Noch niemand hier – der erste Punkt des Tages füllt die Wand! 🌱
+        </div>
+      )}
+
+      {/* Wand aller positiven Namen – Reihenfolge wechselt täglich */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 8 }}>
+        {gemischt.map((k, i) => {
+          const stufe = Math.min(5, Math.max(1, Math.floor(k.punkte / pps) || 1));
+          const badge = WACHSTUMS_BADGES[stufe - 1];
+          const istSpot = i === idx;
+          return (
+            <div key={k.name} className="einblenden" style={{
+              animationDelay: `${i * 0.05}s`, textAlign: "center", borderRadius: 14, padding: "10px 6px",
+              background: istSpot ? "#FFF3C4" : "#fff", border: istSpot ? "3px solid #D9A400" : "2px solid #F1E6D2",
+              boxShadow: "0 2px 6px rgba(0,0,0,.06)",
+            }}>
+              <div style={{ fontSize: 26 }}>{badge}</div>
+              <div style={{ fontWeight: 800, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.name}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 /* ============================================================
-   12) INFO-ANZEIGE: liest automatisch aus den gemeinsamen
-   Einstellungen (Essen, Stundenplan, Geburtstage ...) – perfekt
-   für den Kinder-Bereich, da nichts doppelt gepflegt werden muss.
+   KINDER-BEREICH (Vollbild, scrollbar)
    ============================================================ */
-const INFO_ARTEN = {
-  essen:{titel:"🍽️ Heute gibt es", emoji:"🍽️"}, nachtisch:{titel:"🍮 Nachtisch", emoji:"🍮"},
-  stundenplan:{titel:"📚 Fächer heute", emoji:"📚"}, geburtstage:{titel:"🎂 Geburtstagskinder", emoji:"🎂"},
-  wetter:{titel:"🌤️ Wetter", emoji:"🌤️"}, besonderheiten:{titel:"🎉 Besonderheiten", emoji:"🎉"},
-  ziel:{titel:"⭐ Tagesziel", emoji:"⭐"}, regeln:{titel:"🦊 Unsere Regeln", emoji:"🦊"},
-  countdown:{titel:"🎈 Countdown", emoji:"🎈"}, sterne:{titel:"⭐ Unsere Sterne", emoji:"⭐"},
-};
+function KinderBereich({ daten, schliessen }) {
+  const heute = heuteName();
+  const rangliste = [...daten.schueler].sort((a, b) => b.punkte - a.punkte);
+  const medaillen = ["🥇", "🥈", "🥉"];
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#FFF7EC", overflowY: "auto", zIndex: 100 }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 18px 60px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+          <div style={{ fontSize: 52 }}>{daten.maskottchen}</div>
+          <h1 style={{ flex: 1, margin: 0, fontSize: "clamp(26px,5vw,40px)", fontWeight: 800, color: daten.farbe }}>Euer Bereich</h1>
+          <button onClick={schliessen} style={{
+            border: "none", borderRadius: 999, padding: "12px 26px", fontSize: 20, fontWeight: 800,
+            background: daten.farbe, color: "#fff",
+          }}>✕ Zurück</button>
+        </div>
 
-function renderInfo(inhalt, mod, bearbeitbar){
-  if(bearbeitbar){
-    const label=document.createElement("div"); label.className="e-label"; label.textContent="Was soll angezeigt werden?";
-    const sel=document.createElement("select"); sel.className="e-input";
-    Object.entries(INFO_ARTEN).forEach(([k,v])=>{ const o=document.createElement("option"); o.value=k; o.textContent=v.titel; if(mod.daten.art===k) o.selected=true; sel.appendChild(o); });
-    sel.onchange=()=>{ mod.daten.art=sel.value; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
-    inhalt.append(label,sel);
-    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);margin-top:6px;";
-    hinweis.textContent="Die Inhalte selbst pflegt ihr zentral in ⚙️ Einstellungen – hier wählt ihr nur aus, was angezeigt wird.";
-    inhalt.appendChild(hinweis);
-    return;
-  }
-  const art = mod.daten.art || "stundenplan";
-  const info = INFO_ARTEN[art];
-  const t = document.createElement("div"); t.className="m-titel"; t.textContent = info.titel;
-  inhalt.appendChild(t);
-  const heute = heutigerWochentagName();
-  const koerper = document.createElement("div");
+        <div className="einblenden" style={{ display: "grid", gap: 16 }}>
+          <div style={{ ...kartenStil, padding: 22 }}>
+            <div style={{ fontWeight: 800, fontSize: 26, marginBottom: 6 }}>🍽️ Was gibt es heute zu essen?</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: daten.farbe }}>{daten.essensplan[heute] || "—"}</div>
+            <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+              {TAGE.map((t) => (
+                <div key={t} style={{ display: "flex", gap: 12, fontSize: 17, fontWeight: t === heute ? 800 : 600, opacity: t === heute ? 1 : 0.6 }}>
+                  <span style={{ minWidth: 110 }}>{t}:</span><span>{daten.essensplan[t] || "—"}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-  if(art==="essen") koerper.innerHTML = `<div class="m-text">${escapeHtml(daten.essensplan[heute]||"Kein Eintrag für heute.")}</div>`;
-  else if(art==="nachtisch") koerper.innerHTML = `<div class="m-text">${escapeHtml(daten.nachtisch[heute]||"Kein Eintrag für heute.")}</div>`;
-  else if(art==="stundenplan") koerper.innerHTML = (daten.stundenplan[heute]||[]).map((f)=>`<span class="fach-chip">${escapeHtml(f)}</span>`).join("") || '<div class="m-leer-hinweis">Heute kein Unterricht eingetragen.</div>';
-  else if(art==="wetter") koerper.innerHTML = `<div style="font-size:44px;text-align:center;">${daten.wetter.icon}</div><div class="m-text" style="text-align:center;">${escapeHtml(daten.wetter.text)}</div>`;
-  else if(art==="besonderheiten"){
-    const b = daten.besonderheiten||[];
-    koerper.innerHTML = b.length ? "<ul>"+b.map((x)=>`<li class="m-text">${escapeHtml(x.text)}</li>`).join("")+"</ul>" : '<div class="m-leer-hinweis">Nichts Besonderes heute. 🙂</div>';
-  }
-  else if(art==="ziel"){
-    const z = daten.ziele||[];
-    koerper.innerHTML = z.length ? "<ul>"+z.map((x)=>`<li class="m-text">${escapeHtml(x)}</li>`).join("")+"</ul>" : '<div class="m-leer-hinweis">Noch kein Ziel eingetragen.</div>';
-  }
-  else if(art==="regeln"){
-    const r = daten.klassenregeln||[];
-    koerper.innerHTML = "<ul>"+r.map((x)=>`<li class="m-text">${escapeHtml(x)}</li>`).join("")+"</ul>";
-  }
-  else if(art==="geburtstage"){
-    const now = new Date();
-    const geb = (daten.geburtstage||[]).filter((g)=>g.monat===now.getMonth()+1 && g.tag===now.getDate());
-    koerper.innerHTML = geb.length
-      ? geb.map((g)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">${g.foto?`<img class="foto" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid var(--gelb);" src="${g.foto}">`:'<div class="foto-platzhalter">🎂</div>'}<div class="m-text" style="font-weight:800;">${escapeHtml(g.name)}</div></div>`).join("")
-      : '<div class="m-leer-hinweis">Heute hat niemand Geburtstag. 🎂</div>';
-  }
-  else if(art==="sterne"){
-    const liste = (daten.schueler||[]).slice().sort((a,b)=>b.punkte-a.punkte);
-    koerper.innerHTML = liste.map((s)=>`<div style="display:flex;justify-content:space-between;font-weight:700;padding:3px 0;">${escapeHtml(s.name)}<span>${"⭐".repeat(Math.min(5,Math.ceil(s.punkte/5)))||"–"}</span></div>`).join("");
-  }
-  else if(art==="countdown"){
-    if(!daten.countdown.ziel){ koerper.innerHTML='<div class="m-leer-hinweis">Noch kein Zieldatum in den Einstellungen eingetragen.</div>'; }
-    else{
-      const heuteD = new Date(); heuteD.setHours(0,0,0,0);
-      const zielD = new Date(daten.countdown.ziel+"T00:00:00");
-      const tage = Math.max(0, Math.round((zielD-heuteD)/86400000));
-      koerper.innerHTML = `<div style="text-align:center;"><div style="font-size:44px;font-weight:800;">${tage}</div><div class="m-text">Tage bis ${escapeHtml(daten.countdown.bezeichnung||"")}</div></div>`;
-    }
-  }
-  inhalt.appendChild(koerper);
+          <div style={{ ...kartenStil, padding: 22 }}>
+            <div style={{ fontWeight: 800, fontSize: 26, marginBottom: 10 }}>📅 Stundenplan heute ({heute})</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {(daten.stundenplan[heute] || []).map((f, i) => (
+                <div key={i} style={{ background: fachFarbe(f), color: "#fff", fontWeight: 800, padding: "12px 18px", borderRadius: 14, fontSize: 20 }}>{i + 1}. {f}</div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ ...kartenStil, padding: 22 }}>
+            <div style={{ fontWeight: 800, fontSize: 26, marginBottom: 10 }}>⭐ Wer hat die meisten Punkte?</div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {rangliste.map((s, i) => (
+                <div key={s.name} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  background: i < 3 ? "#FFF3E0" : "#FAF5EC", borderRadius: 12, padding: "10px 16px",
+                  fontSize: 20, fontWeight: 700,
+                }}>
+                  <span>{medaillen[i] || `${i + 1}.`} {s.name}</span>
+                  <span style={{ color: daten.farbe, fontWeight: 800 }}>{s.punkte} ⭐</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ ...kartenStil, padding: 22 }}>
+            <div style={{ fontWeight: 800, fontSize: 26, marginBottom: 10 }}>🎯 Unsere Ziele</div>
+            {daten.ziele.map((z, i) => (
+              <div key={i} style={{ fontSize: 20, fontWeight: 700, padding: "6px 0" }}>{i + 1}. {z}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ============================================================
-   13) START DER ANWENDUNG
+   VERWALTUNG (Handy)
    ============================================================ */
-function starteApp(){
-  datenLaden();
-  buehneSkalieren();
-  renderHome();
-  zeigeAnsicht("home");
+function Verwaltung({ daten, aktualisiere, zurTafel }) {
+  const [offen, setOffen] = useState("seiten");
+  const [seiteId, setSeiteId] = useState(daten.seiten[0]?.id);
+  const seite = daten.seiten.find((s) => s.id === seiteId) || daten.seiten[0];
 
-  // Fenstergröße / Bildschirmdrehung berücksichtigen
-  window.addEventListener("orientationchange", () => setTimeout(buehneSkalieren, 200));
+  const eingabe = { width: "100%", padding: "11px 13px", borderRadius: 12, border: "2px solid #E5DCCB", marginBottom: 10, background: "#FFFCF6" };
+  const beschriftung = { fontWeight: 700, fontSize: 13, color: "#8A7F72", display: "block", marginBottom: 4 };
+  const knopf = { border: "none", background: daten.farbe, color: "#fff", fontWeight: 800, borderRadius: 12, padding: "11px 16px", fontSize: 15 };
 
-  // Versehentliches Verlassen der Seite/Vollbild abfangen ist im Browser
-  // eingeschränkt möglich – daher: Doppel-Tipp auf Maskottchen = Vollbild an/aus
-  let letzterTipp = 0;
-  document.getElementById("home-maskottchen").addEventListener("click", () => {
-    const jetzt = Date.now();
-    if(jetzt - letzterTipp < 400){ vollbildUmschalten(); }
-    letzterTipp = jetzt;
-  });
+  const Abschnitt = ({ id, titel, emoji, children }) => (
+    <div style={{ background: "#fff", borderRadius: 16, marginBottom: 10, overflow: "hidden", boxShadow: "0 3px 0 rgba(0,0,0,.05)" }}>
+      <button onClick={() => setOffen(offen === id ? null : id)} style={{
+        width: "100%", textAlign: "left", padding: "15px 16px", fontSize: 18, fontWeight: 800,
+        background: "none", border: "none", display: "flex", justifyContent: "space-between", color: "#3A332C",
+      }}><span>{emoji} {titel}</span><span>{offen === id ? "▲" : "▼"}</span></button>
+      {offen === id && <div style={{ padding: "0 16px 16px" }}>{children}</div>}
+    </div>
+  );
+
+  const bearbeiteSeite = (patch) => aktualisiere((d) => ({
+    ...d, seiten: d.seiten.map((s) => s.id === seite.id ? { ...s, ...patch } : s),
+  }));
+  const bearbeiteElement = (elId, patchDaten) => aktualisiere((d) => ({
+    ...d, seiten: d.seiten.map((s) => s.id !== seite.id ? s : {
+      ...s, elemente: s.elemente.map((el) => el.id === elId ? { ...el, daten: { ...el.daten, ...patchDaten } } : el),
+    }),
+  }));
+  const löscheElement = (elId) => aktualisiere((d) => ({
+    ...d, seiten: d.seiten.map((s) => s.id !== seite.id ? s : { ...s, elemente: s.elemente.filter((el) => el.id !== elId) }),
+  }));
+
+  /* ---- Galerie: fertige Elemente aufbewahren & wiederverwenden ---- */
+  const speichereInGalerie = (el) => {
+    const name =
+      el.typ === "notiz" ? (el.daten.titel || "Notiz") :
+      el.typ === "geburtstag" ? `Geburtstag${el.daten.name ? " " + el.daten.name : ""}` :
+      ELEMENT_TYPEN[el.typ].name;
+    aktualisiere((d) => ({
+      ...d, galerie: [...(d.galerie || []), { id: neueId(), name, typ: el.typ, daten: { ...el.daten } }],
+    }));
+  };
+  const ausGalerieEinfuegen = (vorlage) => aktualisiere((d) => ({
+    ...d, seiten: d.seiten.map((s) => s.id !== seite.id ? s : {
+      ...s, elemente: [...s.elemente, {
+        id: neueId(), typ: vorlage.typ, x: 30 + Math.random() * 20, y: 25 + Math.random() * 20,
+        daten: { ...vorlage.daten },
+      }],
+    }),
+  }));
+  const galerieUmbenennen = (vId, name) => aktualisiere((d) => ({
+    ...d, galerie: (d.galerie || []).map((v) => v.id === vId ? { ...v, name } : v),
+  }));
+  const galerieLöschen = (vId) => aktualisiere((d) => ({
+    ...d, galerie: (d.galerie || []).filter((v) => v.id !== vId),
+  }));
+
+  /* ---- Seiten-Galerie: komplette Tafelseiten als Vorlage ---- */
+  const speichereSeiteInGalerie = () => aktualisiere((d) => ({
+    ...d, seitenGalerie: [...(d.seitenGalerie || []), {
+      id: neueId(), name: seite.name, hintergrund: seite.hintergrund,
+      eigenerHintergrund: seite.eigenerHintergrund,
+      elemente: seite.elemente.map((el) => ({ ...el, daten: { ...el.daten } })),
+    }],
+  }));
+  const seiteAusGalerieEinfuegen = (vorlage) => {
+    const neu = {
+      id: neueId(), name: vorlage.name, hintergrund: vorlage.hintergrund,
+      eigenerHintergrund: vorlage.eigenerHintergrund,
+      elemente: vorlage.elemente.map((el) => ({ ...el, id: neueId(), daten: { ...el.daten } })),
+    };
+    aktualisiere((d) => ({ ...d, seiten: [...d.seiten, neu] }));
+    setSeiteId(neu.id);
+  };
+  const seitenGalerieUmbenennen = (vId, name) => aktualisiere((d) => ({
+    ...d, seitenGalerie: (d.seitenGalerie || []).map((v) => v.id === vId ? { ...v, name } : v),
+  }));
+  const seitenGalerieLöschen = (vId) => aktualisiere((d) => ({
+    ...d, seitenGalerie: (d.seitenGalerie || []).filter((v) => v.id !== vId),
+  }));
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#FFF7EC" }}>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: 14 }}>
+        <header style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 38 }}>{daten.maskottchen}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 21, color: daten.farbe }}>Verwaltung</div>
+            <div style={{ color: "#8A7F72", fontSize: 13, fontWeight: 600 }}>Alles hier Eingestellte erscheint automatisch auf der Tafel.</div>
+          </div>
+          <button onClick={zurTafel} style={{ ...knopf, borderRadius: 999 }}>Zur Tafel</button>
+        </header>
+
+        {/* ---- Tafelseiten & Elemente ---- */}
+        <Abschnitt id="seiten" titel="Tafelseiten & Elemente" emoji="🧩">
+          <label style={beschriftung}>Tafelseite auswählen</label>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+            {daten.seiten.map((s, i) => (
+              <button key={s.id} onClick={() => setSeiteId(s.id)} style={{
+                padding: "9px 14px", borderRadius: 10, fontWeight: 800, fontSize: 15,
+                border: s.id === seite.id ? `3px solid ${daten.farbe}` : "2px solid #E5DCCB",
+                background: s.id === seite.id ? "#FFF3E6" : "#FFFCF6",
+              }}>{i + 1} · {s.name}</button>
+            ))}
+            {daten.seiten.length < 8 && (
+              <button onClick={() => {
+                const neu = { id: neueId(), name: `Tafel ${daten.seiten.length + 1}`, hintergrund: "tafel", eigenerHintergrund: "", elemente: [] };
+                aktualisiere((d) => ({ ...d, seiten: [...d.seiten, neu] })); setSeiteId(neu.id);
+              }} style={{ ...knopf, background: "#3E8E5A" }}>+ Neue Seite</button>
+            )}
+          </div>
+
+          <label style={beschriftung}>Name der Seite</label>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input style={{ ...eingabe, flex: 1 }} value={seite.name} onChange={(e) => bearbeiteSeite({ name: e.target.value })} />
+            {daten.seiten.length > 1 && (
+              <button title="Diese Seite löschen" onClick={() => {
+                const übrig = daten.seiten.filter((s) => s.id !== seite.id);
+                aktualisiere((d) => ({ ...d, seiten: d.seiten.filter((s) => s.id !== seite.id) }));
+                setSeiteId(übrig[0].id);
+              }} style={{ ...knopf, background: "#C94F6D", height: 46 }}>🗑️</button>
+            )}
+          </div>
+
+          <label style={beschriftung}>Hintergrund</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+            {Object.entries(HINTERGRUENDE).map(([k, h]) => (
+              <button key={k} title={h.name} onClick={() => bearbeiteSeite({ hintergrund: k, eigenerHintergrund: "" })} style={{
+                width: 64, height: 44, borderRadius: 10, background: h.css, backgroundSize: "cover",
+                border: seite.hintergrund === k && !seite.eigenerHintergrund ? `4px solid ${daten.farbe}` : "2px solid #E5DCCB",
+              }} />
+            ))}
+          </div>
+          <label style={beschriftung}>… oder eigenes Hintergrundbild (Link)</label>
+          <input style={eingabe} placeholder="https://…" value={seite.eigenerHintergrund}
+            onChange={(e) => bearbeiteSeite({ eigenerHintergrund: e.target.value.trim() })} />
+
+          <button onClick={speichereSeiteInGalerie} style={{ ...knopf, width: "100%", background: "#8B5CB8", marginBottom: 12 }}>
+            💾 Diese komplette Seite in die Galerie speichern
+          </button>
+
+          <label style={beschriftung}>Element hinzufügen</label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 12 }}>
+            {Object.entries(ELEMENT_TYPEN).map(([typ, t]) => (
+              <button key={typ} onClick={() => aktualisiere((d) => ({
+                ...d, seiten: d.seiten.map((s) => s.id === seite.id ? { ...s, elemente: [...s.elemente, neuesElement(typ)] } : s),
+              }))} style={{
+                padding: "10px 8px", borderRadius: 10, border: "2px solid #E5DCCB", background: "#FFFCF6",
+                fontWeight: 700, fontSize: 14, textAlign: "left",
+              }}>{t.emoji} {t.name}</button>
+            ))}
+          </div>
+
+          <label style={beschriftung}>Elemente auf dieser Seite (auf der Tafel per Finger verschieben)</label>
+          {seite.elemente.length === 0 && <div style={{ color: "#8A7F72", fontSize: 14, fontWeight: 600 }}>Noch keine Elemente.</div>}
+          {seite.elemente.map((el) => (
+            <div key={el.id} style={{ border: "2px solid #E5DCCB", borderRadius: 12, padding: 12, marginBottom: 8, background: "#FFFCF6" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontWeight: 800 }}>{ELEMENT_TYPEN[el.typ].emoji} {ELEMENT_TYPEN[el.typ].name}</span>
+                <span>
+                  <button onClick={() => speichereInGalerie(el)} style={{ border: "none", background: "none", fontSize: 18 }} title="In Galerie speichern">💾</button>
+                  <button onClick={() => löscheElement(el.id)} style={{ border: "none", background: "none", fontSize: 18 }} title="Löschen">🗑️</button>
+                </span>
+              </div>
+              {el.typ === "notiz" && <>
+                <input style={eingabe} placeholder="Titel" value={el.daten.titel} onChange={(e) => bearbeiteElement(el.id, { titel: e.target.value })} />
+                <textarea style={{ ...eingabe, minHeight: 70 }} placeholder="Text" value={el.daten.text} onChange={(e) => bearbeiteElement(el.id, { text: e.target.value })} />
+              </>}
+              {el.typ === "geburtstag" && <>
+                <input style={eingabe} placeholder="Name des Geburtstagskindes" value={el.daten.name} onChange={(e) => bearbeiteElement(el.id, { name: e.target.value })} />
+                <input style={eingabe} placeholder="Foto-Link (https://…)" value={el.daten.fotoUrl} onChange={(e) => bearbeiteElement(el.id, { fotoUrl: e.target.value.trim() })} />
+              </>}
+              {el.typ === "bild" && (
+                <input style={eingabe} placeholder="Bild-Link (https://…)" value={el.daten.url} onChange={(e) => bearbeiteElement(el.id, { url: e.target.value.trim() })} />
+              )}
+              {el.typ === "gruppen" && <>
+                <label style={beschriftung}>Anzahl Gruppen</label>
+                <input type="number" min="2" max="6" style={eingabe} value={el.daten.anzahl}
+                  onChange={(e) => bearbeiteElement(el.id, { anzahl: Math.min(6, Math.max(2, Number(e.target.value) || 2)) })} />
+              </>}
+              {el.typ === "uhr" && (
+                <button onClick={() => bearbeiteElement(el.id, { digital: !el.daten.digital })} style={{ ...knopf, background: "#3B82C4" }}>
+                  {el.daten.digital ? "→ Analoge Uhr" : "→ Digitale Uhr"}
+                </button>
+              )}
+              {el.typ === "wuerfel" && (
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[1, 2].map((n) => (
+                    <button key={n} onClick={() => bearbeiteElement(el.id, { anzahl: n })} style={{
+                      flex: 1, padding: 10, borderRadius: 10, fontWeight: 800,
+                      border: (el.daten.anzahl || 1) === n ? `3px solid ${daten.farbe}` : "2px solid #E5DCCB",
+                      background: (el.daten.anzahl || 1) === n ? "#FFF3E6" : "#FFFCF6",
+                    }}>{n} Würfel</button>
+                  ))}
+                </div>
+              )}
+              {el.typ === "gluecksrad" && <>
+                <button onClick={() => bearbeiteElement(el.id, { nutzeNamen: !el.daten.nutzeNamen })}
+                  style={{ ...knopf, width: "100%", background: "#8B5CB8", marginBottom: 8 }}>
+                  {el.daten.nutzeNamen ? "Nutzt: Namensliste der Kinder (umschalten)" : "Nutzt: eigene Einträge (umschalten)"}
+                </button>
+                {!el.daten.nutzeNamen && <>
+                  <textarea style={{ ...eingabe, minHeight: 80 }}
+                    value={(el.daten.eintraege || []).join("\n")}
+                    onChange={(e) => bearbeiteElement(el.id, { eintraege: e.target.value.split("\n") })} />
+                  <div style={{ fontSize: 13, color: "#8A7F72" }}>Ein Eintrag pro Zeile (z. B. Aufgaben, Preise, Themen).</div>
+                </>}
+              </>}
+              {el.typ === "rechnen" && (
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[20, 100, 1000].map((r) => (
+                    <button key={r} onClick={() => bearbeiteElement(el.id, { raum: r })} style={{
+                      flex: 1, padding: 10, borderRadius: 10, fontWeight: 800, fontSize: 14,
+                      border: (el.daten.raum || 20) === r ? `3px solid ${daten.farbe}` : "2px solid #E5DCCB",
+                      background: (el.daten.raum || 20) === r ? "#FFF3E6" : "#FFFCF6",
+                    }}>bis {r}</button>
+                  ))}
+                </div>
+              )}
+              {el.typ === "galgen" && <>
+                <textarea style={{ ...eingabe, minHeight: 80 }}
+                  value={(el.daten.woerter || []).join("\n")}
+                  onChange={(e) => bearbeiteElement(el.id, { woerter: e.target.value.split("\n") })} />
+                <div style={{ fontSize: 13, color: "#8A7F72" }}>Ein Wort pro Zeile – die Tafel wählt zufällig aus.</div>
+              </>}
+              {el.typ === "quiz" && <>
+                {(el.daten.fragen || []).map((f, qi) => (
+                  <div key={qi} style={{ border: "2px solid #E5DCCB", borderRadius: 10, padding: 8, marginBottom: 8, background: "#fff" }}>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                      <input style={{ ...eingabe, marginBottom: 0, flex: 1, fontWeight: 700 }} placeholder="Frage"
+                        value={f.frage}
+                        onChange={(e) => bearbeiteElement(el.id, {
+                          fragen: el.daten.fragen.map((x, j) => j === qi ? { ...x, frage: e.target.value } : x),
+                        })} />
+                      <button onClick={() => bearbeiteElement(el.id, { fragen: el.daten.fragen.filter((_, j) => j !== qi) })}
+                        style={{ border: "none", background: "none", fontSize: 17 }}>🗑️</button>
+                    </div>
+                    {f.antworten.map((a, ai) => (
+                      <div key={ai} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                        <button title="Als richtige Antwort markieren"
+                          onClick={() => bearbeiteElement(el.id, {
+                            fragen: el.daten.fragen.map((x, j) => j === qi ? { ...x, richtig: ai } : x),
+                          })}
+                          style={{ border: "none", background: "none", fontSize: 20 }}>
+                          {f.richtig === ai ? "✅" : "⚪"}
+                        </button>
+                        <input style={{ ...eingabe, marginBottom: 0, flex: 1 }} placeholder={`Antwort ${String.fromCharCode(65 + ai)}`}
+                          value={a}
+                          onChange={(e) => bearbeiteElement(el.id, {
+                            fragen: el.daten.fragen.map((x, j) => j === qi
+                              ? { ...x, antworten: x.antworten.map((y, k) => k === ai ? e.target.value : y) } : x),
+                          })} />
+                      </div>
+                    ))}
+                    <div style={{ fontSize: 12, color: "#8A7F72" }}>✅ markiert die richtige Antwort.</div>
+                  </div>
+                ))}
+                <button onClick={() => bearbeiteElement(el.id, {
+                  fragen: [...(el.daten.fragen || []), { frage: "", antworten: ["", "", ""], richtig: 0 }],
+                })} style={{ ...knopf, width: "100%", background: "#3E8E5A" }}>+ Frage hinzufügen</button>
+              </>}
+            </div>
+          ))}
+        </Abschnitt>
+
+        {/* ---- Galerie ---- */}
+        <Abschnitt id="galerie" titel={`Galerie (${(daten.galerie || []).length + (daten.seitenGalerie || []).length})`} emoji="📦">
+          <div style={{ fontSize: 14, color: "#8A7F72", fontWeight: 600, marginBottom: 10 }}>
+            Fertige Elemente hier aufbewahren und jederzeit wieder einfügen.
+            Zum Speichern bei einem Element auf 💾 tippen. „Einfügen" legt eine Kopie
+            auf die oben ausgewählte Seite (aktuell: <b>{seite.name}</b>).
+          </div>
+
+          {/* --- Ganze Tafelseiten --- */}
+          <div style={{ fontWeight: 800, fontSize: 16, margin: "4px 0 8px" }}>🗂️ Ganze Tafelseiten</div>
+          {(daten.seitenGalerie || []).length === 0 && (
+            <div style={{
+              border: "2px dashed #E5DCCB", borderRadius: 12, padding: 14, textAlign: "center",
+              color: "#8A7F72", fontWeight: 600, marginBottom: 12, fontSize: 14,
+            }}>Noch keine Seiten-Vorlagen.<br />Oben „💾 Diese komplette Seite …" antippen.</div>
+          )}
+          {(daten.seitenGalerie || []).map((v) => (
+            <div key={v.id} style={{ border: "2px solid #E5DCCB", borderRadius: 12, padding: 10, marginBottom: 8, background: "#FFFCF6" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <div style={{
+                  width: 52, height: 36, borderRadius: 8, flexShrink: 0,
+                  background: v.eigenerHintergrund ? `url(${v.eigenerHintergrund}) center/cover` : (HINTERGRUENDE[v.hintergrund] || HINTERGRUENDE.holz).css,
+                  border: "1px solid #E5DCCB",
+                }} />
+                <input
+                  style={{ ...eingabe, marginBottom: 0, flex: 1, fontWeight: 700 }}
+                  value={v.name}
+                  onChange={(e) => seitenGalerieUmbenennen(v.id, e.target.value)}
+                />
+                <button onClick={() => seitenGalerieLöschen(v.id)} style={{ border: "none", background: "none", fontSize: 18 }} title="Vorlage löschen">🗑️</button>
+              </div>
+              <div style={{ fontSize: 13, color: "#8A7F72", margin: "6px 2px 0", fontWeight: 600 }}>
+                {v.elemente.length} Element{v.elemente.length === 1 ? "" : "e"}: {v.elemente.map((el) => ELEMENT_TYPEN[el.typ].emoji).join(" ")}
+              </div>
+              {daten.seiten.length < 8 ? (
+                <button onClick={() => seiteAusGalerieEinfuegen(v)} style={{ ...knopf, width: "100%", marginTop: 8, background: "#8B5CB8" }}>
+                  → Als neue Tafelseite einfügen
+                </button>
+              ) : (
+                <div style={{ fontSize: 13, color: "#C94F6D", fontWeight: 700, marginTop: 8 }}>
+                  Alle 8 Seiten belegt – erst eine Seite löschen.
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* --- Einzelne Elemente --- */}
+          <div style={{ fontWeight: 800, fontSize: 16, margin: "14px 0 8px" }}>🧩 Einzelne Elemente</div>
+          {(daten.galerie || []).length === 0 && (
+            <div style={{
+              border: "2px dashed #E5DCCB", borderRadius: 12, padding: 18, textAlign: "center",
+              color: "#8A7F72", fontWeight: 600,
+            }}>Die Galerie ist noch leer.<br />Speichere ein Element über das 💾-Symbol.</div>
+          )}
+          {(daten.galerie || []).map((v) => (
+            <div key={v.id} style={{ border: "2px solid #E5DCCB", borderRadius: 12, padding: 10, marginBottom: 8, background: "#FFFCF6" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 24 }}>{ELEMENT_TYPEN[v.typ].emoji}</span>
+                <input
+                  style={{ ...eingabe, marginBottom: 0, flex: 1, fontWeight: 700 }}
+                  value={v.name}
+                  onChange={(e) => galerieUmbenennen(v.id, e.target.value)}
+                />
+                <button onClick={() => galerieLöschen(v.id)} style={{ border: "none", background: "none", fontSize: 18 }} title="Aus Galerie löschen">🗑️</button>
+              </div>
+              {v.typ === "notiz" && v.daten.text && (
+                <div style={{
+                  fontSize: 13, color: "#8A7F72", margin: "6px 2px 0", whiteSpace: "nowrap",
+                  overflow: "hidden", textOverflow: "ellipsis",
+                }}>{v.daten.text}</div>
+              )}
+              <button onClick={() => ausGalerieEinfuegen(v)} style={{ ...knopf, width: "100%", marginTop: 8 }}>
+                → Auf Seite „{seite.name}" einfügen
+              </button>
+            </div>
+          ))}
+        </Abschnitt>
+
+        {/* ---- Klasse ---- */}
+        <Abschnitt id="klasse" titel="Klasse & Maskottchen" emoji="🎨">
+          <label style={beschriftung}>Klassenname</label>
+          <input style={eingabe} value={daten.klassenname} onChange={(e) => aktualisiere({ klassenname: e.target.value })} />
+          <label style={beschriftung}>Maskottchen</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 6, marginBottom: 10 }}>
+            {MASKOTTCHEN.map((m) => (
+              <button key={m} onClick={() => aktualisiere({ maskottchen: m })} style={{
+                fontSize: 26, padding: 7, borderRadius: 10, background: "#FFFCF6",
+                border: daten.maskottchen === m ? `3px solid ${daten.farbe}` : "2px solid #E5DCCB",
+              }}>{m}</button>
+            ))}
+          </div>
+          <label style={beschriftung}>Klassenfarbe</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {FARBEN.map((f) => (
+              <button key={f} onClick={() => aktualisiere({ farbe: f })} style={{
+                width: 38, height: 38, borderRadius: "50%", background: f,
+                border: daten.farbe === f ? "4px solid #3A332C" : "3px solid #fff", boxShadow: "0 2px 4px rgba(0,0,0,.15)",
+              }} />
+            ))}
+          </div>
+        </Abschnitt>
+
+        {/* ---- Stundenplan ---- */}
+        <Abschnitt id="plan" titel="Stundenplan" emoji="📅">
+          {TAGE.map((t) => (
+            <div key={t}>
+              <label style={beschriftung}>{t} (Fächer mit Komma trennen)</label>
+              <input style={eingabe} value={(daten.stundenplan[t] || []).join(", ")}
+                onChange={(e) => aktualisiere((d) => ({ ...d, stundenplan: { ...d.stundenplan, [t]: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) } }))} />
+            </div>
+          ))}
+        </Abschnitt>
+
+        {/* ---- Essensplan ---- */}
+        <Abschnitt id="essen" titel="Essensplan" emoji="🍽️">
+          {TAGE.map((t) => (
+            <div key={t}>
+              <label style={beschriftung}>{t}</label>
+              <input style={eingabe} value={daten.essensplan[t] || ""}
+                onChange={(e) => aktualisiere((d) => ({ ...d, essensplan: { ...d.essensplan, [t]: e.target.value } }))} />
+            </div>
+          ))}
+        </Abschnitt>
+
+        {/* ---- Kinder & Punkte ---- */}
+        <Abschnitt id="punkte" titel="Kinder & Punkte" emoji="⭐">
+          {daten.schueler.map((s, i) => (
+            <div key={i} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+              <input style={{ ...eingabe, marginBottom: 0, flex: 1 }} value={s.name}
+                onChange={(e) => aktualisiere((d) => ({ ...d, schueler: d.schueler.map((x, j) => j === i ? { ...x, name: e.target.value } : x) }))} />
+              <button onClick={() => aktualisiere((d) => ({ ...d, schueler: d.schueler.map((x, j) => j === i ? { ...x, punkte: Math.max(0, x.punkte - 1) } : x) }))}
+                style={{ ...knopf, background: "#fff", color: daten.farbe, border: `2px solid ${daten.farbe}`, padding: "9px 13px" }}>−</button>
+              <span style={{ fontWeight: 800, minWidth: 26, textAlign: "center" }}>{s.punkte}</span>
+              <button onClick={() => aktualisiere((d) => ({ ...d, schueler: d.schueler.map((x, j) => j === i ? { ...x, punkte: x.punkte + 1 } : x) }))}
+                style={{ ...knopf, padding: "9px 13px" }}>+</button>
+              <button onClick={() => aktualisiere((d) => ({ ...d, schueler: d.schueler.filter((_, j) => j !== i) }))}
+                style={{ border: "none", background: "none", fontSize: 17 }}>🗑️</button>
+            </div>
+          ))}
+          <button onClick={() => aktualisiere((d) => ({ ...d, schueler: [...d.schueler, { name: "Neues Kind", punkte: 0 }] }))}
+            style={{ ...knopf, background: "#3E8E5A", width: "100%" }}>+ Kind hinzufügen</button>
+        </Abschnitt>
+
+        {/* ---- Sternen-Challenge ---- */}
+        <Abschnitt id="challenge" titel="Sternen-Challenge" emoji="🌟">
+          <div style={{ fontSize: 14, color: "#8A7F72", fontWeight: 600, marginBottom: 10 }}>
+            Punkte sammeln → Sterne verdienen → bei 5 Sternen gibt es die Wochen-Belohnung.
+            Das Element „🌟 Sternen-Challenge" oben zur Tafelseite hinzufügen, damit es angezeigt wird.
+          </div>
+          <label style={beschriftung}>Punkte pro Stern</label>
+          <input type="number" min="1" style={eingabe} value={(daten.belohnung || {}).punkteProStern || 5}
+            onChange={(e) => aktualisiere((d) => ({ ...d, belohnung: { ...d.belohnung, punkteProStern: Math.max(1, Number(e.target.value) || 1) } }))} />
+          <label style={beschriftung}>Wochen-Belohnung bei 5 Sternen</label>
+          <input style={eingabe} placeholder="z. B. Extra-Pause am Freitag 🎉" value={(daten.belohnung || {}).wochenBelohnung || ""}
+            onChange={(e) => aktualisiere((d) => ({ ...d, belohnung: { ...d.belohnung, wochenBelohnung: e.target.value } }))} />
+          <label style={beschriftung}>Wofür gibt es Punkte? (eine Kategorie pro Zeile)</label>
+          <textarea style={{ ...eingabe, minHeight: 70 }} value={((daten.belohnung || {}).kategorien || []).join("\n")}
+            onChange={(e) => aktualisiere((d) => ({ ...d, belohnung: { ...d.belohnung, kategorien: e.target.value.split("\n").map((z) => z.trim()).filter(Boolean) } }))} />
+
+          <label style={beschriftung}>🏅 Lob-Sprüche für die Ehrenwand (einer pro Zeile)</label>
+          <textarea style={{ ...eingabe, minHeight: 70 }} value={((daten.belohnung || {}).spruecheLob || []).join("\n")}
+            onChange={(e) => aktualisiere((d) => ({ ...d, belohnung: { ...d.belohnung, spruecheLob: e.target.value.split("\n").map((z) => z.trim()).filter(Boolean) } }))} />
+          <div style={{ fontSize: 13, color: "#8A7F72", marginBottom: 10 }}>
+            Das Element „🏅 Ehrenwand (nur positiv)" zeigt nur Namen mit Punkten, in täglich wechselnder
+            Reihenfolge (nicht sortiert nach Punktzahl) – so steht nicht immer dasselbe Kind oben.
+          </div>
+
+          <label style={beschriftung}>⚡ Schnell-Vergabe: Name antippen = +1 Punkt</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 8 }}>
+            {daten.schueler.map((s, i) => {
+              const pps = Math.max(1, (daten.belohnung || {}).punkteProStern || 5);
+              const sterne = Math.min(5, Math.floor(s.punkte / pps));
+              return (
+                <button key={i} onClick={() => aktualisiere((d) => ({
+                  ...d, schueler: d.schueler.map((x, j) => j === i ? { ...x, punkte: x.punkte + 1 } : x),
+                }))} style={{
+                  padding: "10px 4px", borderRadius: 10, border: "2px solid #E5DCCB", background: sterne >= 5 ? "#FFF3C4" : "#FFFCF6",
+                  fontWeight: 800, fontSize: 14,
+                }}>
+                  {s.name}<br />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#8A7F72" }}>{s.punkte} P · {"⭐".repeat(sterne) || "–"}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={() => aktualisiere((d) => ({ ...d, schueler: d.schueler.map((x) => ({ ...x, punkte: x.punkte + 1 })) }))}
+            style={{ ...knopf, width: "100%", background: "#3E8E5A", marginBottom: 8 }}>
+            🎉 Ganze Klasse +1 Punkt
+          </button>
+          <WochenReset aktualisiere={aktualisiere} />
+        </Abschnitt>
+
+        {/* ---- Ziele ---- */}
+        <Abschnitt id="ziele" titel="Ziele der Woche" emoji="🎯">
+          <textarea style={{ ...eingabe, minHeight: 90 }} value={daten.ziele.join("\n")}
+            onChange={(e) => aktualisiere({ ziele: e.target.value.split("\n").map((z) => z.trim()).filter(Boolean) })} />
+          <div style={{ fontSize: 13, color: "#8A7F72" }}>Ein Ziel pro Zeile.</div>
+        </Abschnitt>
+      </div>
+    </div>
+  );
 }
 
-function vollbildUmschalten(){
-  if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.().catch(()=>{}); }
-  else { document.exitFullscreen?.(); }
+function WochenReset({ aktualisiere }) {
+  const [bestätigen, setBestätigen] = useState(false);
+  useEffect(() => {
+    if (!bestätigen) return;
+    const t = setTimeout(() => setBestätigen(false), 4000);
+    return () => clearTimeout(t);
+  }, [bestätigen]);
+  return (
+    <button onClick={() => {
+      if (!bestätigen) { setBestätigen(true); return; }
+      aktualisiere((d) => ({ ...d, schueler: d.schueler.map((x) => ({ ...x, punkte: 0 })) }));
+      setBestätigen(false);
+    }} style={{
+      width: "100%", border: "none", borderRadius: 12, padding: "11px 16px", fontSize: 15,
+      fontWeight: 800, color: "#fff", background: bestätigen ? "#D64545" : "#C94F6D",
+    }}>
+      {bestätigen ? "Wirklich? Nochmal tippen zum Zurücksetzen!" : "🔄 Neue Woche starten (alle Punkte auf 0)"}
+    </button>
+  );
 }
 
-starteApp();
-</script></body></html>
+    ReactDOM.render(<TafelBaukasten />, document.getElementById('root'));
+  </script>
+</body>
+</html>
