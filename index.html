@@ -262,228 +262,72 @@ img{max-width:100%; display:block;}
 @media(hover:hover){ .team-btn:hover{transform:translateY(-2px);} }
 
 
-/* ===== FUCHSKLASSE – TAFEL-BAUKASTEN DESIGN ===== */
+/* ===== DIGIBOARD 2.0 – helles, freundliches Cloud-Design ===== */
 :root{
-  --akzent:#F07A2B; --akzent-dunkel:#C95B18; --bg:#F6EBD8; --karte:#FFFDF7;
-  --text:#2E342F; --weich:#756D60; --rand:#E7D7BC; --gruen:#4B9B65;
-  --rot:#D9534F; --gelb:#F2B83B; --blau:#3E7DB6;
-  --schatten:0 8px 18px rgba(46,35,22,.24); --schatten-stark:0 16px 38px rgba(46,35,22,.32);
+  --akzent:#ff7a59; --akzent-dunkel:#e85d3f; --bg:#f4fbff; --karte:#ffffff;
+  --text:#25324a; --weich:#71809a; --rand:#dcecf4; --gruen:#30b875;
+  --rot:#ef6671; --gelb:#f6bd3a; --schatten:0 10px 30px rgba(48,91,120,.13);
+  --schatten-stark:0 18px 45px rgba(48,91,120,.18);
 }
-html,body{background:#6f5034;}
-#bruecke{background:repeating-linear-gradient(90deg,#9b7650 0,#896642 60px,#a47e57 61px,#96704b 140px,#87633f 141px,#9b7650 220px);}
+html,body{background:#dff4ff;}
+#bruecke{background:linear-gradient(135deg,#e7f8ff 0%,#fff7e9 48%,#edfff4 100%);}
 #buehne{background:transparent;}
-.home-pille{background:#FFF9EA;border:2px solid rgba(255,255,255,.7);box-shadow:0 6px 14px rgba(43,31,18,.34);padding:7px 20px 7px 10px;transform:rotate(-1deg);}
-.home-pille:after{content:'✦';position:absolute;right:-12px;top:-10px;color:#F2B83B;font-size:23px;transform:rotate(14deg);}
-.home-titel h1{color:#E66D24;font-size:22px;}
-.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{background:#FFF9EA;border:2px solid #F5E7CC;color:#39423A;text-shadow:none;box-shadow:0 5px 12px rgba(43,31,18,.25);}
-.team-btn{position:relative;}
-.team-btn:active,.team-btn:hover{background:#FFF0D4;border-color:#F0A46E;color:#C95B18;}
-.modul{background:#FFFDF7;border:2px solid #F5E9D6;border-bottom:7px solid var(--modfarbe,var(--akzent));box-shadow:var(--schatten);}
-.modul:before{content:'';position:absolute;top:-3px;left:50%;width:58px;height:12px;transform:translateX(-50%) rotate(-1deg);background:rgba(240,221,178,.72);z-index:1;pointer-events:none;}
-.modul-frei{background:transparent!important;border:none!important;box-shadow:none!important;}
-.modul-frei:before{display:none;}
-.bereich-kopf{background:rgba(255,249,234,.94);border-bottom:4px solid #B88957;box-shadow:0 5px 14px rgba(43,31,18,.24);}
-.bereich-kopf:after{content:'🦊';font-size:28px;margin-left:2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));}
-.zurueck-btn,.bearbeiten-toggle,.seiten-tab,.seiten-tab-neu{background:#FFFDF7;box-shadow:0 4px 10px rgba(43,31,18,.18);}
-.seiten-tab.aktiv{background:var(--akzent);border-color:var(--akzent-dunkel);color:#fff;}
-.dash-kinder-btn{background:linear-gradient(135deg,#F18A36,#E86B25);border:3px solid #FFF4D8;box-shadow:0 8px 18px rgba(43,31,18,.34);}
-.dash-kinder-btn:before{content:'🌿';font-size:20px;}
-.dash-kinder-btn:after{content:'🌿';font-size:20px;transform:scaleX(-1);}
-.werkzeug-leiste{background:#FFF9EA;border-top:3px solid #D6B889;}
-.werkzeug-btn,.palette-item{background:#FFF1D8;border:2px solid #F0D6AA;}
-#einstellungen-panel,#palette-panel,#seiten-panel{background:#FFFDF7;border:4px solid #C79A63;box-shadow:0 24px 60px rgba(31,22,13,.38);position:relative;}
-#einstellungen-overlay,#seiten-overlay,#palette-overlay{backdrop-filter:blur(3px);}
-.e-abschnitt{border-color:#E7D7BC}.e-abschnitt>button.kopf{background:#FFF6E6}.e-input{background:#FFFCF5;border-color:#E7D7BC;}
-.e-schliessen,.dienst-schliessen{position:relative;z-index:20;cursor:pointer;touch-action:manipulation;}
-.cloud-status{position:absolute;left:50%;top:15px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:#FFF9EA;border:2px solid #F0DFC1;box-shadow:0 5px 12px rgba(43,31,18,.22);font-size:12px;font-weight:800;color:#675E50;}
-.cloud-status .punkt{width:10px;height:10px;border-radius:50%;background:#F2B83B}.cloud-status.online .punkt{background:#4B9B65;box-shadow:0 0 0 4px rgba(75,155,101,.16)}.cloud-status.fehler .punkt{background:#D9534F}.cloud-status.sync .punkt{animation:puls 1s infinite}
+.home-pille{background:rgba(255,255,255,.94);border:2px solid rgba(255,255,255,.9);box-shadow:var(--schatten);padding:8px 20px 8px 12px;}
+.home-titel h1{color:#ff6f4d;font-size:22px;}
+.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{background:rgba(255,255,255,.9);border:2px solid #fff;color:#33415c;text-shadow:none;box-shadow:0 6px 18px rgba(48,91,120,.12);}
+.team-btn:active,.team-btn:hover{background:#fff0e9;border-color:#ffb39f;color:#e85d3f;}
+.modul{background:rgba(255,255,255,.96);border:2px solid rgba(255,255,255,.95);border-bottom:7px solid var(--modfarbe,var(--akzent));box-shadow:var(--schatten);}
+.modul-frei{background:transparent!important;border:none!important;}
+.bereich-kopf{background:rgba(255,255,255,.88);border-bottom:1px solid #dcecf4;box-shadow:0 6px 22px rgba(48,91,120,.10);}
+.zurueck-btn,.bearbeiten-toggle,.seiten-tab,.seiten-tab-neu{box-shadow:0 5px 16px rgba(48,91,120,.12);}
+.seiten-tab.aktiv{background:linear-gradient(135deg,#ff8b6f,#ff6f4d);border-color:#ff6f4d;}
+.dash-kinder-btn{background:linear-gradient(135deg,#32c98a,#24aef0);box-shadow:0 10px 25px rgba(36,174,240,.28);}
+.werkzeug-leiste{background:rgba(255,255,255,.96);}
+.werkzeug-btn,.palette-item{background:#edf9ff;}
+#einstellungen-panel,#palette-panel,#seiten-panel{background:#fbfeff;box-shadow:0 24px 60px rgba(21,52,72,.25);}
+.e-abschnitt{border-color:#dcecf4}.e-abschnitt>button.kopf{background:#f2fbff}.e-input{background:#fff;border-color:#dcecf4;}
+.cloud-status{position:absolute;left:50%;top:15px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 6px 18px rgba(48,91,120,.13);font-size:12px;font-weight:800;color:#53637c;}
+.cloud-status .punkt{width:10px;height:10px;border-radius:50%;background:#f6bd3a}.cloud-status.online .punkt{background:#30b875;box-shadow:0 0 0 4px rgba(48,184,117,.14)}.cloud-status.fehler .punkt{background:#ef6671}.cloud-status.sync .punkt{animation:puls 1s infinite}
 @keyframes puls{50%{transform:scale(.55);opacity:.45}}
-#dienst-overlay{position:fixed;inset:0;z-index:150;background:repeating-linear-gradient(90deg,#9b7650 0,#896642 60px,#a47e57 61px,#96704b 140px,#87633f 141px,#9b7650 220px);overflow:auto;padding:26px;}
-.dienst-kopf{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;gap:14px;background:#FFF9EA;border:3px solid #E7D0A9;border-radius:24px;padding:18px 22px;box-shadow:var(--schatten)}
-.dienst-kopf h1{font-family:var(--schrift-rund);margin:0;flex:1;color:#2E342F}.dienst-schliessen{width:48px;height:48px;border-radius:16px;background:#FFF0D4;font-size:22px}
-.dienst-hinweis{max-width:1100px;margin:0 auto 18px;text-align:center;color:#FFF8E8;font-weight:800;text-shadow:0 2px 3px rgba(0,0,0,.35)}
+#dienst-overlay{position:fixed;inset:0;z-index:150;background:linear-gradient(135deg,#e7f8ff,#fff7e9 55%,#edfff4);overflow:auto;padding:26px;}
+.dienst-kopf{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;gap:14px;background:#fff;border-radius:24px;padding:18px 22px;box-shadow:var(--schatten)}
+.dienst-kopf h1{font-family:var(--schrift-rund);margin:0;flex:1;color:#25324a}.dienst-schliessen{width:48px;height:48px;border-radius:16px;background:#edf9ff;font-size:22px}
+.dienst-hinweis{max-width:1100px;margin:0 auto 18px;text-align:center;color:#63738c;font-weight:700}
 .dienst-raster{max-width:1100px;margin:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
-.dienst-kind{background:#FFFDF7;border-radius:24px;padding:18px;text-align:center;box-shadow:var(--schatten);border:3px solid #F4E2C5}.dienst-avatar{font-size:52px}.dienst-name{font-family:var(--schrift-rund);font-size:21px;font-weight:800;margin:6px 0}.dienst-stand{font-size:14px;color:#756D60;margin-bottom:12px}.dienst-aktionen{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dienst-aktionen button{border-radius:15px;padding:12px 8px;color:#fff;font-weight:800;font-size:13px}.dienst-gruen{background:linear-gradient(135deg,#64B87B,#3F8F59)}.dienst-gold{background:linear-gradient(135deg,#FFD45D,#ECA51C)}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:250;background:#2E342F;color:#fff;border-radius:999px;padding:12px 22px;font-weight:800;box-shadow:var(--schatten-stark);animation:toastrein .25s ease-out}@keyframes toastrein{from{transform:translate(-50%,20px);opacity:0}}
-/* Kleine Fuchs-Spuren statt Deko-Überladung */
-#home:after{content:'🐾   🐾';position:absolute;right:36px;bottom:28px;font-size:24px;letter-spacing:15px;opacity:.28;transform:rotate(-12deg);pointer-events:none;z-index:2;}
-.kinder-modus .seiten-buehne:after{content:'🦊';position:absolute;right:30px;bottom:22px;font-size:54px;opacity:.22;pointer-events:none;z-index:1;}
+.dienst-kind{background:#fff;border-radius:24px;padding:18px;text-align:center;box-shadow:var(--schatten);border:3px solid #fff}.dienst-avatar{font-size:52px}.dienst-name{font-family:var(--schrift-rund);font-size:21px;font-weight:800;margin:6px 0}.dienst-stand{font-size:14px;color:#71809a;margin-bottom:12px}.dienst-aktionen{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dienst-aktionen button{border-radius:15px;padding:12px 8px;color:#fff;font-weight:800;font-size:13px}.dienst-gruen{background:linear-gradient(135deg,#49cf8d,#27ae6f)}.dienst-gold{background:linear-gradient(135deg,#ffd45d,#f0a91e)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:250;background:#25324a;color:#fff;border-radius:999px;padding:12px 22px;font-weight:800;box-shadow:var(--schatten-stark);animation:toastrein .25s ease-out}@keyframes toastrein{from{transform:translate(-50%,20px);opacity:0}}
 
 
-/* ===== FUCHSKLASSEN-WALDTAFEL 3.0 ===== */
-:root{
-  --navy:#10233d; --navy2:#0a172a; --tafel:#244d37; --tafel-dunkel:#173827;
-  --holz-hell:#c88a43; --holz:#9b5f2e; --wald:#2f6b45; --blatt:#65a34e;
-  --fuchs:#ef7b2d; --creme:#fff9eb;
-}
-#bruecke{background:#d9e7d2;}
-#home{background:linear-gradient(180deg,#0e223c 0 82px,#e8f0e2 82px 100%);}
-#home::before{
-  content:"";position:absolute;left:126px;right:34px;top:88px;bottom:72px;z-index:0;border-radius:10px;
-  background:
-    linear-gradient(90deg,rgba(255,255,255,.18),transparent 20%,rgba(0,0,0,.12) 65%,rgba(255,255,255,.10)),
-    repeating-linear-gradient(90deg,#bf7d38 0 52px,#d39a54 53px 105px,#a86631 106px 158px);
-  box-shadow:0 18px 45px rgba(8,25,20,.38),inset 0 0 0 5px rgba(91,48,18,.42);
-}
-#home::after{
-  content:"";position:absolute;left:145px;right:53px;top:107px;bottom:91px;z-index:1;border-radius:4px;
-  background:
-    radial-gradient(circle at 20% 25%,rgba(255,255,255,.035) 0 2px,transparent 3px),
-    radial-gradient(circle at 70% 60%,rgba(255,255,255,.025) 0 2px,transparent 3px),
-    linear-gradient(135deg,#28583e,#1f4934 55%,#183a2a);
-  box-shadow:inset 0 0 55px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.06);
-}
-.home-buehne{z-index:2;background:transparent!important;}
-.home-pille{top:16px;left:22px;background:transparent;border:none;box-shadow:none;color:white;padding:0;}
-.home-maskottchen{font-size:38px;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35));}
-.home-titel h1{color:#fff;font-size:26px;letter-spacing:.2px;text-shadow:0 2px 2px rgba(0,0,0,.3);}
-.home-titel .datum{color:#cce3d1;font-size:12px;}
-.home-controls{top:16px;right:20px;}
-.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{
-  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.24);color:#fff;text-shadow:none;
-  box-shadow:0 5px 14px rgba(0,0,0,.22);backdrop-filter:blur(8px);
-}
-.team-btn:hover,.team-btn:active{background:#1f6f4b;border-color:#68b879;color:#fff;}
-.cloud-status{top:21px;background:rgba(18,49,39,.86);color:#dff6df;border:1px solid rgba(123,211,130,.35);box-shadow:0 5px 16px rgba(0,0,0,.22);}
-
-/* Navigation wie beim Tafel-Baukasten */
-.home-chrome{position:absolute;inset:0;z-index:24;pointer-events:none;font-family:var(--schrift-rund);}
-.home-tabs{position:absolute;top:15px;left:50%;transform:translateX(-50%);display:flex;gap:6px;padding:5px;background:rgba(2,12,25,.45);border-radius:15px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
-.home-tab{padding:8px 27px;border-radius:11px;color:#cbd7e6;font-weight:800;font-size:14px;}
-.home-tab.aktiv{background:#176ac7;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.32);}
-.home-sidebar{position:absolute;left:0;top:82px;bottom:0;width:116px;background:linear-gradient(180deg,#112846,#0b1b31);padding:18px 10px;display:flex;flex-direction:column;gap:13px;box-shadow:8px 0 20px rgba(0,0,0,.16);}
-.side-item{height:86px;border-radius:15px;color:#dce8f5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:800;}
-.side-item .si{font-size:28px;line-height:1;}.side-item.aktiv{background:#174f91;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
-.home-bottom{position:absolute;left:126px;right:34px;bottom:8px;height:54px;background:linear-gradient(180deg,#112846,#0a182b);border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:7px 14px;box-shadow:0 8px 18px rgba(0,0,0,.25);}
-.bottom-chip{background:#176ac7;color:#fff;padding:10px 18px;border-radius:10px;font-weight:800;font-size:14px;}
-.bottom-note{color:#bcd0e2;font-size:12px;font-weight:700;}
-.forest-scene{position:absolute;left:116px;right:0;bottom:62px;height:135px;overflow:hidden;opacity:.95;}
-.forest-scene svg{width:100%;height:100%;display:block;}
-
-/* Karten: klare farbige Kopfstreifen, wie die Vorlage */
-#home .modul:not(.modul-frei){background:#fffdf3;border:2px solid rgba(255,255,255,.9);border-bottom:none;border-radius:12px;box-shadow:0 10px 20px rgba(2,18,12,.30);overflow:hidden;}
-#home .modul:not(.modul-frei)::before{content:"";display:block;height:10px;background:var(--modfarbe,var(--fuchs));flex:0 0 auto;}
-#home .modul-inhalt{padding:12px 14px;}
-#home .m-titel,#home .sp-tag-titel{font-size:17px;margin:0 0 8px;font-weight:800;}
-#home .m-text{font-size:15px;line-height:1.45;}
-#home .m-leer-hinweis{font-size:14px;}
-#home .fach-chip{font-size:15px;padding:9px 12px;border-radius:9px;margin-top:7px;}
-#home .home-welcome{background:transparent!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
-#home .home-welcome::before{display:none!important;}
-#home .home-welcome .modul-inhalt{padding:0;text-align:center;color:#fff;overflow:visible;}
-#home .home-welcome .m-titel{display:none;}
-#home .home-welcome .m-text{font-family:var(--schrift-rund);font-size:41px;font-weight:800;line-height:1.05;text-shadow:0 3px 1px rgba(0,0,0,.25);white-space:nowrap;}
-#home .home-welcome .m-text::after{content:"  ☀️";font-size:35px;}
-#home .home-uhr{filter:drop-shadow(0 8px 10px rgba(0,0,0,.45));}
-#home .home-ampel .gehaeuse{border:5px solid #15231c;background:#27342f;padding:10px;border-radius:18px;}
-#home .home-geburtstag::after{content:"🎈";position:absolute;right:11px;bottom:7px;font-size:32px;opacity:.25;}
-#home .home-wetter::after{content:"🍃";position:absolute;right:9px;bottom:5px;font-size:28px;opacity:.30;}
-#home .home-besonderheiten::after{content:"📌";position:absolute;right:10px;top:14px;font-size:25px;opacity:.28;}
-.dash-kinder-btn{left:auto;right:52px;bottom:16px;transform:none;background:linear-gradient(135deg,#7d3ec8,#4d75d7);border:2px solid rgba(255,255,255,.55);box-shadow:0 7px 18px rgba(0,0,0,.3);padding:10px 20px;}
-
-/* Bereiche behalten den gleichen Wald-/Schulstil */
-#bereich{background:linear-gradient(180deg,#10233d 0 74px,#dfead9 74px 100%);}
-.bereich-kopf{background:linear-gradient(90deg,#10233d,#153454);border-bottom:2px solid #77a66c;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.24);}
-.bereich-titel{color:#fff;}.zurueck-btn,.bearbeiten-toggle,.seiten-tab,.seiten-tab-neu{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.22);}
-.seiten-tab.aktiv{background:#176ac7;border-color:#5aa5ef;}
-.kinder-modus .seiten-buehne{background:linear-gradient(180deg,#b9e7ff 0 58%,#75bd57 58% 100%);}
-
-/* Modale Fenster sicher klickbar */
-#einstellungen-overlay,#palette-overlay,#seiten-overlay{z-index:500!important;pointer-events:auto!important;}
-#einstellungen-panel,#palette-panel,#seiten-panel{position:relative;z-index:501;}
-.e-schliessen{z-index:510;cursor:pointer;pointer-events:auto;}
-
-
-
-/* ===== FUCHSKLASSEN-TAFEL 4.0: nur die eigentliche Tafel ===== */
-#home{background:#e7e0d2;}
-#home::before{
-  left:18px;right:18px;top:18px;bottom:18px;border-radius:8px;
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.15),transparent 16%,rgba(0,0,0,.10)),
-    repeating-linear-gradient(90deg,#b97835 0 45px,#d0954d 46px 92px,#a9652d 93px 138px);
-  box-shadow:0 16px 36px rgba(34,25,15,.38),inset 0 0 0 5px rgba(95,51,17,.45);
-}
-#home::after{
-  left:37px;right:37px;top:37px;bottom:37px;border-radius:3px;
-  background:
-    radial-gradient(circle at 18% 24%,rgba(255,255,255,.035) 0 2px,transparent 3px),
-    radial-gradient(circle at 74% 66%,rgba(255,255,255,.025) 0 2px,transparent 3px),
-    linear-gradient(135deg,#2e6044,#234f38 58%,#1b402e);
-  box-shadow:inset 0 0 65px rgba(0,0,0,.34),inset 0 0 0 2px rgba(255,255,255,.06);
-}
+/* ===== KLASSENTAFEL – MITTLERER TAFELBEREICH ===== */
+:root{--akzent:#ef7b2d;--akzent-dunkel:#c95d1c;--text:#26352d;--weich:#6d786f;--rand:#e5dfd2;--gruen:#47a354;--rot:#dc5757;--gelb:#e9b830;--schatten:0 10px 24px rgba(14,31,22,.28);}
+html,body{background:#d8d3c7;}
+#bruecke{background:#d8d3c7;}
+#home{background:#d8d3c7;}
+#home::before{content:"";position:absolute;inset:15px;border-radius:10px;background:repeating-linear-gradient(90deg,#ad6e31 0 44px,#cc914b 45px 89px,#965826 90px 134px);box-shadow:0 16px 40px rgba(40,25,12,.42),inset 0 0 0 5px rgba(91,48,18,.45);z-index:0;pointer-events:none;}
+#home::after{content:"";position:absolute;inset:35px;border-radius:4px;background:radial-gradient(circle at 20% 25%,rgba(255,255,255,.04) 0 2px,transparent 3px),linear-gradient(135deg,#2c5e42,#234d37 60%,#193b2a);box-shadow:inset 0 0 70px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.06);z-index:1;pointer-events:none;}
 .home-pille{display:none!important;}
-.home-controls{top:26px;right:34px;z-index:80;gap:8px;}
-.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{
-  height:40px;min-width:44px;padding:0 14px;border-radius:10px;
-  background:rgba(17,42,34,.88);border:1px solid rgba(255,255,255,.28);color:#fff;
-  box-shadow:0 5px 14px rgba(0,0,0,.28);backdrop-filter:blur(7px);
-}
-.team-btn{font-size:13px;}
-.team-btn:hover,.team-btn:active{background:#2d8055;border-color:#8bc99a;}
-.cloud-status{top:27px;left:50%;z-index:80;background:rgba(17,42,34,.88);color:#e7f7e8;border:1px solid rgba(255,255,255,.22);}
-.home-buehne{z-index:3;left:37px;right:37px;top:37px;bottom:37px;inset:auto;overflow:hidden;background:transparent!important;}
-
-/* dezente Waldkante – Natur ja, aber ohne zusätzliche Navigation */
-#home .home-buehne::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:72px;z-index:0;pointer-events:none;opacity:.72;
-  background:
-    radial-gradient(ellipse at 8% 100%,#2f7044 0 33%,transparent 34%),
-    radial-gradient(ellipse at 25% 100%,#4d9252 0 35%,transparent 36%),
-    radial-gradient(ellipse at 48% 100%,#2f7044 0 32%,transparent 33%),
-    radial-gradient(ellipse at 71% 100%,#4d9252 0 35%,transparent 36%),
-    radial-gradient(ellipse at 92% 100%,#2f7044 0 33%,transparent 34%);
-}
-#home .home-buehne::before{
-  content:"🦊";position:absolute;right:52px;bottom:18px;z-index:1;font-size:46px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));pointer-events:none;
-}
-
-/* Einzelne Werkzeugkarten wie in der Vorlage */
-#home .modul:not(.modul-frei){
-  background:#fffdf5;border:1px solid rgba(255,255,255,.88);border-radius:10px;box-shadow:0 9px 18px rgba(0,0,0,.28);overflow:hidden;
-}
-#home .modul:not(.modul-frei)::before{display:none!important;}
+.home-buehne{z-index:3!important;left:35px!important;right:35px!important;top:35px!important;bottom:35px!important;inset:auto!important;background:transparent!important;overflow:hidden!important;}
+.home-controls{top:24px;right:31px;z-index:90;gap:7px;}
+.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{height:40px;min-width:42px;padding:0 13px;border-radius:10px;background:rgba(16,39,31,.90);border:1px solid rgba(255,255,255,.28);color:#fff;text-shadow:none;box-shadow:0 5px 14px rgba(0,0,0,.28);}
+.cloud-status{top:25px!important;z-index:90!important;background:rgba(16,39,31,.90)!important;color:#eaf8eb!important;border:1px solid rgba(255,255,255,.22);}
+.dash-kinder-btn{right:48px;left:auto;bottom:22px;transform:none;z-index:90;background:linear-gradient(135deg,#ef7b2d,#cf5c1d);border:2px solid rgba(255,255,255,.7);}
+#home .modul{z-index:10;background:#fffdf5;border:1px solid rgba(255,255,255,.95);border-bottom:none;border-radius:10px;box-shadow:0 9px 20px rgba(0,0,0,.30);overflow:hidden;}
+#home .modul-frei{background:transparent!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
 #home .modul-inhalt{padding:0 13px 12px;}
-#home .m-titel,#home .sp-tag-titel{
-  margin:0 -13px 11px;padding:8px 12px;background:var(--modfarbe,var(--akzent));color:#fff!important;
-  font-size:16px;line-height:1.15;text-align:center;text-shadow:0 1px 1px rgba(0,0,0,.18);
-}
+#home .m-titel,#home .sp-tag-titel{margin:0 -13px 11px;padding:8px 12px;background:var(--modfarbe,var(--akzent));color:#fff!important;font-size:16px;line-height:1.15;text-align:center;text-shadow:0 1px 1px rgba(0,0,0,.2);}
 #home .home-welcome{background:transparent!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
-#home .home-welcome .modul-inhalt{padding:0!important;}
-#home .home-welcome .m-text{font-size:39px;color:#fff;text-align:center;text-shadow:0 3px 1px rgba(0,0,0,.25);}
+#home .home-welcome .modul-inhalt{padding:0!important;overflow:visible!important;}
+#home .home-welcome .m-titel{display:none!important;}
+#home .home-welcome .m-text{font-family:var(--schrift-rund);font-size:39px;font-weight:800;color:#fff;text-align:center;white-space:nowrap;text-shadow:0 3px 1px rgba(0,0,0,.25);}
 #home .home-welcome .m-text::after{content:"  ☀️";font-size:31px;}
-#home .home-stundenplan{--modfarbe:#2170bd;}
-#home .home-geburtstage{--modfarbe:#ef851c;}
-#home .home-wetter{--modfarbe:#2784b9;}
-#home .home-besonderheiten{--modfarbe:#7c4aa0;}
-#home .home-regeln{--modfarbe:#3c9a42;}
-#home .home-timer{--modfarbe:#2170bd;}
-#home .home-ampel{--modfarbe:#43a83e;}
-#home .home-ampel .gehaeuse{transform:scale(.88);transform-origin:center;}
-#home .m-timer .anzeige{font-size:44px;}
-#home .m-timer button{padding:7px 13px;}
-.dash-kinder-btn{right:48px;bottom:24px;z-index:70;background:linear-gradient(135deg,#e9782d,#cf5d1f);border:2px solid rgba(255,255,255,.72);}
-
-/* Bearbeitung: Griffe bleiben immer oben und fingerfreundlich */
-.modul-bearbeitbar{outline:3px dashed #ff7a2e!important;outline-offset:3px;overflow:visible!important;}
-.modul-griff,.modul-loeschen{width:38px;height:38px;top:-18px;z-index:120;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:none;pointer-events:auto;}
-.modul-griff{left:-18px;background:#26352f;border:2px solid #fff;border-radius:50%;font-size:18px;cursor:grab;}
-.modul-loeschen{right:-18px;background:#e75858;border:2px solid #fff;border-radius:50%;font-size:17px;cursor:pointer;}
-.modul-groesse{width:34px;height:34px;right:-12px;bottom:-12px;z-index:120;background:rgba(255,255,255,.92);border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25);touch-action:none;pointer-events:auto;}
-.modul-groesse::after{right:7px;bottom:7px;width:14px;height:14px;}
-
-/* Einstellungs- und Auswahlfenster: klare Kopfzeile, keine überlagerten Knöpfe */
-#einstellungen-panel,#seiten-panel,#palette-panel{padding-top:62px;border-radius:18px;background:#fffdf5;border:5px solid #b97835;box-shadow:0 24px 65px rgba(0,0,0,.38);}
-#einstellungen-panel::before,#seiten-panel::before,#palette-panel::before{content:"";position:absolute;left:0;right:0;top:0;height:48px;background:linear-gradient(135deg,#285b40,#1f4733);border-radius:12px 12px 0 0;}
-#einstellungen-panel h2,#seiten-panel h2,#palette-panel h2{position:absolute;left:20px;top:11px;margin:0!important;color:#fff!important;z-index:2;font-size:21px;}
-.e-schliessen{position:absolute!important;top:8px!important;right:10px!important;width:36px!important;height:36px!important;border-radius:50%!important;background:#ef5b5b!important;color:#fff!important;z-index:520!important;}
-.e-abschnitt{background:#fff;border-color:#eadbc3;}
-.e-abschnitt>button.kopf{background:#f7eedf;min-height:48px;}
-.palette-raster{grid-template-columns:repeat(4,minmax(110px,1fr));}
-.palette-item{background:#f8efdf;border:2px solid #ead7b8;min-height:84px;}
-.seiten-liste-item{background:#f8efdf;border:1px solid #ead7b8;}
-
-@media(max-width:900px){.team-reihe{flex-wrap:nowrap}.team-btn{padding:0 9px;font-size:11px}.home-controls{right:26px}}
+#home .home-stundenplan{--modfarbe:#2472bd;}#home .home-geburtstage{--modfarbe:#ef851c;}#home .home-wetter{--modfarbe:#2784b9;}#home .home-besonderheiten{--modfarbe:#77509b;}#home .home-regeln{--modfarbe:#3b9a46;}#home .home-timer{--modfarbe:#2472bd;}
+#home .modul-bearbeitbar{outline:3px dashed #ff8a35!important;outline-offset:3px!important;overflow:visible!important;}
+#home .modul-griff{top:-15px;left:-15px;width:38px;height:38px;border-radius:12px;background:#26352d;z-index:999;touch-action:none;}
+#home .modul-loeschen{top:-15px;right:-15px;width:38px;height:38px;border-radius:12px;background:#e25454;z-index:999;cursor:pointer;}
+#home .modul-groesse{right:-14px;bottom:-14px;width:42px;height:42px;border-radius:12px;background:#fff7e8;box-shadow:0 4px 12px rgba(0,0,0,.28);z-index:999;touch-action:none;}
+#einstellungen-overlay,#palette-overlay,#seiten-overlay{z-index:500!important;pointer-events:auto!important;}
+#einstellungen-panel,#palette-panel,#seiten-panel{position:relative;z-index:501;background:#fffaf0;border:5px solid #9b642e;box-shadow:0 25px 65px rgba(0,0,0,.38);}
+.e-schliessen{position:sticky!important;float:right;top:0!important;right:0!important;z-index:999!important;width:46px!important;height:46px!important;background:#e25454!important;color:#fff!important;box-shadow:0 4px 12px rgba(0,0,0,.25);}
 
 </style>
 </head>
@@ -584,7 +428,7 @@ const MASKOTTCHEN_AUSWAHL = ["🦊","🐻","🦁","🐸","🦉","🐧","🐰","�
 
 // Hintergründe für Seiten & Homescreen – frei wählbar, siehe Hintergrund-Wähler (🎨)
 const HINTERGRUENDE = {
-  holz:   { name:"Holz", css:"repeating-linear-gradient(90deg,#9c7a52 0px,#8a6a45 60px,#a3805a 61px,#96754e 140px,#8a6a45 141px,#9c7a52 220px)" },
+  holz:   { name:"Hell & freundlich", css:"linear-gradient(135deg,#e7f8ff 0%,#fff7e9 48%,#edfff4 100%)" },
   tafel:  { name:"Kreidetafel", css:"radial-gradient(ellipse at 30% 20%, #3d5c4a 0%, #2e4a39 60%, #263f30 100%)" },
   blau:   { name:"Schreibtisch",css:"radial-gradient(ellipse at 40% 30%, #1c7a8c 0%, #14606f 70%, #0f4e5b 100%)" },
   kork:   { name:"Korkwand",    css:"radial-gradient(circle at 20% 30%, #c99a62 2px, transparent 3px), radial-gradient(circle at 70% 60%, #b98a52 2px, transparent 3px), radial-gradient(circle at 45% 80%, #c99a62 2px, transparent 3px), linear-gradient(135deg,#d1a76f,#c2955c)" },
@@ -782,6 +626,12 @@ function datenZusammenfuehren(quelle){
   ergebnis.einstellungen = { ...basis.einstellungen, ...(quelle.einstellungen||{}) };
   ergebnis.einstellungen.namen = { ...basis.einstellungen.namen, ...((quelle.einstellungen||{}).namen||{}) };
   ergebnis.bereiche = { ...basis.bereiche, ...(quelle.bereiche||{}) };
+  // Eine leere Cloud-Startseite darf die sichtbaren Standard-Tools nicht löschen.
+  const qHome = quelle?.bereiche?.home;
+  const qModule = qHome?.seiten?.[0]?.module;
+  if(!Array.isArray(qModule) || qModule.length === 0){
+    ergebnis.bereiche.home = JSON.parse(JSON.stringify(basis.bereiche.home));
+  }
   return ergebnis;
 }
 
@@ -1033,14 +883,6 @@ function baueModulElement(seite, mod){
   el.style.width = mod.w+"px"; el.style.height = mod.h+"px";
   el.style.zIndex = mod.z || 1;
   el.dataset.id = mod.id;
-  // Spezielle Klassen für die übersichtliche Starttafel
-  if(aktuellerBereichSchluessel === "home"){
-    if(mod.typ === "text" && /Guten Morgen|Willkommen/i.test(mod.daten?.titel || "")) el.classList.add("home-welcome");
-    if(mod.typ === "uhr") el.classList.add("home-uhr");
-    if(mod.typ === "ampel") el.classList.add("home-ampel");
-    if(mod.typ === "timer") el.classList.add("home-timer");
-    if(mod.typ === "info" && mod.daten?.art) el.classList.add("home-" + mod.daten.art);
-  }
 
   const inhalt = document.createElement("div");
   inhalt.className = "modul-inhalt";
@@ -1050,7 +892,7 @@ function baueModulElement(seite, mod){
   if(bearbeitenModus){
     const griff = document.createElement("div"); griff.className="modul-griff"; griff.textContent="✥"; el.appendChild(griff);
     const loeschen = document.createElement("div"); loeschen.className="modul-loeschen"; loeschen.textContent="✕";
-    loeschen.onclick = (e) => { e.preventDefault(); e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); if(aktuellerBereichSchluessel === "home") renderHomeBuehne(); else renderSeiten(); } };
+    loeschen.onclick = (e) => { e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); renderSeiten(); } };
     el.appendChild(loeschen);
     const resize = document.createElement("div"); resize.className="modul-groesse"; el.appendChild(resize);
     machDragbar(el, mod, griff);
@@ -1577,7 +1419,6 @@ function renderHome(){
 function renderHomeBuehne(){
   aktuellerBereichSchluessel = "home";
   document.getElementById("btn-home-bearbeiten").classList.toggle("an", bearbeitenModus);
-  if(!daten?.bereiche?.home?.seiten?.[0]) waldtafelLayoutAnwenden();
   const seite = daten.bereiche.home.seiten[0];
   const buehneEl = document.getElementById("home-buehne");
   buehneEl.innerHTML = "";
@@ -1612,28 +1453,19 @@ function oeffneEinstellungen(){
 function schliesseEinstellungen(){ document.getElementById("einstellungen-overlay").classList.add("versteckt"); }
 document.getElementById("btn-einstellungen").onclick = oeffneEinstellungen;
 document.getElementById("btn-einstellungen-schliessen").onclick = schliesseEinstellungen;
-
-// Robustes Schließen aller Fenster: X, Klick auf den dunklen Rand und Escape.
-// stopPropagation im Panel verhindert, dass Klicks innerhalb des Fensters schließen.
-function aktiviereOverlaySchliessen(overlayId, panelId, schliessenFn){
-  const overlay = document.getElementById(overlayId);
-  const panel = document.getElementById(panelId);
-  if(!overlay || !panel) return;
-  panel.addEventListener("click", (e) => e.stopPropagation());
-  panel.addEventListener("pointerup", (e) => e.stopPropagation());
-  overlay.addEventListener("click", (e) => { if(e.target === overlay) schliessenFn(); });
-  overlay.addEventListener("pointerup", (e) => { if(e.target === overlay) schliessenFn(); });
-}
-aktiviereOverlaySchliessen("einstellungen-overlay", "einstellungen-panel", schliesseEinstellungen);
-aktiviereOverlaySchliessen("seiten-overlay", "seiten-panel", schliesseSeitenUebersicht);
-document.getElementById("palette-panel")?.addEventListener("click", (e)=>e.stopPropagation());
-document.getElementById("palette-overlay")?.addEventListener("click", (e)=>{ if(e.target===e.currentTarget) e.currentTarget.classList.add("versteckt"); });
-document.addEventListener("keydown", (e)=>{
-  if(e.key !== "Escape") return;
+["einstellungen-overlay","palette-overlay","seiten-overlay"].forEach((id)=>{
+  const ov=document.getElementById(id);
+  ov?.addEventListener("pointerdown",(e)=>{
+    if(e.target!==ov) return;
+    if(id==="einstellungen-overlay") schliesseEinstellungen();
+    else ov.classList.add("versteckt");
+  });
+});
+document.addEventListener("keydown",(e)=>{
+  if(e.key!=="Escape") return;
   document.getElementById("einstellungen-overlay")?.classList.add("versteckt");
-  document.getElementById("seiten-overlay")?.classList.add("versteckt");
   document.getElementById("palette-overlay")?.classList.add("versteckt");
-  document.getElementById("dienst-overlay")?.remove();
+  document.getElementById("seiten-overlay")?.classList.add("versteckt");
 });
 
 let offenerAbschnitt = "identitaet";
@@ -2063,104 +1895,52 @@ function zeigeToast(text){
   const t=document.createElement("div");t.className="toast";t.textContent=text;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);
 }
 
+
+/* ============================================================
+   STARTSEITEN-SICHERUNG
+   Stellt die sichtbaren Werkzeuge unabhängig von alten/leeren
+   Cloud-Daten wieder her und ordnet sie wie eine Klassentafel an.
+   ============================================================ */
+function sichereHomeStartseite(){
+  daten.bereiche = daten.bereiche || {};
+  if(!daten.bereiche.home || !Array.isArray(daten.bereiche.home.seiten) || !daten.bereiche.home.seiten.length){
+    daten.bereiche.home = JSON.parse(JSON.stringify(STANDARD_DATEN.bereiche.home));
+  }
+  let home = daten.bereiche.home.seiten[0];
+  if(!Array.isArray(home.module) || home.module.length === 0){
+    daten.bereiche.home = JSON.parse(JSON.stringify(STANDARD_DATEN.bereiche.home));
+    home = daten.bereiche.home.seiten[0];
+  }
+  const find=(typ,art)=>home.module.find(m=>m.typ===typ && (!art || m.daten?.art===art));
+  const add=(typ,art)=>{
+    const m=neuesModul(typ,60,60); if(art) m.daten.art=art; home.module.push(m); return m;
+  };
+  const welcome=find('text')||add('text');
+  welcome.daten={titel:'',inhalt:'Herzlich Willkommen!'};
+  const plan=find('info','stundenplan')||add('info','stundenplan');
+  const ampel=find('ampel')||add('ampel');
+  const timer=find('timer')||add('timer');
+  const geb=find('info','geburtstage')||add('info','geburtstage');
+  const wetter=find('info','wetter')||add('info','wetter');
+  const bes=find('info','besonderheiten')||add('info','besonderheiten');
+  let regeln=find('info','regeln'); if(!regeln) regeln=add('info','regeln');
+  const uhr=find('uhr')||add('uhr');
+  const layout=[
+    [welcome,410,35,660,70],[plan,35,130,300,590],[ampel,365,145,170,300],
+    [timer,565,145,245,300],[geb,840,145,285,300],[bes,365,480,330,220],
+    [wetter,725,480,220,220],[regeln,975,480,300,220],[uhr,1320,45,180,180]
+  ];
+  layout.forEach(([m,x,y,w,h],i)=>{m.x=x;m.y=y;m.w=w;m.h=h;m.z=i+2;});
+  home.hintergrund='tafel'; home.eigenerHintergrund='';
+  try{ localStorage.setItem(SPEICHER_SCHLUESSEL,JSON.stringify(daten)); }catch(_){ }
+}
+
 /* ============================================================
    13) START DER ANWENDUNG
    ============================================================ */
-function waldtafelLayoutAnwenden(){
-  const version = 6;
-  daten = daten && typeof daten === "object" ? daten : JSON.parse(JSON.stringify(STANDARD_DATEN));
-  daten.einstellungen = daten.einstellungen || {};
-  daten.bereiche = daten.bereiche || {};
-
-  // Die Cloud kann eine leere oder unvollständige Home-Struktur liefern.
-  // Deshalb wird nicht nur nach Modulen gesucht, sondern zuerst der komplette
-  // Bereich samt Startseite zuverlässig angelegt.
-  if(!daten.bereiche.home || typeof daten.bereiche.home !== "object"){
-    daten.bereiche.home = standardBereich(["Start"]);
-  }
-  if(!Array.isArray(daten.bereiche.home.seiten) || daten.bereiche.home.seiten.length === 0){
-    daten.bereiche.home.seiten = [neueSeite("Start")];
-    daten.bereiche.home.seiteIndex = 0;
-  }
-  const home = daten.bereiche.home.seiten[0];
-  if(!home.id) home.id = neueId();
-  if(!home.name) home.name = "Start";
-  home.module = Array.isArray(home.module) ? home.module : [];
-
-  const standardHome = STANDARD_DATEN.bereiche.home.seiten[0];
-  let wurdeWiederhergestellt = home.module.length === 0;
-  const hat = (test) => home.module.some(test);
-  const kopiereStandard = (test) => {
-    const vorlage = standardHome.module.find(test);
-    if(vorlage){
-      const kopie = JSON.parse(JSON.stringify(vorlage));
-      kopie.id = neueId();
-      home.module.push(kopie);
-      wurdeWiederhergestellt = true;
-      return kopie;
-    }
-    return null;
-  };
-
-  let willkommen = home.module.find(m => m.typ === "text" && (/Guten Morgen|Willkommen/i.test(m.daten?.titel || "") || /Herzlich Willkommen/i.test(m.daten?.inhalt || "")));
-  if(!willkommen) willkommen = kopiereStandard(m => m.typ === "text");
-  let stundenplan = home.module.find(m => m.typ === "info" && m.daten?.art === "stundenplan");
-  if(!stundenplan) stundenplan = kopiereStandard(m => m.typ === "info" && m.daten?.art === "stundenplan");
-  let ampel = home.module.find(m => m.typ === "ampel");
-  if(!ampel) ampel = kopiereStandard(m => m.typ === "ampel");
-  let uhr = home.module.find(m => m.typ === "uhr");
-  if(!uhr) uhr = kopiereStandard(m => m.typ === "uhr");
-  let geburtstage = home.module.find(m => m.typ === "info" && m.daten?.art === "geburtstage");
-  if(!geburtstage) geburtstage = kopiereStandard(m => m.typ === "info" && m.daten?.art === "geburtstage");
-  let wetter = home.module.find(m => m.typ === "info" && m.daten?.art === "wetter");
-  if(!wetter) wetter = kopiereStandard(m => m.typ === "info" && m.daten?.art === "wetter");
-  let besonderheiten = home.module.find(m => m.typ === "info" && m.daten?.art === "besonderheiten");
-  if(!besonderheiten) besonderheiten = kopiereStandard(m => m.typ === "info" && m.daten?.art === "besonderheiten");
-  let timer = home.module.find(m => m.typ === "timer");
-  if(!timer){ timer = neuesModul("timer",0,0); home.module.push(timer); wurdeWiederhergestellt = true; }
-  let regeln = home.module.find(m => m.typ === "info" && m.daten?.art === "regeln");
-  if(!regeln){ regeln = neuesModul("info",0,0); regeln.daten.art="regeln"; home.module.push(regeln); wurdeWiederhergestellt = true; }
-
-  home.hintergrund = "tafel";
-  home.eigenerHintergrund = "";
-
-  // Bei einer leeren/reparierten Startseite wird das Layout sofort neu gesetzt.
-  // Bei einer schon eingerichteten Seite geschieht das nur einmal pro Designversion,
-  // damit späteres Verschieben nicht bei jedem Start überschrieben wird.
-  if(wurdeWiederhergestellt || Number(daten.einstellungen.homeDesignVersion || 0) < version){
-    if(willkommen){
-      willkommen.x=420; willkommen.y=38; willkommen.w=650; willkommen.h=68;
-      willkommen.daten = willkommen.daten || {};
-      willkommen.daten.titel=""; willkommen.daten.inhalt="Herzlich Willkommen!";
-    }
-    if(stundenplan){ stundenplan.x=28; stundenplan.y=125; stundenplan.w=300; stundenplan.h=565; }
-    if(ampel){ ampel.x=355; ampel.y=135; ampel.w=205; ampel.h=300; }
-    if(timer){ timer.x=585; timer.y=135; timer.w=245; timer.h=300; }
-    if(geburtstage){ geburtstage.x=855; geburtstage.y=135; geburtstage.w=285; geburtstage.h=300; }
-    if(besonderheiten){ besonderheiten.x=355; besonderheiten.y=465; besonderheiten.w=330; besonderheiten.h=220; }
-    if(wetter){ wetter.x=710; wetter.y=465; wetter.w=220; wetter.h=220; }
-    if(regeln){ regeln.x=955; regeln.y=465; regeln.w=300; regeln.h=220; }
-    if(uhr){ uhr.x=1300; uhr.y=42; uhr.w=185; uhr.h=185; }
-    daten.einstellungen.homeDesignVersion = version;
-  }
-
-  // Ungültige Werte aus älteren Speicherständen normalisieren.
-  home.module.forEach((m, i) => {
-    if(!m.id) m.id = neueId();
-    if(!Number.isFinite(Number(m.x))) m.x = 40 + (i%4)*280;
-    if(!Number.isFinite(Number(m.y))) m.y = 120 + Math.floor(i/4)*250;
-    if(!Number.isFinite(Number(m.w)) || Number(m.w) < 80) m.w = 240;
-    if(!Number.isFinite(Number(m.h)) || Number(m.h) < 60) m.h = 180;
-    if(!Number.isFinite(Number(m.z))) m.z = i + 1;
-  });
-
-  try{ localStorage.setItem(SPEICHER_SCHLUESSEL, JSON.stringify(daten)); }catch(_){ }
-  cloudSpeichern(true);
-}
-
 async function starteApp(){
   await datenLaden();
-  waldtafelLayoutAnwenden();
+  sichereHomeStartseite();
   buehneSkalieren();
   renderHome();
   zeigeAnsicht("home");
