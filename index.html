@@ -306,7 +306,7 @@ html,body{background:#d8d3c7;}
 #home::before{content:"";position:absolute;inset:15px;border-radius:10px;background:repeating-linear-gradient(90deg,#ad6e31 0 44px,#cc914b 45px 89px,#965826 90px 134px);box-shadow:0 16px 40px rgba(40,25,12,.42),inset 0 0 0 5px rgba(91,48,18,.45);z-index:0;pointer-events:none;}
 #home::after{content:"";position:absolute;inset:35px;border-radius:4px;background:radial-gradient(circle at 20% 25%,rgba(255,255,255,.04) 0 2px,transparent 3px),linear-gradient(135deg,#2c5e42,#234d37 60%,#193b2a);box-shadow:inset 0 0 70px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.06);z-index:1;pointer-events:none;}
 .home-pille{display:none!important;}
-.home-buehne{z-index:3!important;left:35px!important;right:35px!important;top:35px!important;bottom:35px!important;inset:auto!important;background:transparent!important;overflow:hidden!important;}
+.home-buehne{z-index:3!important;inset:35px!important;background:transparent!important;overflow:hidden!important;}
 .home-controls{top:24px;right:31px;z-index:90;gap:7px;}
 .home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{height:40px;min-width:42px;padding:0 13px;border-radius:10px;background:rgba(16,39,31,.90);border:1px solid rgba(255,255,255,.28);color:#fff;text-shadow:none;box-shadow:0 5px 14px rgba(0,0,0,.28);}
 .cloud-status{top:25px!important;z-index:90!important;background:rgba(16,39,31,.90)!important;color:#eaf8eb!important;border:1px solid rgba(255,255,255,.22);}
@@ -398,7 +398,7 @@ html,body{background:#d8d3c7;}
 <div id="einstellungen-overlay" class="versteckt">
   <div id="einstellungen-panel">
     <button class="e-schliessen" id="btn-einstellungen-schliessen">✕</button>
-    <h2>⚙️ Einstellungen</h2>
+    <h2>⚙️ Einstellungen <span style="font-size:12px;color:var(--weich);font-weight:600">v5</span></h2>
     <div id="einstellungen-inhalt"><!-- JS generiert Abschnitte --></div>
   </div>
 </div>
@@ -428,6 +428,8 @@ html,body{background:#d8d3c7;}
    Änderung komplett in localStorage gespeichert wird. Das hält
    die App einfach: eine Quelle der Wahrheit, ein Speicherplatz.
    ============================================================ */
+const APP_VERSION = "v5";
+console.log("Digitale Klassentafel – Version", APP_VERSION);
 const SPEICHER_SCHLUESSEL = "klassentafel-fuchs-v1";
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwpvLJek_ZM2YaKX8A051HQAayuAy9qQ9E3jeR3qt_dmbDjTFHGcLIk4MLT-XnVgci8/exec";
 const CLOUD_AKTIV = true;
@@ -1350,7 +1352,8 @@ function baueWerkzeugLeiste(){
       const mod = neuesModul(typ, 80+Math.random()*120, 80+Math.random()*80);
       mod.z = naechsteZ();
       seite.module.push(mod);
-      datenSpeichern(); renderSeiten();
+      datenSpeichern();
+      if(aktuellerBereichSchluessel === "home") renderHomeBuehne(); else renderSeiten();
     };
     leiste.appendChild(btn);
   });
