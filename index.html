@@ -2066,32 +2066,61 @@ function zeigeToast(text){
    13) START DER ANWENDUNG
    ============================================================ */
 function waldtafelLayoutAnwenden(){
-  const version = 4;
-  if(Number(daten.einstellungen?.homeDesignVersion || 0) >= version) return;
+  const version = 5;
   daten.einstellungen = daten.einstellungen || {};
   const home = daten.bereiche?.home?.seiten?.[0];
   if(!home) return;
-  home.hintergrund = "tafel"; home.eigenerHintergrund = "";
+  home.module = Array.isArray(home.module) ? home.module : [];
+
+  // Falls die Startseite durch eine ältere Version oder die Cloud leer gespeichert
+  // wurde, werden die Grundbausteine zuverlässig wiederhergestellt.
+  const standardHome = STANDARD_DATEN.bereiche.home.seiten[0];
+  const hat = (test) => home.module.some(test);
+  const kopiereStandard = (test) => {
+    const vorlage = standardHome.module.find(test);
+    if(vorlage) home.module.push(JSON.parse(JSON.stringify(vorlage)));
+  };
+
+  if(!hat(m => m.typ === "text" && /Guten Morgen|Willkommen/i.test(m.daten?.titel || "")))
+    kopiereStandard(m => m.typ === "text" && /Guten Morgen|Willkommen/i.test(m.daten?.titel || ""));
+  if(!hat(m => m.typ === "info" && m.daten?.art === "stundenplan"))
+    kopiereStandard(m => m.typ === "info" && m.daten?.art === "stundenplan");
+  if(!hat(m => m.typ === "ampel")) kopiereStandard(m => m.typ === "ampel");
+  if(!hat(m => m.typ === "uhr")) kopiereStandard(m => m.typ === "uhr");
+  if(!hat(m => m.typ === "info" && m.daten?.art === "geburtstage"))
+    kopiereStandard(m => m.typ === "info" && m.daten?.art === "geburtstage");
+  if(!hat(m => m.typ === "info" && m.daten?.art === "wetter"))
+    kopiereStandard(m => m.typ === "info" && m.daten?.art === "wetter");
+  if(!hat(m => m.typ === "info" && m.daten?.art === "besonderheiten"))
+    kopiereStandard(m => m.typ === "info" && m.daten?.art === "besonderheiten");
 
   let timer = home.module.find(m=>m.typ === "timer");
   if(!timer){ timer = neuesModul("timer",0,0); home.module.push(timer); }
   let regeln = home.module.find(m=>m.typ === "info" && m.daten?.art === "regeln");
   if(!regeln){ regeln = neuesModul("info",0,0); regeln.daten.art="regeln"; home.module.push(regeln); }
 
-  home.module.forEach((m)=>{
-    if(m.typ === "text" && /Guten Morgen|Willkommen/i.test(m.daten?.titel || "")){
-      m.x=420; m.y=38; m.w=650; m.h=68; m.daten.inhalt="Herzlich Willkommen!";
-    } else if(m.typ === "info" && m.daten?.art === "stundenplan"){ m.x=28; m.y=125; m.w=300; m.h=565;
-    } else if(m.typ === "ampel"){ m.x=355; m.y=135; m.w=205; m.h=300;
-    } else if(m.typ === "timer"){ m.x=585; m.y=135; m.w=245; m.h=300;
-    } else if(m.typ === "info" && m.daten?.art === "geburtstage"){ m.x=855; m.y=135; m.w=285; m.h=300;
-    } else if(m.typ === "info" && m.daten?.art === "besonderheiten"){ m.x=355; m.y=465; m.w=330; m.h=220;
-    } else if(m.typ === "info" && m.daten?.art === "wetter"){ m.x=710; m.y=465; m.w=220; m.h=220;
-    } else if(m.typ === "info" && m.daten?.art === "regeln"){ m.x=955; m.y=465; m.w=300; m.h=220;
-    } else if(m.typ === "uhr"){ m.x=1300; m.y=42; m.w=185; m.h=185;
-    }
-  });
-  daten.einstellungen.homeDesignVersion = version;
+  home.hintergrund = "tafel";
+  home.eigenerHintergrund = "";
+
+  // Das Layout wird bei dieser Version einmal sauber neu angeordnet.
+  if(Number(daten.einstellungen.homeDesignVersion || 0) < version){
+    home.module.forEach((m)=>{
+      if(m.typ === "text" && /Guten Morgen|Willkommen/i.test(m.daten?.titel || "")){
+        m.x=420; m.y=38; m.w=650; m.h=68;
+        m.daten.titel=""; m.daten.inhalt="Herzlich Willkommen!";
+      } else if(m.typ === "info" && m.daten?.art === "stundenplan"){ m.x=28; m.y=125; m.w=300; m.h=565;
+      } else if(m.typ === "ampel"){ m.x=355; m.y=135; m.w=205; m.h=300;
+      } else if(m.typ === "timer"){ m.x=585; m.y=135; m.w=245; m.h=300;
+      } else if(m.typ === "info" && m.daten?.art === "geburtstage"){ m.x=855; m.y=135; m.w=285; m.h=300;
+      } else if(m.typ === "info" && m.daten?.art === "besonderheiten"){ m.x=355; m.y=465; m.w=330; m.h=220;
+      } else if(m.typ === "info" && m.daten?.art === "wetter"){ m.x=710; m.y=465; m.w=220; m.h=220;
+      } else if(m.typ === "info" && m.daten?.art === "regeln"){ m.x=955; m.y=465; m.w=300; m.h=220;
+      } else if(m.typ === "uhr"){ m.x=1300; m.y=42; m.w=185; m.h=185;
+      }
+    });
+    daten.einstellungen.homeDesignVersion = version;
+  }
+
   try{ localStorage.setItem(SPEICHER_SCHLUESSEL, JSON.stringify(daten)); }catch(_){ }
   cloudSpeichern();
 }
