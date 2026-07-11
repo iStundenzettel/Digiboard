@@ -877,6 +877,7 @@ const MODUL_TYPEN = {
 function baueModulElement(seite, mod){
   const el = document.createElement("div");
   el.className = "modul" + (bearbeitenModus ? " modul-bearbeitbar" : "");
+  if(aktuellerBereichSchluessel === "home"){ el.classList.add("home-"+mod.typ); if(mod.daten?.art) el.classList.add("home-"+mod.daten.art); if(mod.typ === "text" && mod.daten?.inhalt === "Herzlich Willkommen!") el.classList.add("home-welcome"); }
   if(mod.typ === "uhr" || mod.typ === "ampel") el.classList.add("modul-frei"); // ohne Karten-Kasten
   el.style.setProperty("--modfarbe", wortFarbe(mod.typ)); // bunter Akzent je Modul-Typ
   el.style.left = mod.x+"px"; el.style.top = mod.y+"px";
@@ -892,7 +893,7 @@ function baueModulElement(seite, mod){
   if(bearbeitenModus){
     const griff = document.createElement("div"); griff.className="modul-griff"; griff.textContent="✥"; el.appendChild(griff);
     const loeschen = document.createElement("div"); loeschen.className="modul-loeschen"; loeschen.textContent="✕";
-    loeschen.onclick = (e) => { e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); renderSeiten(); } };
+    loeschen.onclick = (e) => { e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); if(aktuellerBereichSchluessel === "home") renderHomeBuehne(); else renderSeiten(); } };
     el.appendChild(loeschen);
     const resize = document.createElement("div"); resize.className="modul-groesse"; el.appendChild(resize);
     machDragbar(el, mod, griff);
@@ -1902,36 +1903,31 @@ function zeigeToast(text){
    Cloud-Daten wieder her und ordnet sie wie eine Klassentafel an.
    ============================================================ */
 function sichereHomeStartseite(){
+  // HOME wird bewusst aus sauberen Modulen neu aufgebaut. Alte/defekte Cloud-Module
+  // dürfen den Renderer nicht mehr an der ersten kaputten Karte stoppen.
   daten.bereiche = daten.bereiche || {};
-  if(!daten.bereiche.home || !Array.isArray(daten.bereiche.home.seiten) || !daten.bereiche.home.seiten.length){
-    daten.bereiche.home = JSON.parse(JSON.stringify(STANDARD_DATEN.bereiche.home));
-  }
-  let home = daten.bereiche.home.seiten[0];
-  if(!Array.isArray(home.module) || home.module.length === 0){
-    daten.bereiche.home = JSON.parse(JSON.stringify(STANDARD_DATEN.bereiche.home));
-    home = daten.bereiche.home.seiten[0];
-  }
-  const find=(typ,art)=>home.module.find(m=>m.typ===typ && (!art || m.daten?.art===art));
-  const add=(typ,art)=>{
-    const m=neuesModul(typ,60,60); if(art) m.daten.art=art; home.module.push(m); return m;
+  const homeBereich = daten.bereiche.home || standardBereich(["Start"]);
+  daten.bereiche.home = homeBereich;
+  homeBereich.seiten = [neueSeite("Start")];
+  homeBereich.seiteIndex = 0;
+  const home = homeBereich.seiten[0];
+  home.hintergrund = "tafel";
+  home.eigenerHintergrund = "";
+
+  const add=(typ,x,y,w,h,art)=>{
+    const m=neuesModul(typ,x,y); m.w=w; m.h=h; m.z=home.module.length+2;
+    if(art) m.daten.art=art; home.module.push(m); return m;
   };
-  const welcome=find('text')||add('text');
-  welcome.daten={titel:'',inhalt:'Herzlich Willkommen!'};
-  const plan=find('info','stundenplan')||add('info','stundenplan');
-  const ampel=find('ampel')||add('ampel');
-  const timer=find('timer')||add('timer');
-  const geb=find('info','geburtstage')||add('info','geburtstage');
-  const wetter=find('info','wetter')||add('info','wetter');
-  const bes=find('info','besonderheiten')||add('info','besonderheiten');
-  let regeln=find('info','regeln'); if(!regeln) regeln=add('info','regeln');
-  const uhr=find('uhr')||add('uhr');
-  const layout=[
-    [welcome,410,35,660,70],[plan,35,130,300,590],[ampel,365,145,170,300],
-    [timer,565,145,245,300],[geb,840,145,285,300],[bes,365,480,330,220],
-    [wetter,725,480,220,220],[regeln,975,480,300,220],[uhr,1320,45,180,180]
-  ];
-  layout.forEach(([m,x,y,w,h],i)=>{m.x=x;m.y=y;m.w=w;m.h=h;m.z=i+2;});
-  home.hintergrund='tafel'; home.eigenerHintergrund='';
+  const welcome=add("text",390,25,700,78); welcome.daten={titel:"",inhalt:"Herzlich Willkommen!"};
+  add("info",35,125,300,590,"stundenplan");
+  add("ampel",365,145,170,300);
+  add("timer",565,145,245,300);
+  add("info",840,145,285,300,"geburtstage");
+  const notiz=add("text",365,480,330,220); notiz.daten={titel:"Notizen",inhalt:"Bitte an Sportzeug denken!\n\nHier ist Platz für wichtige Mitteilungen."};
+  add("info",725,480,220,220,"wetter");
+  add("info",975,480,300,220,"regeln");
+  add("uhr",1325,45,180,180);
+
   try{ localStorage.setItem(SPEICHER_SCHLUESSEL,JSON.stringify(daten)); }catch(_){ }
 }
 
