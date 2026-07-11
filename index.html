@@ -1596,6 +1596,16 @@ function renderEinstellungen(){
     const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:13px;color:var(--weich);margin-bottom:10px;";
     hinweis.textContent="Alle Daten liegen nur auf diesem Gerät (lokal gespeichert). Mit den Knöpfen unten könnt ihr sie sichern oder auf einem anderen Gerät wiederherstellen.";
     inhalt.appendChild(hinweis);
+    const reparBtn=document.createElement("button"); reparBtn.className="e-btn"; reparBtn.style.cssText="width:100%;margin-bottom:8px;background:var(--gruen)";
+    reparBtn.textContent="🔧 Startseite reparieren (alle Werkzeuge wiederherstellen)";
+    reparBtn.onclick=()=>{
+      if(!confirm("Startseite auf das Standard-Layout mit allen Werkzeugen zurücksetzen?\n\nEigene Anordnung auf der Startseite geht verloren – alle anderen Bereiche und Einstellungen bleiben unverändert.")) return;
+      daten.bereiche.home.seiten[0].module = [];
+      sichereHomeStartseite();
+      schliesseEinstellungen();
+      renderHome();
+    };
+    inhalt.appendChild(reparBtn);
     const exportBtn=document.createElement("button"); exportBtn.className="e-btn"; exportBtn.style.width="100%"; exportBtn.style.marginBottom="8px"; exportBtn.textContent="⬇️ Sicherung herunterladen";
     exportBtn.onclick=datenExportieren; inhalt.appendChild(exportBtn);
     const importInp=document.createElement("input"); importInp.type="file"; importInp.accept="application/json"; importInp.style.marginBottom="8px";
@@ -1985,39 +1995,69 @@ function notfallGriffe(el){
    ============================================================ */
 const HOME_LAYOUT_VERSION = 3;
 
+// Die 9 Standard-Werkzeuge der Startseite – eine Quelle der Wahrheit.
+// "erkennen" prüft, ob das Werkzeug bereits vorhanden ist; "anlegen" erzeugt es neu.
+function standardHomeWerkzeuge(){
+  const neu=(typ,x,y,w,h,extra)=>{ const m=neuesModul(typ,x,y); m.w=w; m.h=h; if(extra) m.daten={...m.daten,...extra}; return m; };
+  return [
+    { erkennen:(m)=>m.typ==="text" && m.daten?.inhalt==="Herzlich Willkommen!",
+      anlegen:()=>neu("text",390,25,700,78,{titel:"",inhalt:"Herzlich Willkommen!"}) },
+    { erkennen:(m)=>m.typ==="info" && m.daten?.art==="stundenplan", anlegen:()=>neu("info",35,125,300,590,{art:"stundenplan"}) },
+    { erkennen:(m)=>m.typ==="ampel",  anlegen:()=>neu("ampel",365,145,170,300) },
+    { erkennen:(m)=>m.typ==="timer",  anlegen:()=>neu("timer",565,145,245,300) },
+    { erkennen:(m)=>m.typ==="info" && m.daten?.art==="geburtstage", anlegen:()=>neu("info",840,145,285,300,{art:"geburtstage"}) },
+    { erkennen:(m)=>m.typ==="text" && m.daten?.inhalt!=="Herzlich Willkommen!",
+      anlegen:()=>neu("text",365,480,330,220,{titel:"Notizen",inhalt:"Bitte an Sportzeug denken!\n\nHier ist Platz für wichtige Mitteilungen."}) },
+    { erkennen:(m)=>m.typ==="info" && m.daten?.art==="wetter", anlegen:()=>neu("info",725,480,220,220,{art:"wetter"}) },
+    { erkennen:(m)=>m.typ==="info" && m.daten?.art==="regeln", anlegen:()=>neu("info",975,480,300,220,{art:"regeln"}) },
+    { erkennen:(m)=>m.typ==="uhr",   anlegen:()=>neu("uhr",1325,45,180,180) },
+  ];
+}
+
 function sichereHomeStartseite(){
-  // Nur einmal migrieren. Danach bleiben Verschieben, Größe und Löschen dauerhaft erhalten.
   daten.bereiche = daten.bereiche || {};
   daten.einstellungen = daten.einstellungen || {};
-  const vorhandeneModule = daten.bereiche.home?.seiten?.[0]?.module;
-  if(daten.einstellungen.homeLayoutVersion === HOME_LAYOUT_VERSION &&
-     Array.isArray(vorhandeneModule) && vorhandeneModule.length > 0){
-    return false;
-  }
-
   const homeBereich = daten.bereiche.home || standardBereich(["Start"]);
   daten.bereiche.home = homeBereich;
-  homeBereich.seiten = [neueSeite("Start")];
+  if(!Array.isArray(homeBereich.seiten) || homeBereich.seiten.length === 0){ homeBereich.seiten = [neueSeite("Start")]; }
   homeBereich.seiteIndex = 0;
   const home = homeBereich.seiten[0];
-  home.hintergrund = "tafel";
-  home.eigenerHintergrund = "";
+  if(!Array.isArray(home.module)) home.module = [];
 
-  const add=(typ,x,y,w,h,art)=>{
-    const m=neuesModul(typ,x,y); m.w=w; m.h=h; m.z=home.module.length+2;
-    if(art) m.daten.art=art; home.module.push(m); return m;
-  };
-  const welcome=add("text",390,25,700,78); welcome.daten={titel:"",inhalt:"Herzlich Willkommen!"};
-  add("info",35,125,300,590,"stundenplan");
-  add("ampel",365,145,170,300);
-  add("timer",565,145,245,300);
-  add("info",840,145,285,300,"geburtstage");
-  const notiz=add("text",365,480,330,220); notiz.daten={titel:"Notizen",inhalt:"Bitte an Sportzeug denken!\n\nHier ist Platz für wichtige Mitteilungen."};
-  add("info",725,480,220,220,"wetter");
-  add("info",975,480,300,220,"regeln");
-  add("uhr",1325,45,180,180);
+  let repariert = false;
 
-  daten.einstellungen.homeLayoutVersion = HOME_LAYOUT_VERSION;
+  if(daten.einstellungen.homeLayoutVersion !== HOME_LAYOUT_VERSION || home.module.length === 0){
+    // Kompletter Neuaufbau: Versionswechsel oder ganz leere Startseite
+    home.hintergrund = "tafel";
+    home.eigenerHintergrund = "";
+    home.module = [];
+    standardHomeWerkzeuge().forEach((w,i)=>{ const m=w.anlegen(); m.z=i+2; home.module.push(m); });
+    daten.einstellungen.homeLayoutVersion = HOME_LAYOUT_VERSION;
+    repariert = true;
+  } else {
+    // 1) Kaputte Module reparieren statt sie stillschweigend verschwinden zu lassen
+    const vorher = home.module.length;
+    home.module = home.module.filter((m)=> m && typeof m === "object" && MODUL_TYPEN[m.typ]);
+    if(home.module.length !== vorher) repariert = true;
+    home.module.forEach((m)=>{
+      const std = neuesModul(m.typ);
+      if(!m.daten || typeof m.daten !== "object"){ m.daten = std.daten; repariert = true; }
+      if(!Number.isFinite(m.w) || m.w < 40){ m.w = std.w; repariert = true; }
+      if(!Number.isFinite(m.h) || m.h < 40){ m.h = std.h; repariert = true; }
+      if(!Number.isFinite(m.x) || m.x < 0 || m.x > BUEHNE_BREITE - 40){ m.x = 60;  repariert = true; }
+      if(!Number.isFinite(m.y) || m.y < 0 || m.y > BUEHNE_HOEHE - 40){ m.y = 120; repariert = true; }
+      if(!Number.isFinite(m.z)){ m.z = 1; repariert = true; }
+    });
+    // 2) Fehlende Standard-Werkzeuge (Uhr, Ampel, Timer …) automatisch ergänzen
+    standardHomeWerkzeuge().forEach((w)=>{
+      if(!home.module.some(w.erkennen)){
+        const m = w.anlegen(); m.z = home.module.length + 2;
+        home.module.push(m); repariert = true;
+      }
+    });
+  }
+
+  if(!repariert) return false;
   try{ localStorage.setItem(SPEICHER_SCHLUESSEL,JSON.stringify(daten)); }catch(_){ }
   datenSpeichern();
   return true;
