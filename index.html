@@ -329,6 +329,18 @@ html,body{background:#d8d3c7;}
 #einstellungen-panel,#palette-panel,#seiten-panel{position:relative;z-index:501;background:#fffaf0;border:5px solid #9b642e;box-shadow:0 25px 65px rgba(0,0,0,.38);}
 .e-schliessen{position:sticky!important;float:right;top:0!important;right:0!important;z-index:999!important;width:46px!important;height:46px!important;background:#e25454!important;color:#fff!important;box-shadow:0 4px 12px rgba(0,0,0,.25);}
 
+
+/* ===== REPARATUR: sichtbare Werkzeug-Griffe auf der Startseite ===== */
+#home .modul-bearbeitbar{pointer-events:auto!important;}
+#home .modul-bearbeitbar .modul-griff,
+#home .modul-bearbeitbar .modul-loeschen,
+#home .modul-bearbeitbar .modul-groesse{display:flex!important;pointer-events:auto!important;}
+#home .modul-griff::after{content:" verschieben";font-size:11px;font-weight:800;margin-left:5px;}
+#home .modul-griff{width:104px!important;justify-content:center!important;}
+#home .modul-loeschen{font-weight:900!important;}
+#home .modul-groesse::before{content:"↘";position:absolute;inset:0;display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--akzent);}
+#home .modul-groesse::after{display:none!important;}
+
 </style>
 </head>
 <body>
@@ -1902,10 +1914,18 @@ function zeigeToast(text){
    Stellt die sichtbaren Werkzeuge unabhängig von alten/leeren
    Cloud-Daten wieder her und ordnet sie wie eine Klassentafel an.
    ============================================================ */
+const HOME_LAYOUT_VERSION = 3;
+
 function sichereHomeStartseite(){
-  // HOME wird bewusst aus sauberen Modulen neu aufgebaut. Alte/defekte Cloud-Module
-  // dürfen den Renderer nicht mehr an der ersten kaputten Karte stoppen.
+  // Nur einmal migrieren. Danach bleiben Verschieben, Größe und Löschen dauerhaft erhalten.
   daten.bereiche = daten.bereiche || {};
+  daten.einstellungen = daten.einstellungen || {};
+  const vorhandeneModule = daten.bereiche.home?.seiten?.[0]?.module;
+  if(daten.einstellungen.homeLayoutVersion === HOME_LAYOUT_VERSION &&
+     Array.isArray(vorhandeneModule) && vorhandeneModule.length > 0){
+    return false;
+  }
+
   const homeBereich = daten.bereiche.home || standardBereich(["Start"]);
   daten.bereiche.home = homeBereich;
   homeBereich.seiten = [neueSeite("Start")];
@@ -1928,18 +1948,30 @@ function sichereHomeStartseite(){
   add("info",975,480,300,220,"regeln");
   add("uhr",1325,45,180,180);
 
+  daten.einstellungen.homeLayoutVersion = HOME_LAYOUT_VERSION;
   try{ localStorage.setItem(SPEICHER_SCHLUESSEL,JSON.stringify(daten)); }catch(_){ }
+  datenSpeichern();
+  return true;
 }
 
 /* ============================================================
    13) START DER ANWENDUNG
    ============================================================ */
 async function starteApp(){
-  await datenLaden();
+  // WICHTIG: Die lokale Tafel wird SOFORT gerendert.
+  // Die Cloud darf die Startseite nicht mehr blockieren, wenn Apps Script langsam ist.
+  const cloudLaden = datenLaden();
+
   sichereHomeStartseite();
   buehneSkalieren();
   renderHome();
   zeigeAnsicht("home");
+
+  cloudLaden.then(() => {
+    sichereHomeStartseite();
+    renderHome();
+    zeigeAnsicht("home");
+  }).catch((e) => console.warn("Cloud-Nachladen fehlgeschlagen.", e));
   const parameter = new URLSearchParams(location.search);
   if(parameter.get("modus") === "dienst") setTimeout(oeffneDienstAnsicht, 80);
 
