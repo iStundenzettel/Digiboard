@@ -393,6 +393,98 @@ html,body{background:#6f5034;}
 #einstellungen-panel,#palette-panel,#seiten-panel{position:relative;z-index:501;}
 .e-schliessen{z-index:510;cursor:pointer;pointer-events:auto;}
 
+
+
+/* ===== FUCHSKLASSEN-TAFEL 4.0: nur die eigentliche Tafel ===== */
+#home{background:#e7e0d2;}
+#home::before{
+  left:18px;right:18px;top:18px;bottom:18px;border-radius:8px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.15),transparent 16%,rgba(0,0,0,.10)),
+    repeating-linear-gradient(90deg,#b97835 0 45px,#d0954d 46px 92px,#a9652d 93px 138px);
+  box-shadow:0 16px 36px rgba(34,25,15,.38),inset 0 0 0 5px rgba(95,51,17,.45);
+}
+#home::after{
+  left:37px;right:37px;top:37px;bottom:37px;border-radius:3px;
+  background:
+    radial-gradient(circle at 18% 24%,rgba(255,255,255,.035) 0 2px,transparent 3px),
+    radial-gradient(circle at 74% 66%,rgba(255,255,255,.025) 0 2px,transparent 3px),
+    linear-gradient(135deg,#2e6044,#234f38 58%,#1b402e);
+  box-shadow:inset 0 0 65px rgba(0,0,0,.34),inset 0 0 0 2px rgba(255,255,255,.06);
+}
+.home-pille{display:none!important;}
+.home-controls{top:26px;right:34px;z-index:80;gap:8px;}
+.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{
+  height:40px;min-width:44px;padding:0 14px;border-radius:10px;
+  background:rgba(17,42,34,.88);border:1px solid rgba(255,255,255,.28);color:#fff;
+  box-shadow:0 5px 14px rgba(0,0,0,.28);backdrop-filter:blur(7px);
+}
+.team-btn{font-size:13px;}
+.team-btn:hover,.team-btn:active{background:#2d8055;border-color:#8bc99a;}
+.cloud-status{top:27px;left:50%;z-index:80;background:rgba(17,42,34,.88);color:#e7f7e8;border:1px solid rgba(255,255,255,.22);}
+.home-buehne{z-index:3;left:37px;right:37px;top:37px;bottom:37px;inset:auto;overflow:hidden;background:transparent!important;}
+
+/* dezente Waldkante – Natur ja, aber ohne zusätzliche Navigation */
+#home .home-buehne::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:72px;z-index:0;pointer-events:none;opacity:.72;
+  background:
+    radial-gradient(ellipse at 8% 100%,#2f7044 0 33%,transparent 34%),
+    radial-gradient(ellipse at 25% 100%,#4d9252 0 35%,transparent 36%),
+    radial-gradient(ellipse at 48% 100%,#2f7044 0 32%,transparent 33%),
+    radial-gradient(ellipse at 71% 100%,#4d9252 0 35%,transparent 36%),
+    radial-gradient(ellipse at 92% 100%,#2f7044 0 33%,transparent 34%);
+}
+#home .home-buehne::before{
+  content:"🦊";position:absolute;right:52px;bottom:18px;z-index:1;font-size:46px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));pointer-events:none;
+}
+
+/* Einzelne Werkzeugkarten wie in der Vorlage */
+#home .modul:not(.modul-frei){
+  background:#fffdf5;border:1px solid rgba(255,255,255,.88);border-radius:10px;box-shadow:0 9px 18px rgba(0,0,0,.28);overflow:hidden;
+}
+#home .modul:not(.modul-frei)::before{display:none!important;}
+#home .modul-inhalt{padding:0 13px 12px;}
+#home .m-titel,#home .sp-tag-titel{
+  margin:0 -13px 11px;padding:8px 12px;background:var(--modfarbe,var(--akzent));color:#fff!important;
+  font-size:16px;line-height:1.15;text-align:center;text-shadow:0 1px 1px rgba(0,0,0,.18);
+}
+#home .home-welcome{background:transparent!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
+#home .home-welcome .modul-inhalt{padding:0!important;}
+#home .home-welcome .m-text{font-size:39px;color:#fff;text-align:center;text-shadow:0 3px 1px rgba(0,0,0,.25);}
+#home .home-welcome .m-text::after{content:"  ☀️";font-size:31px;}
+#home .home-stundenplan{--modfarbe:#2170bd;}
+#home .home-geburtstage{--modfarbe:#ef851c;}
+#home .home-wetter{--modfarbe:#2784b9;}
+#home .home-besonderheiten{--modfarbe:#7c4aa0;}
+#home .home-regeln{--modfarbe:#3c9a42;}
+#home .home-timer{--modfarbe:#2170bd;}
+#home .home-ampel{--modfarbe:#43a83e;}
+#home .home-ampel .gehaeuse{transform:scale(.88);transform-origin:center;}
+#home .m-timer .anzeige{font-size:44px;}
+#home .m-timer button{padding:7px 13px;}
+.dash-kinder-btn{right:48px;bottom:24px;z-index:70;background:linear-gradient(135deg,#e9782d,#cf5d1f);border:2px solid rgba(255,255,255,.72);}
+
+/* Bearbeitung: Griffe bleiben immer oben und fingerfreundlich */
+.modul-bearbeitbar{outline:3px dashed #ff7a2e!important;outline-offset:3px;overflow:visible!important;}
+.modul-griff,.modul-loeschen{width:38px;height:38px;top:-18px;z-index:120;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:none;pointer-events:auto;}
+.modul-griff{left:-18px;background:#26352f;border:2px solid #fff;border-radius:50%;font-size:18px;cursor:grab;}
+.modul-loeschen{right:-18px;background:#e75858;border:2px solid #fff;border-radius:50%;font-size:17px;cursor:pointer;}
+.modul-groesse{width:34px;height:34px;right:-12px;bottom:-12px;z-index:120;background:rgba(255,255,255,.92);border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25);touch-action:none;pointer-events:auto;}
+.modul-groesse::after{right:7px;bottom:7px;width:14px;height:14px;}
+
+/* Einstellungs- und Auswahlfenster: klare Kopfzeile, keine überlagerten Knöpfe */
+#einstellungen-panel,#seiten-panel,#palette-panel{padding-top:62px;border-radius:18px;background:#fffdf5;border:5px solid #b97835;box-shadow:0 24px 65px rgba(0,0,0,.38);}
+#einstellungen-panel::before,#seiten-panel::before,#palette-panel::before{content:"";position:absolute;left:0;right:0;top:0;height:48px;background:linear-gradient(135deg,#285b40,#1f4733);border-radius:12px 12px 0 0;}
+#einstellungen-panel h2,#seiten-panel h2,#palette-panel h2{position:absolute;left:20px;top:11px;margin:0!important;color:#fff!important;z-index:2;font-size:21px;}
+.e-schliessen{position:absolute!important;top:8px!important;right:10px!important;width:36px!important;height:36px!important;border-radius:50%!important;background:#ef5b5b!important;color:#fff!important;z-index:520!important;}
+.e-abschnitt{background:#fff;border-color:#eadbc3;}
+.e-abschnitt>button.kopf{background:#f7eedf;min-height:48px;}
+.palette-raster{grid-template-columns:repeat(4,minmax(110px,1fr));}
+.palette-item{background:#f8efdf;border:2px solid #ead7b8;min-height:84px;}
+.seiten-liste-item{background:#f8efdf;border:1px solid #ead7b8;}
+
+@media(max-width:900px){.team-reihe{flex-wrap:nowrap}.team-btn{padding:0 9px;font-size:11px}.home-controls{right:26px}}
+
 </style>
 </head>
 <body>
@@ -402,34 +494,6 @@ html,body{background:#6f5034;}
 
       <!-- ========== HOMESCREEN ========== -->
       <section id="home" class="ansicht">
-        <div class="home-chrome" aria-hidden="true">
-          <div class="home-tabs"><div class="home-tab aktiv">Tafel</div><div class="home-tab">Verwaltung</div></div>
-          <div class="home-sidebar">
-            <div class="side-item aktiv"><span class="si">⌂</span><span>Übersicht</span></div>
-            <div class="side-item"><span class="si">▤</span><span>Seiten</span></div>
-            <div class="side-item"><span class="si">⊞</span><span>Elemente</span></div>
-            <div class="side-item"><span class="si">🦊</span><span>Kinderbereich</span></div>
-            <div class="side-item"><span class="si">⚙</span><span>Einstellungen</span></div>
-          </div>
-          <div class="forest-scene">
-            <svg viewBox="0 0 1480 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 96 Q130 35 260 95 T520 90 T780 92 T1040 86 T1300 92 T1480 82 V140 H0Z" fill="#2d6f42" opacity=".95"/>
-              <path d="M0 112 Q170 72 330 112 T660 108 T990 110 T1320 105 T1480 108 V140 H0Z" fill="#63a84d"/>
-              <g fill="#174d31">
-                <path d="M80 108l28-60 28 60h-18l23 28H53l24-28z"/><path d="M260 112l24-52 24 52h-15l20 24h-67l20-24z"/>
-                <path d="M1180 111l30-66 30 66h-18l24 29h-92l25-29z"/><path d="M1370 112l24-52 24 52h-15l19 24h-66l19-24z"/>
-              </g>
-              <g transform="translate(1020 67)">
-                <ellipse cx="46" cy="52" rx="43" ry="25" fill="#e86f28"/><circle cx="78" cy="30" r="25" fill="#ef7b2d"/>
-                <path d="M63 12l3-24 17 18M87 7l18-18-3 27" fill="#ef7b2d"/><path d="M65 33q13 22 27 0q-3 28-14 30-12-3-13-30" fill="#fff4dc"/>
-                <circle cx="70" cy="28" r="3"/><circle cx="88" cy="28" r="3"/><circle cx="79" cy="38" r="3.5"/>
-                <path d="M9 52q-27-4-26 20 18 13 37-2" fill="#ef7b2d"/><path d="M-13 68q12 8 25 1" fill="#fff4dc"/>
-              </g>
-              <g fill="#f5d758"><circle cx="360" cy="116" r="4"/><circle cx="390" cy="122" r="3"/><circle cx="900" cy="118" r="4"/><circle cx="940" cy="123" r="3"/></g>
-            </svg>
-          </div>
-          <div class="home-bottom"><div class="bottom-chip">＋ Element hinzufügen</div><div class="bottom-note">🌲 Fuchsklasse · Lernen im Wald</div></div>
-        </div>
         <div class="home-buehne" id="home-buehne">
           <!-- Frei verschiebbare, größenveränderbare Karten – JS generiert -->
         </div>
@@ -974,6 +1038,7 @@ function baueModulElement(seite, mod){
     if(mod.typ === "text" && /Guten Morgen|Willkommen/i.test(mod.daten?.titel || "")) el.classList.add("home-welcome");
     if(mod.typ === "uhr") el.classList.add("home-uhr");
     if(mod.typ === "ampel") el.classList.add("home-ampel");
+    if(mod.typ === "timer") el.classList.add("home-timer");
     if(mod.typ === "info" && mod.daten?.art) el.classList.add("home-" + mod.daten.art);
   }
 
@@ -985,7 +1050,7 @@ function baueModulElement(seite, mod){
   if(bearbeitenModus){
     const griff = document.createElement("div"); griff.className="modul-griff"; griff.textContent="✥"; el.appendChild(griff);
     const loeschen = document.createElement("div"); loeschen.className="modul-loeschen"; loeschen.textContent="✕";
-    loeschen.onclick = (e) => { e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); renderSeiten(); } };
+    loeschen.onclick = (e) => { e.preventDefault(); e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); if(aktuellerBereichSchluessel === "home") renderHomeBuehne(); else renderSeiten(); } };
     el.appendChild(loeschen);
     const resize = document.createElement("div"); resize.className="modul-groesse"; el.appendChild(resize);
     machDragbar(el, mod, griff);
@@ -2001,23 +2066,29 @@ function zeigeToast(text){
    13) START DER ANWENDUNG
    ============================================================ */
 function waldtafelLayoutAnwenden(){
-  // Einmalige, verlustfreie Neuanordnung des Homescreens im Stil des Tafel-Baukastens.
-  // Inhalte bleiben erhalten; nur Positionen und Größen der vorhandenen Startmodule ändern sich.
-  const version = 3;
+  const version = 4;
   if(Number(daten.einstellungen?.homeDesignVersion || 0) >= version) return;
   daten.einstellungen = daten.einstellungen || {};
   const home = daten.bereiche?.home?.seiten?.[0];
   if(!home) return;
   home.hintergrund = "tafel"; home.eigenerHintergrund = "";
+
+  let timer = home.module.find(m=>m.typ === "timer");
+  if(!timer){ timer = neuesModul("timer",0,0); home.module.push(timer); }
+  let regeln = home.module.find(m=>m.typ === "info" && m.daten?.art === "regeln");
+  if(!regeln){ regeln = neuesModul("info",0,0); regeln.daten.art="regeln"; home.module.push(regeln); }
+
   home.module.forEach((m)=>{
     if(m.typ === "text" && /Guten Morgen|Willkommen/i.test(m.daten?.titel || "")){
-      m.x=480; m.y=112; m.w=610; m.h=72; m.daten.inhalt="Herzlich Willkommen!";
-    } else if(m.typ === "info" && m.daten?.art === "stundenplan"){ m.x=170; m.y=205; m.w=300; m.h=490;
-    } else if(m.typ === "ampel"){ m.x=510; m.y=230; m.w=160; m.h=300;
-    } else if(m.typ === "info" && m.daten?.art === "geburtstage"){ m.x=980; m.y=205; m.w=280; m.h=290;
-    } else if(m.typ === "info" && m.daten?.art === "wetter"){ m.x=720; m.y=485; m.w=240; m.h=205;
-    } else if(m.typ === "info" && m.daten?.art === "besonderheiten"){ m.x=990; m.y=520; m.w=300; m.h=170;
-    } else if(m.typ === "uhr"){ m.x=1320; m.y=115; m.w=190; m.h=190;
+      m.x=420; m.y=38; m.w=650; m.h=68; m.daten.inhalt="Herzlich Willkommen!";
+    } else if(m.typ === "info" && m.daten?.art === "stundenplan"){ m.x=28; m.y=125; m.w=300; m.h=565;
+    } else if(m.typ === "ampel"){ m.x=355; m.y=135; m.w=205; m.h=300;
+    } else if(m.typ === "timer"){ m.x=585; m.y=135; m.w=245; m.h=300;
+    } else if(m.typ === "info" && m.daten?.art === "geburtstage"){ m.x=855; m.y=135; m.w=285; m.h=300;
+    } else if(m.typ === "info" && m.daten?.art === "besonderheiten"){ m.x=355; m.y=465; m.w=330; m.h=220;
+    } else if(m.typ === "info" && m.daten?.art === "wetter"){ m.x=710; m.y=465; m.w=220; m.h=220;
+    } else if(m.typ === "info" && m.daten?.art === "regeln"){ m.x=955; m.y=465; m.w=300; m.h=220;
+    } else if(m.typ === "uhr"){ m.x=1300; m.y=42; m.w=185; m.h=185;
     }
   });
   daten.einstellungen.homeDesignVersion = version;
