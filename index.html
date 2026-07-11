@@ -1439,7 +1439,16 @@ function renderHomeBuehne(){
   const hg = seite.eigenerHintergrund ? `url(${seite.eigenerHintergrund}) center/cover no-repeat` : (HINTERGRUENDE[seite.hintergrund]||HINTERGRUENDE.holz).css;
   buehneEl.style.background = hg;
 
-  seite.module.slice().sort((a,b)=>a.z-b.z).forEach((mod) => buehneEl.appendChild(baueModulElement(seite, mod)));
+  seite.module.slice().sort((a,b)=>a.z-b.z).forEach((mod) => {
+    try{
+      buehneEl.appendChild(baueModulElement(seite, mod));
+    }catch(fehler){
+      console.error("Home-Modul konnte nicht gerendert werden:", mod?.typ, fehler);
+    }
+  });
+  if(!buehneEl.querySelector(".modul")){
+    renderHomeNotfall(buehneEl);
+  }
 
   if(bearbeitenModus){
     buehneEl.appendChild(baueHintergrundLeiste(seite, renderHomeBuehne));
@@ -1909,6 +1918,66 @@ function zeigeToast(text){
 }
 
 
+
+/* ============================================================
+   NOTFALL-RENDERER HOME
+   Unabhängig von Cloud/alten Modul-Daten. Wenn die normale
+   Modul-Engine keine einzige Karte erzeugt, wird die Tafel
+   trotzdem sofort mit sichtbaren Werkzeugfenstern aufgebaut.
+   ============================================================ */
+function renderHomeNotfall(buehneEl){
+  const karten = [
+    {t:"Tagesplan", c:"#2472bd", x:35,y:125,w:300,h:590, html:"🕗 8:00 &nbsp; Ankommen<br>👥 8:30 &nbsp; Morgenkreis<br>🔢 9:00 &nbsp; Mathe<br>🍎 10:00 &nbsp; Frühstück<br>🔤 10:30 &nbsp; Deutsch<br>⚽ 11:30 &nbsp; Pause<br>🎨 12:00 &nbsp; Kunst<br>🏠 13:00 &nbsp; Ende"},
+    {t:"Verhalten", c:"#47a354", x:365,y:145,w:170,h:300, html:"<div style='font-size:72px;text-align:center'>🚦</div><div style='text-align:center;font-weight:800'>Wir sind leise,<br>wir helfen uns,<br>wir sind ein Team! ♡</div>"},
+    {t:"Timer", c:"#2472bd", x:565,y:145,w:245,h:300, html:"<div style='font-size:52px;text-align:center;font-weight:900;margin-top:50px'>15:00</div><div style='text-align:center;font-size:34px;margin-top:25px'>➖ &nbsp; ⏸️</div>"},
+    {t:"Geburtstag", c:"#ef851c", x:840,y:145,w:285,h:300, html:"<div style='font-size:50px;text-align:center'>🎈🎉</div><div style='text-align:center;font-size:25px;font-weight:800'>Heute hat<br>jemand Geburtstag!</div>"},
+    {t:"Notizen", c:"#77509b", x:365,y:480,w:330,h:220, html:"Bitte an Sportzeug denken!<br><br>Hier ist Platz für wichtige Mitteilungen. ♡"},
+    {t:"Wetter", c:"#2784b9", x:725,y:480,w:220,h:220, html:"<div style='font-size:62px;text-align:center'>🌤️</div><div style='font-size:34px;text-align:center;font-weight:900'>22°C</div><div style='text-align:center'>leicht bewölkt</div>"},
+    {t:"Unsere Regeln", c:"#3b9a46", x:975,y:480,w:300,h:220, html:"✓ Wir hören zu<br><br>✓ Wir sind freundlich<br><br>✓ Wir halten Ordnung<br><br>✓ Wir geben unser Bestes"},
+  ];
+
+  const welcome=document.createElement("div");
+  welcome.className="notfall-welcome";
+  welcome.textContent="Herzlich Willkommen! ☀️";
+  Object.assign(welcome.style,{position:"absolute",left:"390px",top:"35px",width:"700px",textAlign:"center",fontFamily:"var(--schrift-rund)",fontSize:"39px",fontWeight:"800",color:"#fff",textShadow:"0 3px 1px rgba(0,0,0,.25)"});
+  buehneEl.appendChild(welcome);
+
+  karten.forEach((k,i)=>{
+    const el=document.createElement("div");
+    el.className="modul notfall-modul"+(bearbeitenModus?" modul-bearbeitbar":"");
+    Object.assign(el.style,{left:k.x+"px",top:k.y+"px",width:k.w+"px",height:k.h+"px",zIndex:String(i+2),background:"#fffdf5",borderRadius:"10px",overflow:bearbeitenModus?"visible":"hidden"});
+    el.innerHTML=`<div style="background:${k.c};color:white;padding:9px 12px;text-align:center;font-family:var(--schrift-rund);font-size:16px;font-weight:800">${k.t}</div><div class="nf-body" style="padding:14px;font-size:16px;line-height:1.55">${k.html}</div>`;
+    if(bearbeitenModus) notfallGriffe(el);
+    buehneEl.appendChild(el);
+  });
+
+  const uhr=document.createElement("div");
+  uhr.className="modul notfall-modul"+(bearbeitenModus?" modul-bearbeitbar":"");
+  Object.assign(uhr.style,{left:"1325px",top:"45px",width:"180px",height:"180px",zIndex:"20",background:"transparent",boxShadow:"none",border:"none",overflow:bearbeitenModus?"visible":"hidden"});
+  uhr.innerHTML="<div style='font-size:135px;line-height:1;text-align:center'>🕒</div>";
+  if(bearbeitenModus) notfallGriffe(uhr);
+  buehneEl.appendChild(uhr);
+}
+
+function notfallGriffe(el){
+  const drag=document.createElement("div"); drag.className="modul-griff"; drag.textContent="✥";
+  const del=document.createElement("div"); del.className="modul-loeschen"; del.textContent="✕";
+  const resize=document.createElement("div"); resize.className="modul-groesse";
+  el.append(drag,del,resize);
+
+  let d=null;
+  drag.onpointerdown=e=>{e.preventDefault();drag.setPointerCapture(e.pointerId);d={x:e.clientX,y:e.clientY,l:parseFloat(el.style.left),t:parseFloat(el.style.top)}};
+  drag.onpointermove=e=>{if(!d)return;el.style.left=Math.max(0,d.l+(e.clientX-d.x)/buehnenSkala)+"px";el.style.top=Math.max(0,d.t+(e.clientY-d.y)/buehnenSkala)+"px"};
+  drag.onpointerup=drag.onpointercancel=()=>d=null;
+
+  let r=null;
+  resize.onpointerdown=e=>{e.preventDefault();e.stopPropagation();resize.setPointerCapture(e.pointerId);r={x:e.clientX,y:e.clientY,w:el.offsetWidth,h:el.offsetHeight}};
+  resize.onpointermove=e=>{if(!r)return;el.style.width=Math.max(110,r.w+(e.clientX-r.x)/buehnenSkala)+"px";el.style.height=Math.max(90,r.h+(e.clientY-r.y)/buehnenSkala)+"px"};
+  resize.onpointerup=resize.onpointercancel=()=>r=null;
+  del.onclick=e=>{e.stopPropagation();el.remove()};
+}
+
+
 /* ============================================================
    STARTSEITEN-SICHERUNG
    Stellt die sichtbaren Werkzeuge unabhängig von alten/leeren
@@ -1965,6 +2034,7 @@ async function starteApp(){
   sichereHomeStartseite();
   buehneSkalieren();
   renderHome();
+  if(!document.querySelector("#home-buehne .modul")) renderHomeNotfall(document.getElementById("home-buehne"));
   zeigeAnsicht("home");
 
   cloudLaden.then(() => {
