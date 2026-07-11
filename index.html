@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Digitale Klassentafel – Die Füchse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DIGITALE KLASSENTAFEL – "Die Füchse"
+   Reines HTML5 / CSS3 / JavaScript (ES6) – ohne Frameworks.
+   Aufbau: Homescreen-Dashboard -> 4 Team-Bereiche + Kinder-Bereich
+   Jeder Bereich hat beliebig viele Seiten mit frei platzierbaren
+   und größenveränderbaren Modulen (Uhr, Timer, Ampel, Spiele ...).
+   Alle Daten werden in localStorage gespeichert (gerätelokal).
+   ============================================================ */
+
+:root{
+  --akzent:#E8722A;
+  --akzent-dunkel:#C25A18;
+  --bg:#FFF8EE;
+  --karte:#FFFFFF;
+  --text:#3A332C;
+  --weich:#8A7F72;
+  --rand:#EFE2CE;
+  --gruen:#3E8E5A;
+  --rot:#D64545;
+  --gelb:#D9A400;
+  --radius-gross:26px;
+  --radius-mittel:18px;
+  --radius-klein:12px;
+  --schatten:0 6px 20px rgba(58,51,44,.14);
+  --schatten-stark:0 12px 34px rgba(58,51,44,.22);
+  --schrift-rund:'Baloo 2','Comic Sans MS',cursive,sans-serif;
+  --schrift-klar:'Quicksand','Segoe UI',sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+html,body{height:100%; margin:0; overflow:hidden; background:#20211f;}
+body{font-family:var(--schrift-klar); color:var(--text);}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+input,textarea,select{font-family:inherit; font-size:16px; user-select:text;}
+img{max-width:100%; display:block;}
+.versteckt{display:none !important;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:#D8C9AE; border-radius:8px;}
+
+/* ---------- Grund-Layout: skalierbare Bühne für konsistentes Layout ---------- */
+/* Der Rahmen um die Bühne zeigt dieselbe Holz-Optik wie der Standard-Hintergrund –
+   dadurch wirkt die Tafel randlos und füllt den ganzen Bildschirm (kein weißer Kasten). */
+#bruecke{position:fixed; inset:0; overflow:hidden; background:repeating-linear-gradient(90deg,#9c7a52 0px,#8a6a45 60px,#a3805a 61px,#96754e 140px,#8a6a45 141px,#9c7a52 220px); display:flex; align-items:center; justify-content:center;}
+#buehne-wrapper{position:relative; width:1600px; height:900px; transform-origin:center center; flex-shrink:0;}
+#buehne{position:absolute; inset:0; background:transparent; overflow:hidden;}
+
+.ansicht{position:absolute; inset:0; overflow:hidden;}
+.ansicht.aus{display:none !important;}
+
+/* ---------- Homescreen: alles schwebt frei über dem Holz (wie im Vorbild) ---------- */
+#home{position:absolute; inset:0;}
+@keyframes hopp{0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-8px) rotate(-4deg)}}
+.home-pille{position:absolute; top:14px; left:14px; z-index:30; display:flex; align-items:center; gap:8px; background:#FFFBF2; border-radius:999px; padding:5px 18px 5px 10px; box-shadow:0 5px 14px rgba(40,32,20,.3);}
+.home-maskottchen{font-size:30px; animation:hopp 2.6s ease-in-out infinite;}
+.home-titel h1{font-family:var(--schrift-rund); font-size:19px; font-weight:800; color:var(--akzent); margin:0; line-height:1.05;}
+.home-titel .datum{color:var(--weich); font-weight:700; font-size:11px; text-transform:capitalize;}
+.home-controls{position:absolute; top:14px; right:14px; z-index:30; display:flex; gap:7px; align-items:center;}
+.home-controls .zahnrad-btn, .home-controls .bearbeiten-toggle{width:38px; height:38px; border-radius:11px; background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.8); font-size:16px; box-shadow:none; flex-shrink:0;}
+
+.team-reihe{display:flex; gap:7px; flex-shrink:0;}
+.team-btn{background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.8); border-radius:11px; padding:0 12px; height:38px; text-align:center; transition:transform .12s, background .15s; font-family:var(--schrift-rund); font-weight:700; font-size:13px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.3); white-space:nowrap; flex-shrink:0;}
+.team-btn:active{transform:scale(.94); background:var(--akzent); border-color:var(--akzent);}
+
+.home-buehne{position:absolute; inset:0; overflow:hidden;}
+.home-buehne.bearbeitbar{background-image:linear-gradient(#00000009 1px, transparent 1px), linear-gradient(90deg,#00000009 1px, transparent 1px); background-size:40px 40px;}
+.dash-geburtstag .foto{width:56px; height:56px; border-radius:50%; object-fit:cover; border:3px solid var(--gelb); flex-shrink:0;}
+.dash-geburtstag .foto-platzhalter{width:56px; height:56px; border-radius:50%; background:#FFF3D0; display:grid; place-items:center; font-size:28px; flex-shrink:0;}
+.dash-kinder-btn{position:absolute; left:50%; bottom:14px; transform:translateX(-50%); z-index:40; background:linear-gradient(135deg,var(--akzent),var(--akzent-dunkel)); color:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; gap:10px; font-family:var(--schrift-rund); font-size:17px; font-weight:800; box-shadow:0 6px 16px rgba(40,32,20,.35); padding:10px 24px;}
+.dash-kinder-btn .icon{font-size:22px; animation:hopp 2s ease-in-out infinite;}
+
+/* ---------- Hintergrund-Wähler (Seiten & Homescreen) ---------- */
+.hg-leiste{position:absolute; top:10px; left:10px; z-index:22; background:#fff; border-radius:14px; padding:8px; display:flex; gap:6px; box-shadow:var(--schatten); align-items:center;}
+.hg-swatch{width:30px; height:30px; border-radius:9px; border:3px solid transparent; flex-shrink:0;}
+.hg-swatch.aktiv{border-color:var(--akzent);}
+.hg-url{width:120px; font-size:12px; padding:6px 8px; border-radius:8px; border:1px solid var(--rand);}
+
+@media (max-width:900px){
+  .team-reihe{flex-wrap:wrap; justify-content:flex-end;}
+}
+
+/* ---------- Bereichs-Ansicht (Team & Kinder teilen sich das Grundgerüst) ---------- */
+#bereich{display:flex; flex-direction:column; height:100%;}
+.bereich-kopf{display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(255,251,242,.82); backdrop-filter:blur(6px); z-index:20;}
+.zurueck-btn{width:48px; height:48px; border-radius:16px; background:#FFFBF2; box-shadow:var(--schatten); font-size:22px;}
+.bereich-titel{font-family:var(--schrift-rund); font-weight:800; font-size:22px; color:var(--akzent); flex:1;}
+.seiten-leiste{display:flex; gap:6px; overflow-x:auto; max-width:44vw; padding:2px;}
+.seiten-tab{padding:9px 16px; border-radius:999px; background:#fff; font-weight:700; font-size:14px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,.08); border:2px solid transparent;}
+.seiten-tab.aktiv{background:var(--akzent); color:#fff; border-color:var(--akzent-dunkel);}
+.seiten-tab-neu{padding:9px 14px; border-radius:999px; background:#fff; font-weight:800; color:var(--akzent); border:2px dashed var(--akzent);}
+.bearbeiten-toggle{width:48px; height:48px; border-radius:14px; background:#fff; box-shadow:var(--schatten); font-size:20px;}
+.bearbeiten-toggle.an{background:var(--akzent); color:#fff;}
+
+.seiten-buehne{flex:1; position:relative; overflow:hidden; touch-action:pan-y;}
+.seite{position:absolute; inset:0; transition:transform .34s cubic-bezier(.22,.8,.3,1), opacity .34s; }
+.seite.bearbeitbar{background-image:linear-gradient(#00000009 1px, transparent 1px), linear-gradient(90deg,#00000009 1px, transparent 1px); background-size:40px 40px;}
+
+.seiten-punkte{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:7px; z-index:15;}
+.seiten-punkt{width:9px; height:9px; border-radius:50%; background:#ffffff88;}
+.seiten-punkt.aktiv{background:var(--akzent); width:24px; border-radius:6px;}
+
+.pfeil-nav{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:64px; background:#ffffffcc; border-radius:16px; font-size:22px; z-index:18; display:flex; align-items:center; justify-content:center; box-shadow:var(--schatten);}
+.pfeil-links{left:10px;} .pfeil-rechts{right:10px;}
+
+/* ---------- Werkzeugleiste im Bearbeiten-Modus ---------- */
+.werkzeug-leiste{position:absolute; left:0; right:0; bottom:0; background:#fff; box-shadow:0 -6px 20px rgba(0,0,0,.15); padding:10px 14px; display:flex; gap:8px; overflow-x:auto; z-index:25;}
+.werkzeug-btn{flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 10px; border-radius:12px; background:#FFF6E9; font-size:11px; font-weight:700; min-width:64px;}
+.werkzeug-btn .e{font-size:22px;}
+.seite-verwalten-leiste{position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:22;}
+.seite-verwalten-leiste button{background:#fff; box-shadow:var(--schatten); border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700;}
+
+/* ---------- Module ---------- */
+.modul{position:absolute; background:#FFFBF2; border-radius:22px; box-shadow:0 8px 22px rgba(58,51,44,.22); overflow:hidden; display:flex; flex-direction:column; border-bottom:6px solid var(--modfarbe,var(--akzent));}
+/* "Freie" Module (Uhr, Ampel) schweben ohne Karten-Kasten direkt auf dem Holz – wie im Vorbild */
+.modul-frei{background:transparent !important; box-shadow:none !important; border-bottom:none !important; overflow:visible !important;}
+.modul-frei .modul-inhalt{padding:0; overflow:visible;}
+.modul-bearbeitbar{outline:3px dashed var(--akzent); outline-offset:2px;}
+.modul-inhalt{flex:1; min-height:0; overflow:auto; padding:11px 12px; position:relative;}
+.modul-griff{position:absolute; top:4px; left:4px; width:34px; height:26px; background:#3A332C; border-radius:8px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; z-index:5; cursor:grab;}
+.modul-loeschen{position:absolute; top:4px; right:4px; width:26px; height:26px; background:var(--rot); border-radius:8px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; z-index:5;}
+.modul-groesse{position:absolute; bottom:2px; right:2px; width:24px; height:24px; z-index:5; cursor:nwse-resize;}
+.modul-groesse::after{content:''; position:absolute; right:5px; bottom:5px; width:12px; height:12px; border-right:4px solid var(--akzent); border-bottom:4px solid var(--akzent); border-radius:0 0 4px 0;}
+
+/* Modul-Typ-spezifische Innereien */
+.m-titel{font-family:var(--schrift-rund); font-weight:800; font-size:14px; margin-bottom:5px; color:var(--modfarbe,var(--akzent));}
+/* Bunte Fächer-Chips (Farbe wird per JS je Fach vergeben) */
+.fach-chip{display:block; color:#fff; font-family:var(--schrift-rund); font-weight:800; padding:8px 13px; border-radius:12px; margin:6px 0 0; font-size:15px; box-shadow:0 2px 4px rgba(0,0,0,.12);}
+.sp-tag-titel{font-family:var(--schrift-rund); font-weight:800; font-size:18px; color:var(--text); display:flex; align-items:center; gap:6px;}
+.m-text{font-size:14px; line-height:1.45; white-space:pre-wrap;}
+.m-bild img, .m-video video, .m-video iframe, .m-webseite iframe, .m-pdf iframe{width:100%; height:100%; border:none; border-radius:8px; object-fit:contain;}
+.m-bild figcaption{font-size:12px; color:var(--weich); text-align:center; margin-top:4px;}
+.m-leer-hinweis{color:var(--weich); font-size:14px; text-align:center; padding:14px;}
+
+.m-uhr-analog{width:100%; height:100%; display:grid; place-items:center; filter:drop-shadow(0 10px 20px rgba(40,32,20,.4));}
+.m-uhr-digital{font-size:clamp(28px,6vw,54px); font-weight:800; font-variant-numeric:tabular-nums; text-align:center; display:flex; align-items:center; justify-content:center; height:100%; background:#FFFBF2; border-radius:999px; box-shadow:0 8px 22px rgba(58,51,44,.3);}
+
+.m-timer{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; text-align:center;}
+.m-timer .anzeige{font-size:clamp(30px,7vw,54px); font-weight:800; font-variant-numeric:tabular-nums;}
+.m-timer .knopfreihe{display:flex; gap:6px; flex-wrap:wrap; justify-content:center;}
+.m-timer button, .m-stoppuhr button{background:var(--akzent); color:#fff; font-weight:800; border-radius:999px; padding:8px 16px; font-size:14px;}
+.m-timer button.stop, .m-stoppuhr button.stop{background:#fff; color:var(--akzent); border:2px solid var(--akzent);}
+
+.m-ampel{height:100%; display:grid; place-items:center;}
+.m-ampel .gehaeuse{background:#2b2b2b; border-radius:24px; padding:14px; display:flex; flex-direction:column; gap:12px; box-shadow:0 10px 26px rgba(0,0,0,.45);}
+.m-ampel .licht{width:clamp(44px, 42%, 96px); aspect-ratio:1; border-radius:50%; background:#4a4a4a;}
+.m-ampel .licht.an-rot{background:var(--rot); box-shadow:0 0 20px var(--rot);}
+.m-ampel .licht.an-gelb{background:var(--gelb); box-shadow:0 0 20px var(--gelb);}
+.m-ampel .licht.an-gruen{background:var(--gruen); box-shadow:0 0 20px var(--gruen);}
+
+.m-punkte table{width:100%; border-collapse:collapse; font-size:14px;}
+.m-punkte td{padding:5px 4px; border-bottom:1px solid var(--rand);}
+.m-punkte .stellknopf{width:26px; height:26px; background:#FFF3E6; border-radius:8px; font-weight:800;}
+.m-punkte input[type=text]{width:100%; border:none; background:transparent; font-weight:700;}
+
+.m-wuerfel{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
+.m-wuerfel .augen{font-size:clamp(40px,10vw,90px);}
+
+.m-rad{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
+.m-rad .radflaeche{position:relative; width:min(180px,80%); aspect-ratio:1;}
+.m-rad svg{width:100%; height:100%;}
+.m-rad .gewinner{font-weight:800; font-size:15px; min-height:20px;}
+
+.m-qr{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center;}
+.m-qr img{border-radius:8px; border:6px solid #fff; box-shadow:var(--schatten);}
+
+.m-lautstaerke{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;}
+.m-lautstaerke .balken-huelle{width:70%; height:18px; background:#F1E6D2; border-radius:999px; overflow:hidden;}
+.m-lautstaerke .balken{height:100%; width:0%; background:var(--gruen); transition:width .12s, background .2s;}
+.m-lautstaerke .status{font-weight:800; font-size:15px;}
+
+.m-smiley{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
+.m-smiley .aktuell{font-size:clamp(44px,10vw,80px);}
+
+/* ---------- Sternenkinder (Belohnungssystem) ---------- */
+@keyframes sk-glanz{0%,100%{box-shadow:0 0 18px rgba(217,164,0,.45)} 50%{box-shadow:0 0 32px rgba(217,164,0,.8)}}
+@keyframes sk-krone{0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)}}
+.m-sternenkinder{display:flex; flex-direction:column; gap:10px; height:100%; overflow:auto;}
+.sk-titel{font-family:var(--schrift-rund); font-weight:800; font-size:19px; color:var(--gelb); text-align:center;}
+.sk-spot{position:relative; background:linear-gradient(180deg,#FFF3C9,#FFE28A); border:3px solid var(--gelb); border-radius:20px; padding:12px 10px 10px; text-align:center; animation:sk-glanz 3s ease-in-out infinite;}
+.sk-spot .sk-krone{position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:26px; animation:sk-krone 2.6s ease-in-out infinite; display:inline-block;}
+.sk-spot .sk-avatar{font-size:52px; line-height:1;}
+.sk-spot .sk-name{font-family:var(--schrift-rund); font-weight:800; font-size:22px; margin-top:2px;}
+.sk-spot .sk-sterne{font-size:19px; letter-spacing:2px; margin-top:2px;}
+.sk-spot .sk-unter{font-size:12px; font-weight:700; color:#8A6400;}
+.sk-raster{display:grid; grid-template-columns:repeat(auto-fill,minmax(86px,1fr)); gap:7px;}
+.sk-karte{background:#fff; border:2px solid #F1E6D2; border-radius:14px; padding:7px 4px 6px; text-align:center;}
+.sk-karte.sk-fertig{background:linear-gradient(180deg,#FFF3C9,#FFE9A8); border-color:var(--gelb);}
+.sk-karte .a{font-size:24px; line-height:1.1;}
+.sk-karte .n{font-weight:800; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.sk-karte .s{font-size:10.5px; letter-spacing:1px;}
+.sk-karte .b{background:#EFE6D5; border-radius:99px; height:5px; margin-top:3px; overflow:hidden;}
+.sk-karte .b > div{height:100%; border-radius:99px; background:var(--gruen); transition:width .5s;}
+.sk-karte.sk-fertig .b > div{background:var(--gelb);}
+
+/* ---------- Guten Morgen in vielen Sprachen ---------- */
+.m-morgengruss{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; gap:6px;}
+.m-morgengruss .mg-flagge{font-size:34px;}
+.m-morgengruss .mg-satz{font-family:var(--schrift-rund); font-weight:800; font-size:19px; color:var(--text); line-height:1.2;}
+.m-morgengruss .mg-sprache{font-size:12px; font-weight:700; color:var(--weich); text-transform:uppercase; letter-spacing:.5px;}
+.m-morgengruss .mg-knopfreihe{display:flex; gap:6px; margin-top:4px;}
+.m-morgengruss button{border:none; border-radius:999px; font-weight:800; font-size:13px; padding:8px 16px; background:var(--akzent); color:#fff;}
+.m-morgengruss button.mg-shuffle{background:#fff; color:var(--akzent); border:2px solid var(--akzent); padding:8px 12px;}
+.m-morgengruss button:active{transform:scale(.94);}
+.m-morgengruss .mg-hinweis{font-size:10.5px; color:var(--weich); margin-top:2px;}
+
+.m-aufgaben ul{list-style:none; margin:0; padding:0;}
+.m-aufgaben li{display:flex; gap:8px; align-items:center; padding:4px 0; font-size:15px;}
+.m-aufgaben input[type=checkbox]{width:20px; height:20px;}
+.m-aufgaben li.erledigt span{text-decoration:line-through; color:var(--weich);}
+
+/* ---------- Kinder-Bereich: eigenes, verspieltes Design ---------- */
+.kinder-modus{--akzent:#F08A3C;}
+.kinder-modus #buehne{background:linear-gradient(180deg,#FFF4E0,#FFE8C2);}
+.kinder-modus .bereich-titel{font-size:26px;}
+.kinder-modus .modul{border-radius:26px; border:4px solid #fff;}
+.kinder-modus .m-titel{font-size:19px;}
+.kinder-modus .m-text{font-size:19px;}
+.kinder-gitter{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; height:100%; align-content:start;}
+.kinder-kachel{background:#fff; border-radius:20px; padding:14px 8px; text-align:center; box-shadow:var(--schatten);}
+.kinder-kachel .icon{font-size:36px;}
+.kinder-kachel .txt{font-weight:800; font-size:15px; margin-top:4px;}
+.kinder-einstiegs-btn{position:fixed; opacity:0; width:1px; height:1px;} /* Gear für Kinder-Bereich bewusst unauffällig, siehe JS (langes Drücken) */
+
+/* ---------- Einstellungen (Modal) ---------- */
+#einstellungen-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:100;}
+#einstellungen-panel{background:#fff; width:min(640px,92vw); max-height:88vh; overflow-y:auto; border-radius:24px; padding:22px;}
+#einstellungen-panel h2{font-family:var(--schrift-rund); color:var(--akzent); margin:0 0 14px;}
+.e-abschnitt{border:2px solid var(--rand); border-radius:16px; margin-bottom:12px; overflow:hidden;}
+.e-abschnitt > button.kopf{width:100%; text-align:left; padding:14px 16px; font-weight:800; font-size:16px; display:flex; justify-content:space-between; background:#FFFBF3;}
+.e-abschnitt .inhalt{padding:0 16px 16px;}
+.e-label{font-weight:700; font-size:13px; color:var(--weich); display:block; margin:8px 0 4px;}
+.e-input{width:100%; padding:11px 12px; border-radius:12px; border:2px solid var(--rand); background:#FFFCF6; margin-bottom:6px;}
+.e-btn{border:none; background:var(--akzent); color:#fff; font-weight:800; border-radius:12px; padding:10px 16px; font-size:14px;}
+.e-btn.sekundaer{background:#fff; color:var(--akzent); border:2px solid var(--akzent);}
+.e-farbe-swatch{width:34px; height:34px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.2); display:inline-block; margin:2px;}
+.e-farbe-swatch.aktiv{border-color:var(--text);}
+.e-schliessen{position:absolute; top:14px; right:16px; font-size:22px; background:#F1E6D2; width:36px; height:36px; border-radius:50%;}
+.e-zeile{display:flex; gap:6px; align-items:center; margin-bottom:6px;}
+.e-zeile input{flex:1;}
+.e-geb-foto{width:34px; height:34px; border-radius:50%; object-fit:cover; background:#eee; flex-shrink:0;}
+
+/* ---------- Modul-Palette (beim Hinzufügen im Bearbeiten-Modus) ---------- */
+#palette-overlay{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:90; display:flex; align-items:flex-end; justify-content:center;}
+#palette-panel{background:#fff; width:100%; max-width:700px; border-radius:24px 24px 0 0; padding:18px; max-height:70vh; overflow-y:auto;}
+.palette-raster{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+.palette-item{background:#FFF6E9; border-radius:14px; padding:12px 6px; text-align:center; font-size:12px; font-weight:700;}
+.palette-item .e{font-size:26px; display:block; margin-bottom:4px;}
+
+/* ---------- Seiten-Übersicht (Overlay) ---------- */
+#seiten-overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:95; display:flex; align-items:center; justify-content:center;}
+#seiten-panel{background:#fff; border-radius:20px; padding:20px; width:min(500px,90vw); max-height:80vh; overflow-y:auto;}
+.seiten-liste-item{display:flex; align-items:center; gap:8px; padding:10px; border-radius:12px; background:#FFFBF3; margin-bottom:8px;}
+.seiten-liste-item input{flex:1; border:none; background:transparent; font-weight:700;}
+
+@media(hover:hover){ .team-btn:hover{transform:translateY(-2px);} }
+
+
+/* ===== DIGIBOARD 2.0 – helles, freundliches Cloud-Design ===== */
+:root{
+  --akzent:#ff7a59; --akzent-dunkel:#e85d3f; --bg:#f4fbff; --karte:#ffffff;
+  --text:#25324a; --weich:#71809a; --rand:#dcecf4; --gruen:#30b875;
+  --rot:#ef6671; --gelb:#f6bd3a; --schatten:0 10px 30px rgba(48,91,120,.13);
+  --schatten-stark:0 18px 45px rgba(48,91,120,.18);
+}
+html,body{background:#dff4ff;}
+#bruecke{background:linear-gradient(135deg,#e7f8ff 0%,#fff7e9 48%,#edfff4 100%);}
+#buehne{background:transparent;}
+.home-pille{background:rgba(255,255,255,.94);border:2px solid rgba(255,255,255,.9);box-shadow:var(--schatten);padding:8px 20px 8px 12px;}
+.home-titel h1{color:#ff6f4d;font-size:22px;}
+.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{background:rgba(255,255,255,.9);border:2px solid #fff;color:#33415c;text-shadow:none;box-shadow:0 6px 18px rgba(48,91,120,.12);}
+.team-btn:active,.team-btn:hover{background:#fff0e9;border-color:#ffb39f;color:#e85d3f;}
+.modul{background:rgba(255,255,255,.96);border:2px solid rgba(255,255,255,.95);border-bottom:7px solid var(--modfarbe,var(--akzent));box-shadow:var(--schatten);}
+.modul-frei{background:transparent!important;border:none!important;}
+.bereich-kopf{background:rgba(255,255,255,.88);border-bottom:1px solid #dcecf4;box-shadow:0 6px 22px rgba(48,91,120,.10);}
+.zurueck-btn,.bearbeiten-toggle,.seiten-tab,.seiten-tab-neu{box-shadow:0 5px 16px rgba(48,91,120,.12);}
+.seiten-tab.aktiv{background:linear-gradient(135deg,#ff8b6f,#ff6f4d);border-color:#ff6f4d;}
+.dash-kinder-btn{background:linear-gradient(135deg,#32c98a,#24aef0);box-shadow:0 10px 25px rgba(36,174,240,.28);}
+.werkzeug-leiste{background:rgba(255,255,255,.96);}
+.werkzeug-btn,.palette-item{background:#edf9ff;}
+#einstellungen-panel,#palette-panel,#seiten-panel{background:#fbfeff;box-shadow:0 24px 60px rgba(21,52,72,.25);}
+.e-abschnitt{border-color:#dcecf4}.e-abschnitt>button.kopf{background:#f2fbff}.e-input{background:#fff;border-color:#dcecf4;}
+.cloud-status{position:absolute;left:50%;top:15px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 6px 18px rgba(48,91,120,.13);font-size:12px;font-weight:800;color:#53637c;}
+.cloud-status .punkt{width:10px;height:10px;border-radius:50%;background:#f6bd3a}.cloud-status.online .punkt{background:#30b875;box-shadow:0 0 0 4px rgba(48,184,117,.14)}.cloud-status.fehler .punkt{background:#ef6671}.cloud-status.sync .punkt{animation:puls 1s infinite}
+@keyframes puls{50%{transform:scale(.55);opacity:.45}}
+#dienst-overlay{position:fixed;inset:0;z-index:150;background:linear-gradient(135deg,#e7f8ff,#fff7e9 55%,#edfff4);overflow:auto;padding:26px;}
+.dienst-kopf{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;gap:14px;background:#fff;border-radius:24px;padding:18px 22px;box-shadow:var(--schatten)}
+.dienst-kopf h1{font-family:var(--schrift-rund);margin:0;flex:1;color:#25324a}.dienst-schliessen{width:48px;height:48px;border-radius:16px;background:#edf9ff;font-size:22px}
+.dienst-hinweis{max-width:1100px;margin:0 auto 18px;text-align:center;color:#63738c;font-weight:700}
+.dienst-raster{max-width:1100px;margin:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.dienst-kind{background:#fff;border-radius:24px;padding:18px;text-align:center;box-shadow:var(--schatten);border:3px solid #fff}.dienst-avatar{font-size:52px}.dienst-name{font-family:var(--schrift-rund);font-size:21px;font-weight:800;margin:6px 0}.dienst-stand{font-size:14px;color:#71809a;margin-bottom:12px}.dienst-aktionen{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dienst-aktionen button{border-radius:15px;padding:12px 8px;color:#fff;font-weight:800;font-size:13px}.dienst-gruen{background:linear-gradient(135deg,#49cf8d,#27ae6f)}.dienst-gold{background:linear-gradient(135deg,#ffd45d,#f0a91e)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:250;background:#25324a;color:#fff;border-radius:999px;padding:12px 22px;font-weight:800;box-shadow:var(--schatten-stark);animation:toastrein .25s ease-out}@keyframes toastrein{from{transform:translate(-50%,20px);opacity:0}}
+
+
+/* ===== KLASSENTAFEL – MITTLERER TAFELBEREICH ===== */
+:root{--akzent:#ef7b2d;--akzent-dunkel:#c95d1c;--text:#26352d;--weich:#6d786f;--rand:#e5dfd2;--gruen:#47a354;--rot:#dc5757;--gelb:#e9b830;--schatten:0 10px 24px rgba(14,31,22,.28);}
+html,body{background:#d8d3c7;}
+#bruecke{background:#d8d3c7;}
+#home{background:#d8d3c7;}
+#home::before{content:"";position:absolute;inset:15px;border-radius:10px;background:repeating-linear-gradient(90deg,#ad6e31 0 44px,#cc914b 45px 89px,#965826 90px 134px);box-shadow:0 16px 40px rgba(40,25,12,.42),inset 0 0 0 5px rgba(91,48,18,.45);z-index:0;pointer-events:none;}
+#home::after{content:"";position:absolute;inset:35px;border-radius:4px;background:radial-gradient(circle at 20% 25%,rgba(255,255,255,.04) 0 2px,transparent 3px),linear-gradient(135deg,#2c5e42,#234d37 60%,#193b2a);box-shadow:inset 0 0 70px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.06);z-index:1;pointer-events:none;}
+.home-pille{display:none!important;}
+.home-buehne{z-index:3!important;left:35px!important;right:35px!important;top:35px!important;bottom:35px!important;inset:auto!important;background:transparent!important;overflow:hidden!important;}
+.home-controls{top:24px;right:31px;z-index:90;gap:7px;}
+.home-controls .zahnrad-btn,.home-controls .bearbeiten-toggle,.team-btn{height:40px;min-width:42px;padding:0 13px;border-radius:10px;background:rgba(16,39,31,.90);border:1px solid rgba(255,255,255,.28);color:#fff;text-shadow:none;box-shadow:0 5px 14px rgba(0,0,0,.28);}
+.cloud-status{top:25px!important;z-index:90!important;background:rgba(16,39,31,.90)!important;color:#eaf8eb!important;border:1px solid rgba(255,255,255,.22);}
+.dash-kinder-btn{right:48px;left:auto;bottom:22px;transform:none;z-index:90;background:linear-gradient(135deg,#ef7b2d,#cf5c1d);border:2px solid rgba(255,255,255,.7);}
+#home .modul{z-index:10;background:#fffdf5;border:1px solid rgba(255,255,255,.95);border-bottom:none;border-radius:10px;box-shadow:0 9px 20px rgba(0,0,0,.30);overflow:hidden;}
+#home .modul-frei{background:transparent!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
+#home .modul-inhalt{padding:0 13px 12px;}
+#home .m-titel,#home .sp-tag-titel{margin:0 -13px 11px;padding:8px 12px;background:var(--modfarbe,var(--akzent));color:#fff!important;font-size:16px;line-height:1.15;text-align:center;text-shadow:0 1px 1px rgba(0,0,0,.2);}
+#home .home-welcome{background:transparent!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
+#home .home-welcome .modul-inhalt{padding:0!important;overflow:visible!important;}
+#home .home-welcome .m-titel{display:none!important;}
+#home .home-welcome .m-text{font-family:var(--schrift-rund);font-size:39px;font-weight:800;color:#fff;text-align:center;white-space:nowrap;text-shadow:0 3px 1px rgba(0,0,0,.25);}
+#home .home-welcome .m-text::after{content:"  ☀️";font-size:31px;}
+#home .home-stundenplan{--modfarbe:#2472bd;}#home .home-geburtstage{--modfarbe:#ef851c;}#home .home-wetter{--modfarbe:#2784b9;}#home .home-besonderheiten{--modfarbe:#77509b;}#home .home-regeln{--modfarbe:#3b9a46;}#home .home-timer{--modfarbe:#2472bd;}
+#home .modul-bearbeitbar{outline:3px dashed #ff8a35!important;outline-offset:3px!important;overflow:visible!important;}
+#home .modul-griff{top:-15px;left:-15px;width:38px;height:38px;border-radius:12px;background:#26352d;z-index:999;touch-action:none;}
+#home .modul-loeschen{top:-15px;right:-15px;width:38px;height:38px;border-radius:12px;background:#e25454;z-index:999;cursor:pointer;}
+#home .modul-groesse{right:-14px;bottom:-14px;width:42px;height:42px;border-radius:12px;background:#fff7e8;box-shadow:0 4px 12px rgba(0,0,0,.28);z-index:999;touch-action:none;}
+#einstellungen-overlay,#palette-overlay,#seiten-overlay{z-index:500!important;pointer-events:auto!important;}
+#einstellungen-panel,#palette-panel,#seiten-panel{position:relative;z-index:501;background:#fffaf0;border:5px solid #9b642e;box-shadow:0 25px 65px rgba(0,0,0,.38);}
+.e-schliessen{position:sticky!important;float:right;top:0!important;right:0!important;z-index:999!important;width:46px!important;height:46px!important;background:#e25454!important;color:#fff!important;box-shadow:0 4px 12px rgba(0,0,0,.25);}
+
+
+/* ===== REPARATUR: sichtbare Werkzeug-Griffe auf der Startseite ===== */
+#home .modul-bearbeitbar{pointer-events:auto!important;}
+#home .modul-bearbeitbar .modul-griff,
+#home .modul-bearbeitbar .modul-loeschen,
+#home .modul-bearbeitbar .modul-groesse{display:flex!important;pointer-events:auto!important;}
+#home .modul-griff::after{content:" verschieben";font-size:11px;font-weight:800;margin-left:5px;}
+#home .modul-griff{width:104px!important;justify-content:center!important;}
+#home .modul-loeschen{font-weight:900!important;}
+#home .modul-groesse::before{content:"↘";position:absolute;inset:0;display:grid;place-items:center;font-size:24px;font-weight:900;color:var(--akzent);}
+#home .modul-groesse::after{display:none!important;}
+
+</style>
+</head>
+<body>
+<div id="bruecke">
+  <div id="buehne-wrapper">
+    <div id="buehne">
+
+      <!-- ========== HOMESCREEN ========== -->
+      <section id="home" class="ansicht">
+        <div class="home-buehne" id="home-buehne">
+          <!-- Frei verschiebbare, größenveränderbare Karten – JS generiert -->
+        </div>
+
+        <!-- Schwebende Kopf-Elemente über dem Holz (Digitaluhr bewusst entfernt:
+             die Kinder lesen die analoge Uhr auf der Tafelfläche) -->
+        <div class="home-pille">
+          <div class="home-maskottchen" id="home-maskottchen">🦊</div>
+          <div class="home-titel">
+            <h1 id="home-klassenname">Die Füchse</h1>
+            <div class="datum" id="home-datum">Montag, 1. Januar</div>
+          </div>
+        </div>
+        <div class="home-controls">
+          <div class="team-reihe" id="team-reihe"><!-- 3 dezente Team-Buttons, JS generiert --></div>
+          <button class="bearbeiten-toggle" id="btn-home-bearbeiten" title="Karten verschieben/verändern">✏️</button>
+          <button class="zahnrad-btn" id="btn-einstellungen" title="Einstellungen">⚙️</button>
+        </div>
+
+        <button class="dash-kinder-btn" id="btn-kinder">
+          <span class="icon">🦊</span> Für euch Kinder <span class="icon">🦊</span>
+        </button>
+      </section>
+
+      <!-- ========== BEREICH (Team & Kinder gemeinsam genutzt) ========== -->
+      <section id="bereich" class="ansicht aus">
+        <div class="bereich-kopf">
+          <button class="zurueck-btn" id="btn-zurueck-home">←</button>
+          <div class="bereich-titel" id="bereich-titel">Bereich</div>
+          <div class="seiten-leiste" id="seiten-leiste"></div>
+          <button class="bearbeiten-toggle" id="btn-bearbeiten" title="Bearbeiten">✏️</button>
+        </div>
+        <div class="seiten-buehne" id="seiten-buehne">
+          <!-- Seiten werden hier per JS eingefügt -->
+          <button class="pfeil-nav pfeil-links" id="pfeil-links">‹</button>
+          <button class="pfeil-nav pfeil-rechts" id="pfeil-rechts">›</button>
+          <div class="seiten-punkte" id="seiten-punkte"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== EINSTELLUNGEN (Modal) ========== -->
+<div id="einstellungen-overlay" class="versteckt">
+  <div id="einstellungen-panel">
+    <button class="e-schliessen" id="btn-einstellungen-schliessen">✕</button>
+    <h2>⚙️ Einstellungen</h2>
+    <div id="einstellungen-inhalt"><!-- JS generiert Abschnitte --></div>
+  </div>
+</div>
+
+<!-- ========== MODUL-PALETTE ========== -->
+<div id="palette-overlay" class="versteckt">
+  <div id="palette-panel">
+    <h2 style="font-family:var(--schrift-rund); color:var(--akzent); margin:0 0 12px;">Modul hinzufügen</h2>
+    <div class="palette-raster" id="palette-raster"></div>
+  </div>
+</div>
+
+<!-- ========== SEITEN-ÜBERSICHT ========== -->
+<div id="seiten-overlay" class="versteckt">
+  <div id="seiten-panel">
+    <h2 style="font-family:var(--schrift-rund); color:var(--akzent); margin:0 0 12px;">Seiten verwalten</h2>
+    <div id="seiten-liste-inhalt"></div>
+    <button class="e-btn" id="btn-seite-hinzufuegen" style="width:100%; margin-top:8px;">+ Neue Seite</button>
+    <button class="e-btn sekundaer" id="btn-seiten-fertig" style="width:100%; margin-top:8px;">Fertig</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1) DATENMODELL & PERSISTENZ
+   Alles liegt in einem einzigen "daten"-Objekt, das nach jeder
+   Änderung komplett in localStorage gespeichert wird. Das hält
+   die App einfach: eine Quelle der Wahrheit, ein Speicherplatz.
+   ============================================================ */
+const SPEICHER_SCHLUESSEL = "klassentafel-fuchs-v1";
+const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwpvLJek_ZM2YaKX8A051HQAayuAy9qQ9E3jeR3qt_dmbDjTFHGcLIk4MLT-XnVgci8/exec";
+const CLOUD_AKTIV = true;
+let cloudBereit = false;
+let cloudSpeicherTimer = null;
+let letzteCloudVersion = 0;
+const WOCHENTAGE = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
+const FARBPALETTE = ["#E8722A","#3E8E5A","#3B82C4","#C94F6D","#D9A400","#8B5CB8","#189E96","#E85D5D"];
+const MASKOTTCHEN_AUSWAHL = ["🦊","🐻","🦁","🐸","🦉","🐧","🐰","🐨","🐯","🦋","🐬","🦔"];
+
+// Hintergründe für Seiten & Homescreen – frei wählbar, siehe Hintergrund-Wähler (🎨)
+const HINTERGRUENDE = {
+  holz:   { name:"Hell & freundlich", css:"linear-gradient(135deg,#e7f8ff 0%,#fff7e9 48%,#edfff4 100%)" },
+  tafel:  { name:"Kreidetafel", css:"radial-gradient(ellipse at 30% 20%, #3d5c4a 0%, #2e4a39 60%, #263f30 100%)" },
+  blau:   { name:"Schreibtisch",css:"radial-gradient(ellipse at 40% 30%, #1c7a8c 0%, #14606f 70%, #0f4e5b 100%)" },
+  kork:   { name:"Korkwand",    css:"radial-gradient(circle at 20% 30%, #c99a62 2px, transparent 3px), radial-gradient(circle at 70% 60%, #b98a52 2px, transparent 3px), radial-gradient(circle at 45% 80%, #c99a62 2px, transparent 3px), linear-gradient(135deg,#d1a76f,#c2955c)" },
+  papier: { name:"Papier",      css:"linear-gradient(#fdf8ee 96%, #e8ddc8 100%)" },
+  nacht:  { name:"Nachthimmel", css:"radial-gradient(circle at 80% 10%, #4a5a8a 0%, #232b4a 40%, #151a30 100%)" },
+};
+
+// Eindeutige IDs ohne externe Bibliothek
+function neueId(){ return Math.random().toString(36).slice(2,10); }
+
+// Eine neue, leere Seite mit Namen
+function neueSeite(name){ return { id: neueId(), name, module: [], hintergrund:"holz", eigenerHintergrund:"" }; }
+
+// Ein neues Modul mit typabhängigen Standarddaten und Startgröße/-position
+function neuesModul(typ, x=60, y=60){
+  const groessen = {
+    text:[280,160], bild:[280,210], video:[360,220], webseite:[400,280], pdf:[360,280],
+    aufgaben:[260,240], timer:[200,180], stoppuhr:[190,170], uhr:[160,160], ampel:[120,240],
+    punkte:[260,240], zufallsgenerator:[250,230], wuerfel:[190,200], qrcode:[200,240],
+    lautstaerke:[230,170], smiley:[190,190], info:[250,200], sternenkinder:[330,440], morgengruss:[260,210],
+  };
+  const [w,h] = groessen[typ] || [300,240];
+  const daten = {
+    text:{ titel:"Notiz", inhalt:"Hier steht euer Text …" },
+    bild:{ url:"", unterschrift:"" },
+    video:{ url:"" },
+    webseite:{ url:"" },
+    pdf:{ url:"", titel:"Arbeitsblatt" },
+    aufgaben:{ titel:"Aufgaben", punkte:[{text:"Seite 12 lesen", erledigt:false}] },
+    timer:{ presets:[1,5,10] },
+    stoppuhr:{},
+    uhr:{ digital:false },
+    ampel:{ stand:"gruen" },
+    punkte:{ titel:"Punkte", zeilen:[{name:"Team A", punkte:0},{name:"Team B", punkte:0}] },
+    zufallsgenerator:{ eintraege:[], quelle:"eigene" },
+    wuerfel:{ anzahl:1 },
+    qrcode:{ text:"https://example.com" },
+    lautstaerke:{ schwelle:60 },
+    smiley:{ arten:["😀","😐","😢","😡","😴"], index:0 },
+    info:{ art:"stundenplan" },
+    sternenkinder:{ titel:"Unsere Sternenkinder", punkteProStern:5, zielSterne:5 },
+    morgengruss:{},
+  }[typ] || {};
+  return { id:neueId(), typ, x, y, w, h, z:1, daten };
+}
+
+// Vier feste Team-Bereiche + Kinder-Bereich, jeweils mit ihren eigenen Seiten
+function standardBereich(seitenNamen){
+  return { seiten: seitenNamen.map((n) => neueSeite(n)), seiteIndex:0 };
+}
+
+const STANDARD_DATEN = {
+  einstellungen:{
+    klassenname:"Die Füchse",
+    maskottchen:"🦊",
+    farbe:"#E8722A",
+    namen:{ lehrerin1:"Frau Wetsch", lehrerin2:"Frau Terlinden", erzieher:"Freizeit", ergaenzung:"offen" },
+  },
+  stundenplan:{
+    Montag:["Deutsch","Mathe","Sport","Musik"], Dienstag:["Mathe","Deutsch","Sachunterricht","Kunst"],
+    Mittwoch:["Deutsch","Mathe","Religion","Sport"], Donnerstag:["Mathe","Deutsch","Sachunterricht","Musik"],
+    Freitag:["Deutsch","Mathe","Klassenrat"],
+  },
+  essensplan:{
+    Montag:"Nudeln mit Tomatensoße", Dienstag:"Kartoffelsuppe", Mittwoch:"Fischstäbchen mit Püree",
+    Donnerstag:"Gemüsereis", Freitag:"Pizza mit Salat",
+  },
+  nachtisch:{ Montag:"Joghurt", Dienstag:"Obst", Mittwoch:"Pudding", Donnerstag:"Kekse", Freitag:"Eis" },
+  geburtstage:[ /* {name, monat, tag, foto} */ ],
+  besonderheiten:[ /* {text} - gilt für "heute", einfache Liste */ ],
+  mitteilungen:"",
+  wetter:{ icon:"☀️", text:"Sonnig" },
+  ziele:["Wir hören einander zu.","Wir räumen unseren Platz auf."],
+  klassenregeln:["Wir sind leise, wenn jemand spricht.","Wir gehen in der Zweierreihe.","Wir sind nett zueinander."],
+  schueler:[
+    {name:"Anna",punkte:8},{name:"Ben",punkte:5},{name:"Clara",punkte:11},
+    {name:"David",punkte:3},{name:"Emma",punkte:9},{name:"Finn",punkte:6},
+  ],
+  countdown:{ ziel:"", bezeichnung:"Sommerferien" },
+
+  bereiche:{
+    home: standardBereich(["Start"]),
+    lehrerin1: standardBereich(["Tagesplan","Deutsch","Mathematik","Sachunterricht","Übungen","Spiele","Medien"]),
+    lehrerin2: standardBereich(["Tagesplan","Deutsch","Mathematik","Sachunterricht","Übungen","Spiele","Medien"]),
+    erzieher: standardBereich(["Freizeitangebote","Spiele","Bewegung","Kreativangebote","Regeln","Belohnungssystem","Abschlusskreis"]),
+    ergaenzung: standardBereich(["Meine Seite"]),
+    kinder: standardBereich(["Heute","Geburtstage","Spiele & Regeln","Sterne","Wie fühlst du dich?"]),
+  },
+};
+
+// Startinhalt der Homescreen-Bühne: freistehende, frei verschiebbare Karten
+// (Begrüßung, Ampel, Uhr, Stundenplan, Geburtstage, Wetter, Besonderheiten) –
+// wie im gewünschten Vorbild, statt eines starren Tabellen-Rasters.
+(function fuelleHomeStandard(){
+  const h = STANDARD_DATEN.bereiche.home.seiten[0];
+  h.hintergrund = "holz";
+  const hinzu = (typ, x, y, w, h_) => { const m = neuesModul(typ, x, y); if(w) m.w=w; if(h_) m.h=h_; return m; };
+
+  // Startpositionen halten oben Platz frei für die schwebende Klassen-Pille
+  // (links) und die Team-/Einstellungs-Knöpfe (rechts).
+  const begruessung = hinzu("text", 40, 90, 340, 150);
+  begruessung.daten = { titel:"Guten Morgen! ☀️", inhalt:"Heute wird ein toller Tag.\nDenkt an eure Hausaufgaben." };
+  h.module.push(begruessung);
+
+  const ampel = hinzu("ampel", 470, 90, 120, 240);
+  h.module.push(ampel);
+
+  const uhr = hinzu("uhr", 1380, 90, 165, 165);
+  h.module.push(uhr);
+
+  // Bewusst schmal wie im Vorbild (Hochformat) – bei Bedarf im
+  // Bearbeiten-Modus an der Ecke einfach größer ziehen.
+  const stundenplan = hinzu("info", 40, 280, 260, 330); stundenplan.daten.art = "stundenplan";
+  h.module.push(stundenplan);
+
+  const geburtstage = hinzu("info", 680, 90, 270, 170); geburtstage.daten.art = "geburtstage";
+  h.module.push(geburtstage);
+
+  const wetter = hinzu("info", 680, 300, 250, 160); wetter.daten.art = "wetter";
+  h.module.push(wetter);
+
+  const besonderheiten = hinzu("info", 1250, 320, 290, 170); besonderheiten.daten.art = "besonderheiten";
+  h.module.push(besonderheiten);
+})();
+
+// Startinhalt für die Kinder-Seiten: automatische Info-Module, die live aus den
+// Einstellungen gespeist werden (Essen, Stundenplan, Geburtstage ...). So muss
+// das Team nichts doppelt eintragen – der Kinder-Bereich zeigt einfach dieselben
+// Daten, nur besonders groß und kindgerecht aufbereitet.
+(function fuelleKinderStandard(){
+  const k = STANDARD_DATEN.bereiche.kinder;
+  const setzeInfo = (seiteIdx, art, x, y, w, h) => {
+    const m = neuesModul("info", x, y); m.daten.art = art; if(w) m.w=w; if(h) m.h=h;
+    k.seiten[seiteIdx].module.push(m);
+  };
+  // Seite 0 "Heute": Essen, Nachtisch, Stundenplan, Wetter im Überblick
+  setzeInfo(0,"essen",40,40,360,220);
+  setzeInfo(0,"nachtisch",420,40,300,220);
+  setzeInfo(0,"stundenplan",40,280,360,260);
+  setzeInfo(0,"wetter",420,280,300,180);
+  // Seite 1 "Geburtstage"
+  setzeInfo(1,"geburtstage",60,60,420,260);
+  // Seite 2 "Spiele & Regeln": Regeln + Ziel + Besonderheiten
+  setzeInfo(2,"regeln",40,40,380,300);
+  setzeInfo(2,"ziel",440,40,300,180);
+  setzeInfo(2,"besonderheiten",440,240,300,220);
+  const rad = neuesModul("zufallsgenerator",760,40); rad.w=280; rad.h=320; rad.daten.quelle="kinder"; k.seiten[2].module.push(rad);
+  // Seite 3 "Sterne": Punktestand als Info-Anzeige
+  setzeInfo(3,"sterne",60,60,500,360);
+  // Seite 4 "Wie fühlst du dich?": Smiley + Countdown
+  const smiley = neuesModul("smiley",100,80); smiley.w=280; smiley.h=260; k.seiten[4].module.push(smiley);
+  setzeInfo(4,"countdown",440,80,320,220);
+})();
+
+let daten = null; // wird beim Start geladen
+
+async function datenLaden(){
+  let lokal = null;
+  try{
+    const roh = localStorage.getItem(SPEICHER_SCHLUESSEL);
+    if(roh) lokal = JSON.parse(roh);
+  }catch(e){ console.warn("Lokale Daten konnten nicht gelesen werden.", e); }
+
+  daten = lokal ? datenZusammenfuehren(lokal) : JSON.parse(JSON.stringify(STANDARD_DATEN));
+
+  if(!CLOUD_AKTIV) return;
+  cloudStatus("sync", "Cloud wird geladen …");
+  try{
+    const antwort = await fetch(CLOUD_API_URL + "?action=load&t=" + Date.now(), {cache:"no-store", redirect:"follow"});
+    if(!antwort.ok) throw new Error("HTTP " + antwort.status);
+    const text = await antwort.text();
+    let paket;
+    try{ paket = JSON.parse(text); }catch(_){ paket = null; }
+    const cloudDaten = paket?.data || paket?.daten || paket?.value || (paket?.einstellungen ? paket : null);
+    if(cloudDaten && typeof cloudDaten === "object"){
+      daten = datenZusammenfuehren(cloudDaten);
+      localStorage.setItem(SPEICHER_SCHLUESSEL, JSON.stringify(daten));
+      letzteCloudVersion = Number(paket?.version || paket?.updatedAt || Date.now());
+      cloudBereit = true;
+      cloudStatus("online", "Cloud verbunden");
+    }else{
+      cloudBereit = true;
+      cloudStatus("online", "Cloud bereit – lokale Daten aktiv");
+      cloudSpeichern(true);
+    }
+  }catch(e){
+    console.warn("Cloud nicht erreichbar – lokaler Modus bleibt aktiv.", e);
+    cloudStatus("fehler", "Offline – lokal gespeichert");
+  }
+}
+
+function datenZusammenfuehren(quelle){
+  const basis = JSON.parse(JSON.stringify(STANDARD_DATEN));
+  const ergebnis = { ...basis, ...quelle };
+  ergebnis.einstellungen = { ...basis.einstellungen, ...(quelle.einstellungen||{}) };
+  ergebnis.einstellungen.namen = { ...basis.einstellungen.namen, ...((quelle.einstellungen||{}).namen||{}) };
+  ergebnis.bereiche = { ...basis.bereiche, ...(quelle.bereiche||{}) };
+  // Eine leere Cloud-Startseite darf die sichtbaren Standard-Tools nicht löschen.
+  const qHome = quelle?.bereiche?.home;
+  const qModule = qHome?.seiten?.[0]?.module;
+  if(!Array.isArray(qModule) || qModule.length === 0){
+    ergebnis.bereiche.home = JSON.parse(JSON.stringify(basis.bereiche.home));
+  }
+  return ergebnis;
+}
+
+function cloudStatus(art, text){
+  let el = document.getElementById("cloud-status");
+  if(!el){
+    el = document.createElement("div"); el.id="cloud-status"; el.className="cloud-status";
+    el.innerHTML='<span class="punkt"></span><span class="text"></span>';
+    document.getElementById("home")?.appendChild(el);
+  }
+  el.className="cloud-status " + art;
+  el.querySelector(".text").textContent=text;
+}
+
+async function cloudSpeichern(sofort=false){
+  if(!CLOUD_AKTIV) return;
+  clearTimeout(cloudSpeicherTimer);
+  const senden = async()=>{
+    cloudStatus("sync", "Synchronisieren …");
+    const paket = { action:"save", data:daten, daten, updatedAt:Date.now(), source:"digiboard" };
+    try{
+      const antwort = await fetch(CLOUD_API_URL, {
+        method:"POST", redirect:"follow",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify(paket)
+      });
+      if(!antwort.ok) throw new Error("HTTP " + antwort.status);
+      cloudBereit=true; cloudStatus("online", "Cloud gespeichert");
+    }catch(e){
+      console.warn("Cloud-Speicherung fehlgeschlagen.", e);
+      cloudStatus("fehler", "Offline – lokal gespeichert");
+    }
+  };
+  if(sofort) return senden();
+  cloudSpeicherTimer=setTimeout(senden,650);
+}
+
+let speicherTimer = null;
+function datenSpeichern(){
+  clearTimeout(speicherTimer);
+  speicherTimer = setTimeout(() => {
+    try{ localStorage.setItem(SPEICHER_SCHLUESSEL, JSON.stringify(daten)); }
+    catch(e){ console.error("Speichern fehlgeschlagen (localStorage voll?)", e); }
+    cloudSpeichern();
+  }, 150); // kurze Verzögerung, damit schnelle Änderungen (Ziehen) nicht jedes Pixel schreiben
+}
+
+// Gibt jedem Wort (Fach, Modultyp ...) eine feste Farbe aus der Fuchs-Palette –
+// gleiche Eingabe ergibt immer dieselbe Farbe, ganz ohne Konfiguration.
+function wortFarbe(wort){
+  let h = 0;
+  for(let i = 0; i < wort.length; i++) h = (h * 31 + wort.charCodeAt(i)) % 997;
+  return FARBPALETTE[h % FARBPALETTE.length];
+}
+
+function heutigerWochentagName(){
+  const namen = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+  return namen[new Date().getDay()];
+}
+
+/* ============================================================
+   2) SKALIERBARE BÜHNE
+   Alle Module werden in einem festen 1600×900-Koordinatensystem
+   platziert. Dieses wird per CSS-Transform auf jede Bildschirm-
+   größe skaliert – dadurch sieht das Layout auf iPhone, Android
+   und Smartboard identisch aus, nur eben größer oder kleiner.
+   ============================================================ */
+const BUEHNE_BREITE = 1600, BUEHNE_HOEHE = 900;
+let buehnenSkala = 1;
+
+function buehneSkalieren(){
+  const bw = window.innerWidth, bh = window.innerHeight;
+  buehnenSkala = Math.min(bw / BUEHNE_BREITE, bh / BUEHNE_HOEHE);
+  document.getElementById("buehne-wrapper").style.transform = `scale(${buehnenSkala})`;
+}
+window.addEventListener("resize", buehneSkalieren);
+
+/* ============================================================
+   3) ANSICHTEN WECHSELN (Home / Bereich / …)
+   ============================================================ */
+let aktuellerBereichSchluessel = null; // z.B. "lehrerin1" oder "kinder"
+let bearbeitenModus = false;
+
+function zeigeAnsicht(name){
+  document.querySelectorAll(".ansicht").forEach((el) => el.classList.add("aus"));
+  document.getElementById(name).classList.remove("aus");
+}
+
+function oeffneBereich(schluessel){
+  aktuellerBereichSchluessel = schluessel;
+  bearbeitenModus = false;
+  const bereichEl = document.getElementById("bereich");
+  bereichEl.classList.toggle("kinder-modus", schluessel === "kinder");
+  renderBereichKopf();
+  renderSeiten();
+  zeigeAnsicht("bereich");
+}
+
+function schliesseBereich(){
+  aktuellerBereichSchluessel = null;
+  bearbeitenModus = false;
+  zeigeAnsicht("home");
+  renderHome();
+}
+
+const BEREICH_TITEL = {
+  lehrerin1:() => daten.einstellungen.namen.lehrerin1,
+  lehrerin2:() => daten.einstellungen.namen.lehrerin2,
+  erzieher:() => daten.einstellungen.namen.erzieher,
+  ergaenzung:() => daten.einstellungen.namen.ergaenzung,
+  kinder:() => "🦊 Für euch Kinder",
+};
+
+function renderBereichKopf(){
+  document.getElementById("bereich-titel").textContent = BEREICH_TITEL[aktuellerBereichSchluessel]();
+  document.getElementById("btn-bearbeiten").classList.toggle("an", bearbeitenModus);
+  const bereich = daten.bereiche[aktuellerBereichSchluessel];
+  const leiste = document.getElementById("seiten-leiste");
+  leiste.innerHTML = "";
+  bereich.seiten.forEach((seite, i) => {
+    const tab = document.createElement("button");
+    tab.className = "seiten-tab" + (i === bereich.seiteIndex ? " aktiv" : "");
+    tab.textContent = seite.name;
+    tab.onclick = () => { bereich.seiteIndex = i; renderBereichKopf(); renderSeiten(); };
+    leiste.appendChild(tab);
+  });
+  const neu = document.createElement("button");
+  neu.className = "seiten-tab-neu";
+  neu.textContent = "☰";
+  neu.title = "Seiten verwalten";
+  neu.onclick = oeffneSeitenUebersicht;
+  leiste.appendChild(neu);
+}
+
+/* ============================================================
+   4) SEITEN-NAVIGATION: Wischen, Pfeiltasten, Punkte-Anzeige
+   ============================================================ */
+function renderSeiten(){
+  const bereich = daten.bereiche[aktuellerBereichSchluessel];
+  const buehneEl = document.getElementById("seiten-buehne");
+  // Alte Seiten-DIVs entfernen (Pfeile/Punkte bleiben erhalten, da separat)
+  buehneEl.querySelectorAll(".seite").forEach((el) => el.remove());
+
+  bereich.seiten.forEach((seite, i) => {
+    const seiteEl = document.createElement("div");
+    seiteEl.className = "seite" + (bearbeitenModus ? " bearbeitbar" : "");
+    seiteEl.dataset.index = i;
+    seiteEl.style.transform = `translateX(${(i - bereich.seiteIndex) * 100}%)`;
+    seiteEl.style.opacity = i === bereich.seiteIndex ? "1" : "0.001";
+    seiteEl.style.background = seite.eigenerHintergrund ? `url(${seite.eigenerHintergrund}) center/cover no-repeat` : (HINTERGRUENDE[seite.hintergrund]||HINTERGRUENDE.papier).css;
+    seite.module.slice().sort((a,b)=>a.z-b.z).forEach((mod) => seiteEl.appendChild(baueModulElement(seite, mod)));
+    if(bearbeitenModus){
+      seiteEl.appendChild(baueHintergrundLeiste(seite, renderSeiten));
+      const verwalten = document.createElement("div");
+      verwalten.className = "seite-verwalten-leiste";
+      verwalten.innerHTML = `<button data-akt="umbenennen">✏️ ${escapeHtml(seite.name)}</button><button data-akt="loeschen">🗑️</button>`;
+      verwalten.querySelector('[data-akt="umbenennen"]').onclick = () => {
+        const neuerName = prompt("Neuer Seitenname:", seite.name);
+        if(neuerName && neuerName.trim()){ seite.name = neuerName.trim(); datenSpeichern(); renderBereichKopf(); renderSeiten(); }
+      };
+      verwalten.querySelector('[data-akt="loeschen"]').onclick = () => {
+        if(bereich.seiten.length <= 1){ alert("Der Bereich braucht mindestens eine Seite."); return; }
+        if(!confirm(`Seite "${seite.name}" wirklich löschen?`)) return;
+        bereich.seiten.splice(i,1);
+        bereich.seiteIndex = Math.max(0, bereich.seiteIndex - (bereich.seiteIndex>=i?1:0));
+        datenSpeichern(); renderBereichKopf(); renderSeiten();
+      };
+      seiteEl.appendChild(verwalten);
+    }
+    buehneEl.appendChild(seiteEl);
+  });
+
+  // Punkte-Anzeige
+  const punkte = document.getElementById("seiten-punkte");
+  punkte.innerHTML = "";
+  bereich.seiten.forEach((_, i) => {
+    const p = document.createElement("div");
+    p.className = "seiten-punkt" + (i === bereich.seiteIndex ? " aktiv" : "");
+    punkte.appendChild(p);
+  });
+  document.getElementById("pfeil-links").style.visibility = bereich.seiteIndex > 0 ? "visible":"hidden";
+  document.getElementById("pfeil-rechts").style.visibility = bereich.seiteIndex < bereich.seiten.length-1 ? "visible":"hidden";
+
+  // Werkzeugleiste im Bearbeiten-Modus ein-/ausblenden
+  let werkzeug = document.querySelector(".werkzeug-leiste");
+  if(bearbeitenModus && !werkzeug){ werkzeug = baueWerkzeugLeiste(); buehneEl.appendChild(werkzeug); }
+  if(!bearbeitenModus && werkzeug){ werkzeug.remove(); }
+}
+
+function geheZuSeite(neuerIndex){
+  const bereich = daten.bereiche[aktuellerBereichSchluessel];
+  if(neuerIndex < 0 || neuerIndex >= bereich.seiten.length) return;
+  bereich.seiteIndex = neuerIndex;
+  datenSpeichern();
+  renderBereichKopf();
+  renderSeiten();
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* Wischen (Touch) */
+(function wischNavigation(){
+  const buehneEl = document.getElementById("seiten-buehne");
+  let startX = null, startY = null, wischt = false;
+  buehneEl.addEventListener("touchstart", (e) => {
+    if(e.target.closest(".modul")) return; // Modul-Interaktion hat Vorrang
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY; wischt = true;
+  }, {passive:true});
+  buehneEl.addEventListener("touchend", (e) => {
+    if(!wischt || startX===null) return; wischt = false;
+    const dx = e.changedTouches[0].clientX - startX, dy = e.changedTouches[0].clientY - startY;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
+      const bereich = daten.bereiche[aktuellerBereichSchluessel];
+      geheZuSeite(bereich.seiteIndex + (dx < 0 ? 1 : -1));
+    }
+  }, {passive:true});
+})();
+
+/* Pfeiltasten */
+document.addEventListener("keydown", (e) => {
+  if(document.getElementById("bereich").classList.contains("aus")) return;
+  if(document.getElementById("einstellungen-overlay").classList.contains("versteckt") === false) return;
+  const bereich = daten.bereiche[aktuellerBereichSchluessel];
+  if(e.key === "ArrowRight") geheZuSeite(bereich.seiteIndex+1);
+  if(e.key === "ArrowLeft") geheZuSeite(bereich.seiteIndex-1);
+});
+document.getElementById("pfeil-links").onclick = () => geheZuSeite(daten.bereiche[aktuellerBereichSchluessel].seiteIndex-1);
+document.getElementById("pfeil-rechts").onclick = () => geheZuSeite(daten.bereiche[aktuellerBereichSchluessel].seiteIndex+1);
+
+/* ============================================================
+   5) MODUL-ENGINE: Rahmen, Ziehen (Drag) & Größe ändern (Resize)
+   ============================================================ */
+const MODUL_TYPEN = {
+  text:{name:"Text",emoji:"📝"}, bild:{name:"Bild",emoji:"🖼️"}, video:{name:"Video",emoji:"🎬"},
+  webseite:{name:"Webseite",emoji:"🌐"}, pdf:{name:"PDF / Arbeitsblatt",emoji:"📄"},
+  aufgaben:{name:"Aufgaben",emoji:"✅"}, timer:{name:"Timer",emoji:"⏳"}, stoppuhr:{name:"Stoppuhr",emoji:"⏱️"},
+  uhr:{name:"Uhr",emoji:"🕒"}, ampel:{name:"Ampel",emoji:"🚦"}, punkte:{name:"Punkte-System",emoji:"⭐"},
+  zufallsgenerator:{name:"Zufallsgenerator",emoji:"🎡"}, wuerfel:{name:"Würfel",emoji:"🎲"},
+  qrcode:{name:"QR-Code",emoji:"🔳"}, lautstaerke:{name:"Lautstärke",emoji:"🔊"}, smiley:{name:"Smiley-Anzeige",emoji:"😊"}, info:{name:"Info-Anzeige (automatisch)",emoji:"📌"}, sternenkinder:{name:"Sternenkinder (Belohnung)",emoji:"🌟"},
+  morgengruss:{name:"Guten Morgen (Sprachen)",emoji:"🌍"},
+};
+
+function baueModulElement(seite, mod){
+  const el = document.createElement("div");
+  el.className = "modul" + (bearbeitenModus ? " modul-bearbeitbar" : "");
+  if(aktuellerBereichSchluessel === "home"){ el.classList.add("home-"+mod.typ); if(mod.daten?.art) el.classList.add("home-"+mod.daten.art); if(mod.typ === "text" && mod.daten?.inhalt === "Herzlich Willkommen!") el.classList.add("home-welcome"); }
+  if(mod.typ === "uhr" || mod.typ === "ampel") el.classList.add("modul-frei"); // ohne Karten-Kasten
+  el.style.setProperty("--modfarbe", wortFarbe(mod.typ)); // bunter Akzent je Modul-Typ
+  el.style.left = mod.x+"px"; el.style.top = mod.y+"px";
+  el.style.width = mod.w+"px"; el.style.height = mod.h+"px";
+  el.style.zIndex = mod.z || 1;
+  el.dataset.id = mod.id;
+
+  const inhalt = document.createElement("div");
+  inhalt.className = "modul-inhalt";
+  renderModulInhalt(inhalt, mod, seite);
+  el.appendChild(inhalt);
+
+  if(bearbeitenModus){
+    const griff = document.createElement("div"); griff.className="modul-griff"; griff.textContent="✥"; el.appendChild(griff);
+    const loeschen = document.createElement("div"); loeschen.className="modul-loeschen"; loeschen.textContent="✕";
+    loeschen.onclick = (e) => { e.stopPropagation(); if(confirm("Dieses Modul löschen?")){ seite.module = seite.module.filter((m)=>m.id!==mod.id); datenSpeichern(); if(aktuellerBereichSchluessel === "home") renderHomeBuehne(); else renderSeiten(); } };
+    el.appendChild(loeschen);
+    const resize = document.createElement("div"); resize.className="modul-groesse"; el.appendChild(resize);
+    machDragbar(el, mod, griff);
+    machResizebar(el, mod, resize);
+  }
+  return el;
+}
+
+/* Ziehen: Pointer Events funktionieren einheitlich für Maus & Touch */
+function machDragbar(el, mod, griff){
+  let start=null;
+  griff.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    griff.setPointerCapture(e.pointerId);
+    start = { px:e.clientX, py:e.clientY, mx:mod.x, my:mod.y };
+    mod.z = naechsteZ();
+  });
+  griff.addEventListener("pointermove", (e) => {
+    if(!start) return;
+    const dx = (e.clientX - start.px) / buehnenSkala, dy = (e.clientY - start.py) / buehnenSkala;
+    mod.x = Math.max(0, Math.min(BUEHNE_BREITE - mod.w, start.mx + dx));
+    mod.y = Math.max(0, Math.min(BUEHNE_HOEHE - mod.h, start.my + dy));
+    el.style.left = mod.x+"px"; el.style.top = mod.y+"px"; el.style.zIndex = mod.z;
+  });
+  const ende = () => { if(start){ start=null; datenSpeichern(); } };
+  griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
+}
+
+function machResizebar(el, mod, griff){
+  let start=null;
+  griff.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    griff.setPointerCapture(e.pointerId);
+    start = { px:e.clientX, py:e.clientY, mw:mod.w, mh:mod.h };
+  });
+  griff.addEventListener("pointermove", (e) => {
+    if(!start) return;
+    const dx=(e.clientX-start.px)/buehnenSkala, dy=(e.clientY-start.py)/buehnenSkala;
+    mod.w = Math.max(100, Math.min(BUEHNE_BREITE-mod.x, start.mw+dx));
+    mod.h = Math.max(85, Math.min(BUEHNE_HOEHE-mod.y, start.mh+dy));
+    el.style.width = mod.w+"px"; el.style.height = mod.h+"px";
+  });
+  const ende = () => { if(start){ start=null; datenSpeichern(); } };
+  griff.addEventListener("pointerup", ende); griff.addEventListener("pointercancel", ende);
+}
+
+function naechsteZ(){
+  let max=1;
+  Object.values(daten.bereiche).forEach((b)=>b.seiten.forEach((s)=>s.module.forEach((m)=>{ if(m.z>max) max=m.z; })));
+  return max+1;
+}
+
+/* ============================================================
+   6) MODUL-INHALTE (je nach Typ)
+   ============================================================ */
+function renderModulInhalt(inhalt, mod, seite){
+  inhalt.innerHTML = "";
+  inhalt.className = "modul-inhalt m-"+mod.typ;
+  const bearbeitbar = bearbeitenModus;
+  switch(mod.typ){
+    case "text": return renderText(inhalt, mod, bearbeitbar);
+    case "bild": return renderBild(inhalt, mod, bearbeitbar);
+    case "video": return renderVideo(inhalt, mod, bearbeitbar);
+    case "webseite": return renderWebseite(inhalt, mod, bearbeitbar);
+    case "pdf": return renderPdf(inhalt, mod, bearbeitbar);
+    case "aufgaben": return renderAufgaben(inhalt, mod, bearbeitbar);
+    case "timer": return renderTimer(inhalt, mod);
+    case "stoppuhr": return renderStoppuhr(inhalt, mod);
+    case "uhr": return renderUhrModul(inhalt, mod, bearbeitbar);
+    case "ampel": return renderAmpel(inhalt, mod, bearbeitbar);
+    case "punkte": return renderPunkte(inhalt, mod, bearbeitbar);
+    case "zufallsgenerator": return renderZufallsrad(inhalt, mod, bearbeitbar);
+    case "wuerfel": return renderWuerfel(inhalt, mod);
+    case "qrcode": return renderQr(inhalt, mod, bearbeitbar);
+    case "lautstaerke": return renderLautstaerke(inhalt, mod, bearbeitbar);
+    case "smiley": return renderSmiley(inhalt, mod, bearbeitbar);
+    case "info": return renderInfo(inhalt, mod, bearbeitbar);
+    case "sternenkinder": return renderSternenkinder(inhalt, mod, bearbeitbar);
+    case "morgengruss": return renderMorgengruss(inhalt, mod, bearbeitbar);
+  }
+}
+
+function feldBearbeitbar(wert, aendern, mehrzeilig){
+  const el = document.createElement(mehrzeilig ? "textarea" : "input");
+  el.value = wert; el.className="e-input"; el.style.margin="0 0 4px";
+  el.addEventListener("input", () => { aendern(el.value); datenSpeichern(); });
+  el.addEventListener("pointerdown", (e) => e.stopPropagation());
+  return el;
+}
+
+/* --- Text / Notiz --- */
+function renderText(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    inhalt.appendChild(feldBearbeitbar(mod.daten.titel, (v)=>mod.daten.titel=v));
+    const ta = feldBearbeitbar(mod.daten.inhalt, (v)=>mod.daten.inhalt=v, true);
+    ta.style.height="calc(100% - 40px)";
+    inhalt.appendChild(ta);
+  } else {
+    const t = document.createElement("div"); t.className="m-titel"; t.textContent=mod.daten.titel;
+    const p = document.createElement("div"); p.className="m-text"; p.textContent=mod.daten.inhalt;
+    inhalt.append(t,p);
+  }
+}
+
+/* --- Bild --- */
+function renderBild(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    inhalt.appendChild(feldBearbeitbarMitLabel("Bild-Link (URL)", mod.daten.url, (v)=>{mod.daten.url=v; renderModulInhalt(inhalt,mod,seiteVon(mod));}));
+    inhalt.appendChild(feldBearbeitbarMitLabel("Unterschrift", mod.daten.unterschrift, (v)=>mod.daten.unterschrift=v));
+    return;
+  }
+  if(!mod.daten.url){ inhalt.innerHTML = '<div class="m-leer-hinweis">🖼️ Bild-Link im Bearbeiten-Modus eintragen</div>'; return; }
+  const fig = document.createElement("figure"); fig.style.margin="0"; fig.style.height="100%";
+  const img = document.createElement("img"); img.src = mod.daten.url; img.style.height = mod.daten.unterschrift? "calc(100% - 18px)":"100%";
+  fig.appendChild(img);
+  if(mod.daten.unterschrift){ const cap=document.createElement("figcaption"); cap.textContent=mod.daten.unterschrift; fig.appendChild(cap); }
+  inhalt.appendChild(fig);
+}
+
+/* --- Video (erkennt YouTube automatisch, sonst direkte Videodatei) --- */
+function renderVideo(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){ inhalt.appendChild(feldBearbeitbarMitLabel("Video-Link (YouTube oder .mp4)", mod.daten.url, (v)=>{mod.daten.url=v;})); return; }
+  if(!mod.daten.url){ inhalt.innerHTML='<div class="m-leer-hinweis">🎬 Video-Link im Bearbeiten-Modus eintragen</div>'; return; }
+  const ytMatch = mod.daten.url.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{6,})/);
+  if(ytMatch){
+    const ifr = document.createElement("iframe");
+    ifr.src = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
+    ifr.allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"; ifr.allowFullscreen=true;
+    inhalt.appendChild(ifr);
+  } else {
+    const v = document.createElement("video"); v.src=mod.daten.url; v.controls=true; inhalt.appendChild(v);
+  }
+}
+
+/* --- Webseite (iframe – manche Seiten blockieren das Einbetten) --- */
+function renderWebseite(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){ inhalt.appendChild(feldBearbeitbarMitLabel("Webseiten-Link", mod.daten.url, (v)=>{mod.daten.url=v;})); return; }
+  if(!mod.daten.url){ inhalt.innerHTML='<div class="m-leer-hinweis">🌐 Link im Bearbeiten-Modus eintragen</div>'; return; }
+  const ifr = document.createElement("iframe"); ifr.src = mod.daten.url; inhalt.appendChild(ifr);
+}
+
+/* --- PDF / Arbeitsblatt --- */
+function renderPdf(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    inhalt.appendChild(feldBearbeitbarMitLabel("Titel", mod.daten.titel, (v)=>mod.daten.titel=v));
+    inhalt.appendChild(feldBearbeitbarMitLabel("PDF-Link (URL)", mod.daten.url, (v)=>{mod.daten.url=v;}));
+    return;
+  }
+  if(!mod.daten.url){ inhalt.innerHTML='<div class="m-leer-hinweis">📄 PDF-Link im Bearbeiten-Modus eintragen</div>'; return; }
+  const ifr = document.createElement("iframe"); ifr.src = mod.daten.url; inhalt.appendChild(ifr);
+  const oeffnen = document.createElement("a"); oeffnen.href=mod.daten.url; oeffnen.target="_blank"; oeffnen.textContent="In neuem Tab öffnen ↗";
+  oeffnen.style.cssText="position:absolute; bottom:6px; right:10px; font-size:11px; background:#fff; padding:3px 8px; border-radius:8px;";
+  inhalt.style.position="relative"; inhalt.appendChild(oeffnen);
+}
+
+/* --- Aufgaben / Checkliste --- */
+function renderAufgaben(inhalt, mod, bearbeitbar){
+  const t = document.createElement("div"); t.className="m-titel";
+  if(bearbeitbar){ t.appendChild(feldBearbeitbar(mod.daten.titel,(v)=>mod.daten.titel=v)); } else { t.textContent = mod.daten.titel; }
+  inhalt.appendChild(t);
+  const ul = document.createElement("ul");
+  mod.daten.punkte.forEach((p, i) => {
+    const li = document.createElement("li"); li.className = p.erledigt?"erledigt":"";
+    const cb = document.createElement("input"); cb.type="checkbox"; cb.checked=p.erledigt;
+    cb.onchange = () => { p.erledigt = cb.checked; datenSpeichern(); li.className = p.erledigt?"erledigt":""; };
+    const span = document.createElement("span"); span.textContent = p.text;
+    li.append(cb, span);
+    if(bearbeitbar){
+      const del = document.createElement("button"); del.textContent="✕"; del.style.marginLeft="auto"; del.style.fontSize="12px";
+      del.onclick=()=>{ mod.daten.punkte.splice(i,1); datenSpeichern(); renderModulInhalt(inhalt,mod,seite); };
+      li.appendChild(del);
+    }
+    ul.appendChild(li);
+  });
+  inhalt.appendChild(ul);
+  if(bearbeitbar){
+    const neu = document.createElement("button"); neu.className="e-btn sekundaer"; neu.style.marginTop="6px"; neu.style.fontSize="12px"; neu.textContent="+ Aufgabe";
+    neu.onclick = () => { const txt = prompt("Neue Aufgabe:"); if(txt){ mod.daten.punkte.push({text:txt, erledigt:false}); datenSpeichern(); renderModulInhalt(inhalt,mod,seite); } };
+    inhalt.appendChild(neu);
+  }
+}
+
+function feldBearbeitbarMitLabel(label, wert, aendern){
+  const wrap = document.createElement("div");
+  const l = document.createElement("div"); l.className="e-label"; l.style.margin="0 0 3px"; l.textContent=label;
+  const feld = feldBearbeitbar(wert, aendern);
+  wrap.append(l, feld);
+  return wrap;
+}
+
+function seiteVon(mod){
+  for(const b of Object.values(daten.bereiche)) for(const s of b.seiten) if(s.module.includes(mod)) return s;
+  return null;
+}
+
+/* ============================================================
+   7) INTERAKTIVE MODULE
+   ============================================================ */
+
+/* --- Uhr (analog / digital) --- */
+function renderUhrModul(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    const btn = document.createElement("button"); btn.className="e-btn sekundaer";
+    btn.textContent = mod.daten.digital ? "→ Analoge Uhr" : "→ Digitale Uhr";
+    btn.onclick = () => { mod.daten.digital = !mod.daten.digital; datenSpeichern(); renderModulInhalt(inhalt,mod); };
+    inhalt.appendChild(btn); return;
+  }
+  if(mod.daten.digital){
+    inhalt.classList.add("m-uhr-digital");
+    inhalt.textContent = uhrzeitText();
+  } else {
+    inhalt.innerHTML = `<svg viewBox="0 0 100 100" class="m-uhr-analog"><circle cx="50" cy="50" r="47" fill="#fff" stroke="#3A332C" stroke-width="2.5"/>${[...Array(12)].map((_,i)=>`<line x1="50" y1="8" x2="50" y2="${i%3===0?16:12}" stroke="#3A332C" stroke-width="${i%3===0?3:1.5}" transform="rotate(${i*30} 50 50)"/>`).join("")}<line class="zeiger-h" x1="50" y1="50" x2="50" y2="27" stroke="#3A332C" stroke-width="4" stroke-linecap="round"/><line class="zeiger-m" x1="50" y1="50" x2="50" y2="17" stroke="#3A332C" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="50" r="3" fill="var(--akzent)"/></svg>`;
+  }
+}
+function uhrzeitText(){ const d=new Date(); return d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
+setInterval(() => {
+  const jetzt = new Date();
+  document.querySelectorAll(".m-uhr-digital").forEach((el) => el.textContent = uhrzeitText());
+  document.querySelectorAll(".m-uhr-analog .zeiger-h").forEach((el) => el.setAttribute("transform", `rotate(${(jetzt.getHours()%12)*30+jetzt.getMinutes()/2} 50 50)`));
+  document.querySelectorAll(".m-uhr-analog .zeiger-m").forEach((el) => el.setAttribute("transform", `rotate(${jetzt.getMinutes()*6} 50 50)`));
+}, 1000);
+
+/* --- Timer (Countdown) --- */
+function renderTimer(inhalt, mod){
+  if(!mod._rest) mod._rest = 0;
+  inhalt.innerHTML = `<div class="m-timer"><div class="anzeige">${formatZeit(mod._rest)}</div><div class="knopfreihe">
+    ${(mod.daten.presets||[1,5,10]).map((m)=>`<button data-m="${m}">${m} min</button>`).join("")}
+    <button class="stop" data-akt="stop">■</button></div></div>`;
+  inhalt.querySelectorAll("[data-m]").forEach((b) => b.onclick = () => { mod._rest = Number(b.dataset.m)*60; mod._laeuft=true; });
+  inhalt.querySelector('[data-akt="stop"]').onclick = () => { mod._laeuft=false; mod._rest=0; inhalt.querySelector(".anzeige").textContent=formatZeit(0); };
+}
+function formatZeit(sek){ const m=String(Math.floor(sek/60)).padStart(2,"0"), s=String(sek%60).padStart(2,"0"); return `${m}:${s}`; }
+setInterval(() => {
+  document.querySelectorAll(".modul").forEach((el) => {
+    const mod = findeModulById(el.dataset.id);
+    if(mod && mod.typ==="timer" && mod._laeuft && mod._rest>0){
+      mod._rest--; const az = el.querySelector(".anzeige"); if(az) az.textContent = formatZeit(mod._rest);
+      if(mod._rest<=0) mod._laeuft=false;
+    }
+  });
+}, 1000);
+
+/* --- Stoppuhr (zählt hoch) --- */
+function renderStoppuhr(inhalt, mod){
+  if(mod._sek===undefined) mod._sek=0;
+  inhalt.innerHTML = `<div class="m-timer"><div class="anzeige">${formatZeit(mod._sek)}</div><div class="knopfreihe">
+    <button data-akt="start">▶ Start</button><button class="stop" data-akt="reset">↺ Reset</button></div></div>`;
+  inhalt.querySelector('[data-akt="start"]').onclick = (e) => { mod._laeuft = !mod._laeuft; e.target.textContent = mod._laeuft? "⏸ Pause":"▶ Start"; };
+  inhalt.querySelector('[data-akt="reset"]').onclick = () => { mod._sek=0; mod._laeuft=false; inhalt.querySelector(".anzeige").textContent=formatZeit(0); inhalt.querySelector('[data-akt="start"]').textContent="▶ Start"; };
+}
+setInterval(() => {
+  document.querySelectorAll(".modul").forEach((el) => {
+    const mod = findeModulById(el.dataset.id);
+    if(mod && mod.typ==="stoppuhr" && mod._laeuft){ mod._sek++; const az=el.querySelector(".anzeige"); if(az) az.textContent=formatZeit(mod._sek); }
+  });
+}, 1000);
+
+function findeModulById(id){
+  for(const b of Object.values(daten.bereiche)) for(const s of b.seiten){ const m=s.module.find((m)=>m.id===id); if(m) return m; }
+  return null;
+}
+
+/* --- Ampel --- */
+function renderAmpel(inhalt, mod, bearbeitbar){
+  inhalt.innerHTML = `<div class="gehaeuse">
+    <div class="licht ${mod.daten.stand==='rot'?'an-rot':''}" data-f="rot"></div>
+    <div class="licht ${mod.daten.stand==='gelb'?'an-gelb':''}" data-f="gelb"></div>
+    <div class="licht ${mod.daten.stand==='gruen'?'an-gruen':''}" data-f="gruen"></div></div>`;
+  inhalt.querySelectorAll("[data-f]").forEach((el) => el.onclick = () => { mod.daten.stand = el.dataset.f; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); });
+}
+
+/* --- Punkte-System (frei nutzbar, z. B. Team-Punkte) --- */
+function renderPunkte(inhalt, mod, bearbeitbar){
+  const wrap = document.createElement("div");
+  const titel = document.createElement("div"); titel.className="m-titel";
+  if(bearbeitbar) titel.appendChild(feldBearbeitbar(mod.daten.titel,(v)=>mod.daten.titel=v)); else titel.textContent=mod.daten.titel;
+  wrap.appendChild(titel);
+  const tab = document.createElement("table");
+  mod.daten.zeilen.forEach((z, i) => {
+    const tr = document.createElement("tr");
+    const tdName = document.createElement("td");
+    if(bearbeitbar){ const inp=document.createElement("input"); inp.type="text"; inp.value=z.name; inp.oninput=()=>{z.name=inp.value; datenSpeichern();}; tdName.appendChild(inp); }
+    else tdName.textContent = z.name;
+    const tdMinus=document.createElement("td"); const bMinus=document.createElement("button"); bMinus.className="stellknopf"; bMinus.textContent="−";
+    bMinus.onclick=()=>{ z.punkte=Math.max(0,z.punkte-1); datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); }; tdMinus.appendChild(bMinus);
+    const tdWert=document.createElement("td"); tdWert.style.fontWeight="800"; tdWert.style.textAlign="center"; tdWert.textContent=z.punkte;
+    const tdPlus=document.createElement("td"); const bPlus=document.createElement("button"); bPlus.className="stellknopf"; bPlus.textContent="+";
+    bPlus.onclick=()=>{ z.punkte++; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); }; tdPlus.appendChild(bPlus);
+    tr.append(tdName,tdMinus,tdWert,tdPlus);
+    if(bearbeitbar){ const tdDel=document.createElement("td"); const bDel=document.createElement("button"); bDel.textContent="🗑️"; bDel.onclick=()=>{mod.daten.zeilen.splice(i,1); datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar);}; tdDel.appendChild(bDel); tr.appendChild(tdDel); }
+    tab.appendChild(tr);
+  });
+  wrap.appendChild(tab);
+  if(bearbeitbar){
+    const neu=document.createElement("button"); neu.className="e-btn sekundaer"; neu.style.fontSize="12px"; neu.style.marginTop="6px"; neu.textContent="+ Zeile";
+    neu.onclick=()=>{ mod.daten.zeilen.push({name:"Neu",punkte:0}); datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
+    wrap.appendChild(neu);
+  }
+  inhalt.appendChild(wrap);
+}
+
+/* --- Würfel --- */
+function renderWuerfel(inhalt, mod){
+  const gesichter=["","⚀","⚁","⚂","⚃","⚄","⚅"];
+  if(!mod._augen) mod._augen = Array.from({length:mod.daten.anzahl||1},()=>6);
+  inhalt.innerHTML = `<div class="m-wuerfel"><div class="augen">${mod._augen.map((a)=>gesichter[a]).join(" ")}</div><button class="e-btn">Würfeln!</button></div>`;
+  inhalt.querySelector("button").onclick = (e) => {
+    if(mod._laeuft) return; mod._laeuft=true; let n=0;
+    const iv = setInterval(() => {
+      mod._augen = Array.from({length:mod.daten.anzahl||1},()=>1+Math.floor(Math.random()*6));
+      inhalt.querySelector(".augen").textContent = mod._augen.map((a)=>gesichter[a]).join(" ");
+      if(++n>10){ clearInterval(iv); mod._laeuft=false; }
+    }, 80);
+  };
+}
+
+/* --- Zufallsgenerator: drehendes Glücksrad --- */
+const RAD_FARBEN = ["#E8722A","#3E8E5A","#3B82C4","#C94F6D","#8B5CB8","#189E96","#D9A400","#E85D5D"];
+function renderZufallsrad(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    const umschalt = document.createElement("button"); umschalt.className="e-btn sekundaer"; umschalt.style.marginBottom="8px";
+    umschalt.textContent = mod.daten.quelle==="kinder" ? "Nutzt: Kinder-Liste (umschalten)" : "Nutzt: eigene Einträge (umschalten)";
+    umschalt.onclick = () => { mod.daten.quelle = mod.daten.quelle==="kinder" ? "eigene" : "kinder"; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
+    inhalt.appendChild(umschalt);
+    if(mod.daten.quelle!=="kinder"){
+      inhalt.appendChild(feldBearbeitbarMitLabel("Einträge (einer pro Zeile – z. B. Namen oder Aufgaben)", (mod.daten.eintraege||[]).join("\n"),
+        (v)=>{ mod.daten.eintraege = v.split("\n").map(x=>x.trim()).filter(Boolean); }, true));
+    } else {
+      const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);"; hinweis.textContent="Nutzt automatisch die Namen aus ⚙️ Einstellungen → Kinder & Punkte.";
+      inhalt.appendChild(hinweis);
+    }
+    return;
+  }
+  const eintraege = mod.daten.quelle==="kinder" ? (daten.schueler||[]).map(s=>s.name) : (mod.daten.eintraege||[]);
+  const wrap = document.createElement("div"); wrap.className="m-rad";
+  if(eintraege.length<2){ wrap.innerHTML='<div class="m-leer-hinweis">🎡 Mind. 2 Einträge im Bearbeiten-Modus eintragen</div>'; inhalt.appendChild(wrap); return; }
+  const n = eintraege.length, seg = 360/n;
+  const pfade = eintraege.map((txt,i)=>{
+    const a1=i*seg*Math.PI/180, a2=(i+1)*seg*Math.PI/180;
+    const x1=50+48*Math.cos(a1-Math.PI/2), y1=50+48*Math.sin(a1-Math.PI/2);
+    const x2=50+48*Math.cos(a2-Math.PI/2), y2=50+48*Math.sin(a2-Math.PI/2);
+    const mid=(i+0.5)*seg*Math.PI/180, tx=50+30*Math.cos(mid-Math.PI/2), ty=50+30*Math.sin(mid-Math.PI/2);
+    return `<path d="M50 50 L${x1} ${y1} A48 48 0 ${seg>180?1:0} 1 ${x2} ${y2} Z" fill="${RAD_FARBEN[i%RAD_FARBEN.length]}" stroke="#fff" stroke-width="0.8"/><text x="${tx}" y="${ty}" fill="#fff" font-size="${n>8?5:6.5}" font-weight="800" text-anchor="middle" dominant-baseline="middle">${escapeHtml(txt.length>8?txt.slice(0,7)+"…":txt)}</text>`;
+  }).join("");
+  wrap.innerHTML = `<div class="radflaeche"><svg viewBox="0 0 100 100" style="transform:rotate(0deg); transition:transform 4s cubic-bezier(.15,.7,.15,1)">${pfade}<circle cx="50" cy="50" r="7" fill="#3A332C"/></svg></div><div class="gewinner"></div><button class="e-btn">Drehen!</button>`;
+  const svg = wrap.querySelector("svg"), gewinnerEl = wrap.querySelector(".gewinner");
+  wrap.querySelector("button").onclick = () => {
+    const ziel = Math.floor(Math.random()*n);
+    const rot = 360*5 + (360-(ziel*seg+seg/2));
+    svg.style.transform = `rotate(${rot}deg)`;
+    gewinnerEl.textContent = "";
+    setTimeout(() => gewinnerEl.textContent = "🎉 " + eintraege[ziel], 4100);
+  };
+  inhalt.appendChild(wrap);
+}
+
+/* --- QR-Code (per externer, kostenloser Bild-API erzeugt – Smartboard braucht Internet) --- */
+function renderQr(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){ inhalt.appendChild(feldBearbeitbarMitLabel("Text oder Link", mod.daten.text, (v)=>{mod.daten.text=v; renderModulInhalt(inhalt,mod,bearbeitbar);})); return; }
+  const url = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data="+encodeURIComponent(mod.daten.text||"");
+  inhalt.innerHTML = `<div class="m-qr"><img src="${url}" alt="QR-Code" width="140" height="140"><div style="font-size:12px;color:var(--weich);word-break:break-all;max-width:90%;text-align:center;">${escapeHtml(mod.daten.text||"")}</div></div>`;
+}
+
+/* --- Lautstärke-Anzeige (Mikrofon-basiert, mit manuellem Fallback) --- */
+function renderLautstaerke(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    inhalt.appendChild(feldBearbeitbarMitLabel("Schwellenwert (0-100) – ab wann 'zu laut'", String(mod.daten.schwelle), (v)=>mod.daten.schwelle=Number(v)||60));
+    return;
+  }
+  inhalt.innerHTML = `<div class="m-lautstaerke"><div class="balken-huelle"><div class="balken"></div></div><div class="status">Mikrofon wird angefragt …</div></div>`;
+  starteLautstaerkeMessung(inhalt, mod);
+}
+async function starteLautstaerkeMessung(inhalt, mod){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const quelle = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser(); analyser.fftSize=512;
+    quelle.connect(analyser);
+    const daten8 = new Uint8Array(analyser.frequencyBinCount);
+    const balken = inhalt.querySelector(".balken"), status = inhalt.querySelector(".status");
+    if(!balken) { stream.getTracks().forEach(t=>t.stop()); return; } // Modul wurde inzwischen neu gerendert
+    function schleife(){
+      if(!document.body.contains(inhalt)){ stream.getTracks().forEach(t=>t.stop()); return; }
+      analyser.getByteFrequencyData(daten8);
+      const mittel = daten8.reduce((a,b)=>a+b,0)/daten8.length;
+      const proz = Math.min(100, Math.round(mittel*1.4));
+      balken.style.width = proz+"%";
+      const schwelle = mod.daten.schwelle||60;
+      if(proz > schwelle){ balken.style.background="var(--rot)"; status.textContent="Zu laut! 🙉"; }
+      else if(proz > schwelle*0.6){ balken.style.background="var(--gelb)"; status.textContent="Etwas leiser bitte"; }
+      else { balken.style.background="var(--gruen)"; status.textContent="Schön leise 👍"; }
+      requestAnimationFrame(schleife);
+    }
+    schleife();
+  }catch(e){
+    const status = inhalt.querySelector(".status");
+    if(status) status.textContent = "🎤 Kein Mikrofonzugriff – bitte in den Browser-Einstellungen erlauben.";
+  }
+}
+
+/* --- Smiley-Anzeige (Stimmungsbarometer) --- */
+function renderSmiley(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    inhalt.appendChild(feldBearbeitbarMitLabel("Smileys (je eines, mit Leerzeichen getrennt)", (mod.daten.arten||[]).join(" "), (v)=>{mod.daten.arten=v.split(/\s+/).filter(Boolean);}));
+    return;
+  }
+  const arten = mod.daten.arten && mod.daten.arten.length ? mod.daten.arten : ["😀","😐","😢","😡","😴"];
+  mod.daten.index = mod.daten.index||0;
+  inhalt.innerHTML = `<div class="m-smiley"><div class="aktuell">${arten[mod.daten.index % arten.length]}</div><div style="font-size:13px;color:var(--weich);">Antippen zum Wechseln</div></div>`;
+  inhalt.querySelector(".aktuell").onclick = () => { mod.daten.index=(mod.daten.index+1)%arten.length; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
+}
+
+/* ============================================================
+   8) WERKZEUGLEISTE (Modul hinzufügen im Bearbeiten-Modus)
+   ============================================================ */
+/* ---------- Hintergrund-Wähler: für Homescreen & jede Bereichs-Seite nutzbar ---------- */
+function baueHintergrundLeiste(seite, aufRenderFn){
+  const leiste = document.createElement("div"); leiste.className="hg-leiste";
+  Object.entries(HINTERGRUENDE).forEach(([schl,info]) => {
+    const sw = document.createElement("button"); sw.className="hg-swatch"+((seite.hintergrund===schl && !seite.eigenerHintergrund)?" aktiv":"");
+    sw.style.background = info.css; sw.title = info.name;
+    sw.onclick = () => { seite.hintergrund = schl; seite.eigenerHintergrund=""; datenSpeichern(); aufRenderFn(); };
+    leiste.appendChild(sw);
+  });
+  const url = document.createElement("input"); url.className="hg-url"; url.placeholder="eigenes Bild (URL)"; url.value=seite.eigenerHintergrund||"";
+  url.onpointerdown = (e) => e.stopPropagation();
+  url.oninput = () => { seite.eigenerHintergrund = url.value.trim(); datenSpeichern(); };
+  url.onchange = () => aufRenderFn();
+  leiste.appendChild(url);
+  return leiste;
+}
+
+function baueWerkzeugLeiste(){
+  const leiste = document.createElement("div"); leiste.className="werkzeug-leiste";
+  Object.entries(MODUL_TYPEN).forEach(([typ,info]) => {
+    const btn = document.createElement("button"); btn.className="werkzeug-btn";
+    btn.innerHTML = `<span class="e">${info.emoji}</span>${info.name}`;
+    btn.onclick = () => {
+      const bereich = daten.bereiche[aktuellerBereichSchluessel];
+      const seite = bereich.seiten[bereich.seiteIndex];
+      const mod = neuesModul(typ, 80+Math.random()*120, 80+Math.random()*80);
+      mod.z = naechsteZ();
+      seite.module.push(mod);
+      datenSpeichern(); renderSeiten();
+    };
+    leiste.appendChild(btn);
+  });
+  return leiste;
+}
+
+document.getElementById("btn-bearbeiten").onclick = () => {
+  bearbeitenModus = !bearbeitenModus;
+  renderBereichKopf(); renderSeiten();
+};
+
+/* ============================================================
+   9) SEITEN-ÜBERSICHT (Overlay zum Verwalten aller Seiten)
+   ============================================================ */
+function oeffneSeitenUebersicht(){
+  const bereich = daten.bereiche[aktuellerBereichSchluessel];
+  const liste = document.getElementById("seiten-liste-inhalt");
+  liste.innerHTML = "";
+  bereich.seiten.forEach((seite, i) => {
+    const zeile = document.createElement("div"); zeile.className="seiten-liste-item";
+    const inp = document.createElement("input"); inp.value = seite.name;
+    inp.oninput = () => { seite.name = inp.value; datenSpeichern(); };
+    const geheZu = document.createElement("button"); geheZu.textContent="👁️"; geheZu.title="Anzeigen";
+    geheZu.onclick = () => { bereich.seiteIndex = i; datenSpeichern(); renderBereichKopf(); renderSeiten(); schliesseSeitenUebersicht(); };
+    const del = document.createElement("button"); del.textContent="🗑️";
+    del.onclick = () => {
+      if(bereich.seiten.length<=1){ alert("Mindestens eine Seite muss bleiben."); return; }
+      if(!confirm(`"${seite.name}" wirklich löschen?`)) return;
+      bereich.seiten.splice(i,1); bereich.seiteIndex=Math.min(bereich.seiteIndex, bereich.seiten.length-1);
+      datenSpeichern(); renderBereichKopf(); renderSeiten(); oeffneSeitenUebersicht();
+    };
+    zeile.append(inp, geheZu, del);
+    liste.appendChild(zeile);
+  });
+  document.getElementById("seiten-overlay").classList.remove("versteckt");
+}
+function schliesseSeitenUebersicht(){ document.getElementById("seiten-overlay").classList.add("versteckt"); }
+document.getElementById("btn-seiten-fertig").onclick = schliesseSeitenUebersicht;
+document.getElementById("btn-seite-hinzufuegen").onclick = () => {
+  const bereich = daten.bereiche[aktuellerBereichSchluessel];
+  const name = prompt("Name der neuen Seite:", "Neue Seite");
+  if(!name) return;
+  bereich.seiten.push(neueSeite(name));
+  bereich.seiteIndex = bereich.seiten.length-1;
+  datenSpeichern(); renderBereichKopf(); renderSeiten(); oeffneSeitenUebersicht();
+};
+
+/* ============================================================
+   10) HOMESCREEN / DASHBOARD
+   ============================================================ */
+const TEAM_ROLLEN = [
+  {schluessel:"lehrerin2"},
+  {schluessel:"lehrerin1"},
+  {schluessel:"erzieher"},
+];
+
+function renderHome(){
+  document.getElementById("home-maskottchen").textContent = daten.einstellungen.maskottchen;
+  document.getElementById("home-klassenname").textContent = daten.einstellungen.klassenname;
+  document.documentElement.style.setProperty("--akzent", daten.einstellungen.farbe);
+  document.getElementById("home-datum").textContent = new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+
+  // Team-Buttons (klein & dezent, wie die frühere Seitenzahlen-Reihe)
+  const reihe = document.getElementById("team-reihe"); reihe.innerHTML="";
+  TEAM_ROLLEN.forEach((r) => {
+    const btn = document.createElement("button"); btn.className="team-btn";
+    btn.textContent = daten.einstellungen.namen[r.schluessel];
+    btn.onclick = () => oeffneBereich(r.schluessel);
+    reihe.appendChild(btn);
+  });
+
+  renderHomeBuehne();
+}
+
+/* Der Homescreen ist intern einfach ein Bereich mit dem Schlüssel "home" und
+   genau einer Seite ("Start") – dadurch lassen sich Uhr, Ampel, Stundenplan
+   & Co. genau wie in den Team-Bereichen frei verschieben, vergrößern,
+   verkleinern und löschen, statt in einem festen Raster zu stecken. */
+function renderHomeBuehne(){
+  aktuellerBereichSchluessel = "home";
+  document.getElementById("btn-home-bearbeiten").classList.toggle("an", bearbeitenModus);
+  const seite = daten.bereiche.home.seiten[0];
+  const buehneEl = document.getElementById("home-buehne");
+  buehneEl.innerHTML = "";
+  buehneEl.classList.toggle("bearbeitbar", bearbeitenModus);
+  const hg = seite.eigenerHintergrund ? `url(${seite.eigenerHintergrund}) center/cover no-repeat` : (HINTERGRUENDE[seite.hintergrund]||HINTERGRUENDE.holz).css;
+  buehneEl.style.background = hg;
+
+  seite.module.slice().sort((a,b)=>a.z-b.z).forEach((mod) => buehneEl.appendChild(baueModulElement(seite, mod)));
+
+  if(bearbeitenModus){
+    buehneEl.appendChild(baueHintergrundLeiste(seite, renderHomeBuehne));
+    buehneEl.appendChild(baueWerkzeugLeiste());
+  }
+}
+
+document.getElementById("btn-home-bearbeiten").onclick = () => {
+  bearbeitenModus = !bearbeitenModus;
+  document.getElementById("btn-home-bearbeiten").classList.toggle("an", bearbeitenModus);
+  renderHomeBuehne();
+};
+
+document.getElementById("btn-kinder").onclick = () => oeffneBereich("kinder");
+document.getElementById("btn-zurueck-home").onclick = schliesseBereich;
+
+/* ============================================================
+   11) EINSTELLUNGEN (globales Modal)
+   ============================================================ */
+function oeffneEinstellungen(){
+  renderEinstellungen();
+  document.getElementById("einstellungen-overlay").classList.remove("versteckt");
+}
+function schliesseEinstellungen(){ document.getElementById("einstellungen-overlay").classList.add("versteckt"); }
+document.getElementById("btn-einstellungen").onclick = oeffneEinstellungen;
+document.getElementById("btn-einstellungen-schliessen").onclick = schliesseEinstellungen;
+["einstellungen-overlay","palette-overlay","seiten-overlay"].forEach((id)=>{
+  const ov=document.getElementById(id);
+  ov?.addEventListener("pointerdown",(e)=>{
+    if(e.target!==ov) return;
+    if(id==="einstellungen-overlay") schliesseEinstellungen();
+    else ov.classList.add("versteckt");
+  });
+});
+document.addEventListener("keydown",(e)=>{
+  if(e.key!=="Escape") return;
+  document.getElementById("einstellungen-overlay")?.classList.add("versteckt");
+  document.getElementById("palette-overlay")?.classList.add("versteckt");
+  document.getElementById("seiten-overlay")?.classList.add("versteckt");
+});
+
+let offenerAbschnitt = "identitaet";
+function eAbschnitt(id, titel, inhaltFn){
+  const box = document.createElement("div"); box.className="e-abschnitt";
+  const kopf = document.createElement("button"); kopf.className="kopf";
+  kopf.innerHTML = `<span>${titel}</span><span>${offenerAbschnitt===id?"▲":"▼"}</span>`;
+  kopf.onclick = () => { offenerAbschnitt = offenerAbschnitt===id? null : id; renderEinstellungen(); };
+  box.appendChild(kopf);
+  if(offenerAbschnitt===id){ const inhalt=document.createElement("div"); inhalt.className="inhalt"; inhaltFn(inhalt); box.appendChild(inhalt); }
+  return box;
+}
+
+function renderEinstellungen(){
+  const root = document.getElementById("einstellungen-inhalt");
+  root.innerHTML = "";
+
+  root.appendChild(eAbschnitt("identitaet","🦊 Klasse, Maskottchen & Farbe", (inhalt) => {
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Klassenname", daten.einstellungen.klassenname, (v)=>{daten.einstellungen.klassenname=v; datenSpeichern(); renderHome();}));
+    const mLabel=document.createElement("div"); mLabel.className="e-label"; mLabel.textContent="Maskottchen"; inhalt.appendChild(mLabel);
+    const mRaster=document.createElement("div"); mRaster.style.cssText="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px;";
+    MASKOTTCHEN_AUSWAHL.forEach((m)=>{ const b=document.createElement("button"); b.textContent=m; b.style.cssText=`font-size:24px;padding:6px;border-radius:10px;background:#FFFCF6;border:2px solid ${daten.einstellungen.maskottchen===m?"var(--akzent)":"var(--rand)"}`;
+      b.onclick=()=>{daten.einstellungen.maskottchen=m; datenSpeichern(); renderHome(); renderEinstellungen();}; mRaster.appendChild(b); });
+    inhalt.appendChild(mRaster);
+    const fLabel=document.createElement("div"); fLabel.className="e-label"; fLabel.textContent="Farbe"; inhalt.appendChild(fLabel);
+    FARBPALETTE.forEach((f)=>{ const sw=document.createElement("span"); sw.className="e-farbe-swatch"+(daten.einstellungen.farbe===f?" aktiv":""); sw.style.background=f;
+      sw.onclick=()=>{daten.einstellungen.farbe=f; datenSpeichern(); renderHome(); renderEinstellungen();}; inhalt.appendChild(sw); });
+  }));
+
+  root.appendChild(eAbschnitt("team","👥 Namen des Team", (inhalt) => {
+    [["lehrerin2","1. Button (z. B. Klassenlehrerin)"],["lehrerin1","2. Button (z. B. Klassenlehrerin)"],["erzieher","3. Button (z. B. Freizeit/Erzieher)"]].forEach(([schl,label])=>{
+      inhalt.appendChild(feldBearbeitbarMitLabelGlobal(label, daten.einstellungen.namen[schl], (v)=>{daten.einstellungen.namen[schl]=v; datenSpeichern(); renderHome();}));
+    });
+  }));
+
+  root.appendChild(eAbschnitt("stundenplan","📅 Stundenplan", (inhalt) => {
+    WOCHENTAGE.forEach((t)=>{
+      inhalt.appendChild(feldBearbeitbarMitLabelGlobal(t+" (Fächer mit Komma trennen)", (daten.stundenplan[t]||[]).join(", "),
+        (v)=>{ daten.stundenplan[t]=v.split(",").map(x=>x.trim()).filter(Boolean); datenSpeichern(); renderHome(); }));
+    });
+  }));
+
+  root.appendChild(eAbschnitt("essen","🍽️ Essens- & Nachtischplan", (inhalt) => {
+    WOCHENTAGE.forEach((t)=>{
+      inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Essen "+t, daten.essensplan[t]||"", (v)=>{daten.essensplan[t]=v; datenSpeichern();}));
+      inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Nachtisch "+t, daten.nachtisch[t]||"", (v)=>{daten.nachtisch[t]=v; datenSpeichern();}));
+    });
+  }));
+
+  root.appendChild(eAbschnitt("geburtstage","🎂 Geburtstage", (inhalt) => {
+    (daten.geburtstage||[]).forEach((g,i)=>{
+      const z=document.createElement("div"); z.className="e-zeile";
+      const foto=document.createElement("img"); foto.className="e-geb-foto"; if(g.foto) foto.src=g.foto;
+      const name=document.createElement("input"); name.value=g.name; name.placeholder="Name"; name.oninput=()=>{g.name=name.value; datenSpeichern();};
+      const tag=document.createElement("input"); tag.type="number"; tag.value=g.tag; tag.style.width="54px"; tag.placeholder="Tag"; tag.oninput=()=>{g.tag=Number(tag.value); datenSpeichern();};
+      const monat=document.createElement("input"); monat.type="number"; monat.value=g.monat; monat.style.width="54px"; monat.placeholder="Monat"; monat.oninput=()=>{g.monat=Number(monat.value); datenSpeichern();};
+      const fotoUrl=document.createElement("input"); fotoUrl.value=g.foto||""; fotoUrl.placeholder="Foto-URL"; fotoUrl.oninput=()=>{g.foto=fotoUrl.value; foto.src=fotoUrl.value; datenSpeichern();};
+      const del=document.createElement("button"); del.textContent="🗑️"; del.onclick=()=>{daten.geburtstage.splice(i,1); datenSpeichern(); renderEinstellungen(); renderHome();};
+      z.append(foto,name,tag,monat,fotoUrl,del); inhalt.appendChild(z);
+    });
+    const neu=document.createElement("button"); neu.className="e-btn"; neu.style.width="100%"; neu.textContent="+ Geburtstagskind";
+    neu.onclick=()=>{ daten.geburtstage=daten.geburtstage||[]; daten.geburtstage.push({name:"",tag:1,monat:1,foto:""}); datenSpeichern(); renderEinstellungen(); };
+    inhalt.appendChild(neu);
+  }));
+
+  root.appendChild(eAbschnitt("besonderheiten","🎉 Besonderheiten heute", (inhalt) => {
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Eine Besonderheit pro Zeile", (daten.besonderheiten||[]).map(b=>b.text).join("\n"),
+      (v)=>{ daten.besonderheiten = v.split("\n").map(x=>x.trim()).filter(Boolean).map(text=>({text})); datenSpeichern(); renderHome(); }, true));
+  }));
+
+  root.appendChild(eAbschnitt("wetter","🌤️ Wetter", (inhalt) => {
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Icon (Emoji)", daten.wetter.icon, (v)=>{daten.wetter.icon=v; datenSpeichern(); renderHome();}));
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Text", daten.wetter.text, (v)=>{daten.wetter.text=v; datenSpeichern(); renderHome();}));
+  }));
+
+  root.appendChild(eAbschnitt("mitteilungen","📢 Mitteilungen", (inhalt) => {
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Text für die Startseite", daten.mitteilungen, (v)=>{daten.mitteilungen=v; datenSpeichern(); renderHome();}, true));
+  }));
+
+  root.appendChild(eAbschnitt("regelnziele","🎯 Ziele & Klassenregeln", (inhalt) => {
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Ziele der Woche (eine pro Zeile)", (daten.ziele||[]).join("\n"), (v)=>{daten.ziele=v.split("\n").map(x=>x.trim()).filter(Boolean); datenSpeichern();}, true));
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Klassenregeln (eine pro Zeile)", (daten.klassenregeln||[]).join("\n"), (v)=>{daten.klassenregeln=v.split("\n").map(x=>x.trim()).filter(Boolean); datenSpeichern();}, true));
+  }));
+
+  root.appendChild(eAbschnitt("kinder","⭐ Kinder & Punkte", (inhalt) => {
+    (daten.schueler||[]).forEach((s,i)=>{
+      const z=document.createElement("div"); z.className="e-zeile";
+      const name=document.createElement("input"); name.value=s.name; name.oninput=()=>{s.name=name.value; datenSpeichern();};
+      const punkte=document.createElement("input"); punkte.type="number"; punkte.value=s.punkte; punkte.style.width="70px"; punkte.oninput=()=>{s.punkte=Number(punkte.value)||0; datenSpeichern();};
+      const del=document.createElement("button"); del.textContent="🗑️"; del.onclick=()=>{daten.schueler.splice(i,1); datenSpeichern(); renderEinstellungen();};
+      z.append(name,punkte,del); inhalt.appendChild(z);
+    });
+    const neu=document.createElement("button"); neu.className="e-btn"; neu.style.width="100%"; neu.textContent="+ Kind hinzufügen";
+    neu.onclick=()=>{ daten.schueler.push({name:"Neues Kind",punkte:0}); datenSpeichern(); renderEinstellungen(); };
+    inhalt.appendChild(neu);
+  }));
+
+  root.appendChild(eAbschnitt("countdown","🎈 Countdown", (inhalt) => {
+    inhalt.appendChild(feldBearbeitbarMitLabelGlobal("Bezeichnung (z. B. 'Sommerferien')", daten.countdown.bezeichnung, (v)=>{daten.countdown.bezeichnung=v; datenSpeichern();}));
+    const dLabel=document.createElement("div"); dLabel.className="e-label"; dLabel.textContent="Zieldatum"; inhalt.appendChild(dLabel);
+    const dInp=document.createElement("input"); dInp.type="date"; dInp.className="e-input"; dInp.value=daten.countdown.ziel||"";
+    dInp.oninput=()=>{daten.countdown.ziel=dInp.value; datenSpeichern();}; inhalt.appendChild(dInp);
+  }));
+
+  root.appendChild(eAbschnitt("daten","💾 Daten", (inhalt) => {
+    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:13px;color:var(--weich);margin-bottom:10px;";
+    hinweis.textContent="Alle Daten liegen nur auf diesem Gerät (lokal gespeichert). Mit den Knöpfen unten könnt ihr sie sichern oder auf einem anderen Gerät wiederherstellen.";
+    inhalt.appendChild(hinweis);
+    const exportBtn=document.createElement("button"); exportBtn.className="e-btn"; exportBtn.style.width="100%"; exportBtn.style.marginBottom="8px"; exportBtn.textContent="⬇️ Sicherung herunterladen";
+    exportBtn.onclick=datenExportieren; inhalt.appendChild(exportBtn);
+    const importInp=document.createElement("input"); importInp.type="file"; importInp.accept="application/json"; importInp.style.marginBottom="8px";
+    importInp.onchange=(e)=>datenImportieren(e.target.files[0]); inhalt.appendChild(importInp);
+    const resetBtn=document.createElement("button"); resetBtn.className="e-btn sekundaer"; resetBtn.style.width="100%"; resetBtn.textContent="⚠️ Alles zurücksetzen";
+    resetBtn.onclick=()=>{ if(confirm("Wirklich ALLE Daten löschen und neu starten?")){ localStorage.removeItem(SPEICHER_SCHLUESSEL); location.reload(); } };
+    inhalt.appendChild(resetBtn);
+  }));
+}
+
+function feldBearbeitbarMitLabelGlobal(label, wert, aendern, mehrzeilig){
+  const wrap=document.createElement("div");
+  const l=document.createElement("label"); l.className="e-label"; l.textContent=label;
+  const feld=document.createElement(mehrzeilig?"textarea":"input"); feld.className="e-input"; feld.value=wert;
+  if(mehrzeilig) feld.style.minHeight="80px";
+  feld.oninput=()=>aendern(feld.value);
+  wrap.append(l,feld); return wrap;
+}
+
+function datenExportieren(){
+  const blob = new Blob([JSON.stringify(daten,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="klassentafel-sicherung.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+function datenImportieren(datei){
+  if(!datei) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const geladen = JSON.parse(reader.result);
+      daten = { ...JSON.parse(JSON.stringify(STANDARD_DATEN)), ...geladen };
+      datenSpeichern(); renderHome(); renderEinstellungen();
+      alert("Daten erfolgreich geladen!");
+    }catch(e){ alert("Diese Datei konnte nicht gelesen werden."); }
+  };
+  reader.readAsText(datei);
+}
+
+/* ============================================================
+   11b) STERNENKINDER – Belohnungssystem-Modul
+   Öffentliche Anzeige nach dem Konzept "Sternenkinder": oben das
+   führende Kind groß im goldenen Spotlight, darunter alle Kinder
+   kompakt mit Sternen und Fortschrittsbalken. Zeigt bewusst NUR
+   Positives (keine roten Punkte, keine Verlierer-Liste).
+   Modular gehalten: weitere Bereiche (Klassenstern, Wochensieger,
+   Serien-Funken ...) können später als eigene Render-Blöcke in
+   renderSternenkinder ergänzt werden, ohne Bestehendes umzubauen.
+   ============================================================ */
+// Jedes Kind bekommt automatisch ein festes Waldtier als Avatar
+// (später ersetzbar durch selbst gewählte Avatare aus dem Konzept).
+const SK_AVATARE = ["🦊","🐰","🦉","🐻","🐸","🐿️","🦔","🐦","🦌","🐝","🐞","🦋","🐢","🐭"];
+function kinderAvatar(kind){
+  if(kind.avatar) return kind.avatar;
+  let h = 0; for(let i=0;i<kind.name.length;i++) h = (h*31 + kind.name.charCodeAt(i)) % 997;
+  return SK_AVATARE[h % SK_AVATARE.length];
+}
+
+function renderSternenkinder(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    inhalt.appendChild(feldBearbeitbarMitLabel("Überschrift", mod.daten.titel, (v)=>mod.daten.titel=v));
+    inhalt.appendChild(feldBearbeitbarMitLabel("Punkte pro Stern", String(mod.daten.punkteProStern), (v)=>mod.daten.punkteProStern=Math.max(1,Number(v)||5)));
+    inhalt.appendChild(feldBearbeitbarMitLabel("Sterne bis zum Ziel", String(mod.daten.zielSterne), (v)=>mod.daten.zielSterne=Math.max(1,Number(v)||5)));
+    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);margin-top:6px;";
+    hinweis.textContent="Kinder & Punkte pflegt ihr zentral in ⚙️ Einstellungen. Der goldene Kopf oben wechselt automatisch zum führenden Kind.";
+    inhalt.appendChild(hinweis);
+    return;
+  }
+  const pps = mod.daten.punkteProStern || 5, ziel = mod.daten.zielSterne || 5;
+  const kinder = (daten.schueler||[]).map((k)=>({
+    ...k, sterne: Math.floor(k.punkte/pps), rest: k.punkte%pps,
+  }));
+  if(kinder.length===0){ inhalt.innerHTML='<div class="m-leer-hinweis">🌟 Kinder in ⚙️ Einstellungen → Kinder & Punkte eintragen</div>'; return; }
+
+  const wrap = document.createElement("div"); wrap.className="m-sternenkinder";
+  const titel = document.createElement("div"); titel.className="sk-titel"; titel.textContent = "🌟 "+(mod.daten.titel||"Unsere Sternenkinder")+" 🌟";
+  wrap.appendChild(titel);
+
+  // --- Spotlight: führendes Kind; bei Gleichstand wechseln sich alle Führenden ab ---
+  const maxPunkte = Math.max(...kinder.map((k)=>k.punkte));
+  const fuehrende = kinder.filter((k)=>k.punkte===maxPunkte && k.punkte>0);
+  const spot = document.createElement("div"); spot.className="sk-spot";
+  if(fuehrende.length){
+    mod._spotIdx = (mod._spotIdx||0) % fuehrende.length;
+    const k = fuehrende[mod._spotIdx];
+    const sterneAnzeige = "⭐".repeat(Math.min(ziel,k.sterne)) + "☆".repeat(Math.max(0, ziel-k.sterne));
+    spot.innerHTML = `<span class="sk-krone">👑</span>
+      <div class="sk-avatar">${kinderAvatar(k)}</div>
+      <div class="sk-name">${escapeHtml(k.name)}</div>
+      <div class="sk-sterne">${sterneAnzeige}</div>
+      <div class="sk-unter">Sternenkind des Tages${fuehrende.length>1?" · gemeinsam vorn!":""}</div>`;
+  } else {
+    spot.innerHTML = `<div class="sk-avatar">🌱</div>
+      <div class="sk-name">Wer wird das erste Sternenkind?</div>
+      <div class="sk-unter">Der erste grüne Punkt zählt!</div>`;
+  }
+  wrap.appendChild(spot);
+
+  // --- Kompaktes Raster aller Kinder (alphabetisch – keine Rangliste von unten) ---
+  const raster = document.createElement("div"); raster.className="sk-raster";
+  kinder.slice().sort((a,b)=>a.name.localeCompare(b.name,"de")).forEach((k)=>{
+    const fertig = k.sterne >= ziel;
+    const karte = document.createElement("div"); karte.className = "sk-karte"+(fertig?" sk-fertig":"");
+    const fortschritt = fertig ? 100 : Math.round((k.rest/pps)*100);
+    karte.innerHTML = `<div class="a">${fertig?"👑 ":""}${kinderAvatar(k)}</div>
+      <div class="n">${escapeHtml(k.name)}</div>
+      <div class="s">${"⭐".repeat(Math.min(ziel,k.sterne)) || "·"}</div>
+      <div class="b"><div style="width:${fortschritt}%"></div></div>`;
+    raster.appendChild(karte);
+  });
+  wrap.appendChild(raster);
+  inhalt.appendChild(wrap);
+}
+
+// Automatischer Wechsel & Aktualisierung: alle 8 Sekunden zeigt der Spotlight
+// das nächste führende Kind (bei Gleichstand) und übernimmt neue Punktestände –
+// so ist die Anzeige nach jeder Vergabe/Auswertung ohne Zutun aktuell.
+setInterval(() => {
+  document.querySelectorAll(".modul").forEach((el) => {
+    const mod = findeModulById(el.dataset.id);
+    if(mod && mod.typ==="sternenkinder" && !bearbeitenModus){
+      mod._spotIdx = (mod._spotIdx||0) + 1;
+      const inhalt = el.querySelector(".modul-inhalt");
+      if(inhalt) renderModulInhalt(inhalt, mod);
+    }
+  });
+}, 8000);
+
+/* ============================================================
+   11c) GUTEN MORGEN IN VIELEN SPRACHEN
+   Wechselt automatisch einmal pro Woche zu einer neuen Sprache
+   (stabiler Wochen-Zufall, ändert sich also nicht bei jedem
+   Neuladen). Über 🔊 wird der Satz per Sprachausgabe des Geräts
+   vorgelesen – dafür ist keine Internetverbindung nötig.
+   ============================================================ */
+const MORGENGRUESSE = [
+  { sprache:"Deutsch", satz:"Guten Morgen", lang:"de-DE", flagge:"🇩🇪" },
+  { sprache:"Englisch", satz:"Good morning", lang:"en-GB", flagge:"🇬🇧" },
+  { sprache:"Französisch", satz:"Bonjour", lang:"fr-FR", flagge:"🇫🇷" },
+  { sprache:"Spanisch", satz:"Buenos días", lang:"es-ES", flagge:"🇪🇸" },
+  { sprache:"Italienisch", satz:"Buongiorno", lang:"it-IT", flagge:"🇮🇹" },
+  { sprache:"Portugiesisch", satz:"Bom dia", lang:"pt-PT", flagge:"🇵🇹" },
+  { sprache:"Niederländisch", satz:"Goedemorgen", lang:"nl-NL", flagge:"🇳🇱" },
+  { sprache:"Polnisch", satz:"Dzień dobry", lang:"pl-PL", flagge:"🇵🇱" },
+  { sprache:"Russisch", satz:"Доброе утро", lang:"ru-RU", flagge:"🇷🇺" },
+  { sprache:"Türkisch", satz:"Günaydın", lang:"tr-TR", flagge:"🇹🇷" },
+  { sprache:"Arabisch", satz:"صباح الخير", lang:"ar-SA", flagge:"🇸🇦" },
+  { sprache:"Griechisch", satz:"Καλημέρα", lang:"el-GR", flagge:"🇬🇷" },
+  { sprache:"Schwedisch", satz:"God morgon", lang:"sv-SE", flagge:"🇸🇪" },
+  { sprache:"Dänisch", satz:"Godmorgen", lang:"da-DK", flagge:"🇩🇰" },
+  { sprache:"Finnisch", satz:"Huomenta", lang:"fi-FI", flagge:"🇫🇮" },
+  { sprache:"Ungarisch", satz:"Jó reggelt", lang:"hu-HU", flagge:"🇭🇺" },
+  { sprache:"Tschechisch", satz:"Dobré ráno", lang:"cs-CZ", flagge:"🇨🇿" },
+  { sprache:"Rumänisch", satz:"Bună dimineața", lang:"ro-RO", flagge:"🇷🇴" },
+  { sprache:"Ukrainisch", satz:"Добрий ранок", lang:"uk-UA", flagge:"🇺🇦" },
+  { sprache:"Japanisch", satz:"おはようございます", lang:"ja-JP", flagge:"🇯🇵" },
+  { sprache:"Chinesisch", satz:"早上好", lang:"zh-CN", flagge:"🇨🇳" },
+  { sprache:"Koreanisch", satz:"좋은 아침이에요", lang:"ko-KR", flagge:"🇰🇷" },
+  { sprache:"Hindi", satz:"सुप्रभात", lang:"hi-IN", flagge:"🇮🇳" },
+  { sprache:"Vietnamesisch", satz:"Chào buổi sáng", lang:"vi-VN", flagge:"🇻🇳" },
+  { sprache:"Hebräisch", satz:"בוקר טוב", lang:"he-IL", flagge:"🇮🇱" },
+  { sprache:"Persisch", satz:"صبح بخیر", lang:"fa-IR", flagge:"🇮🇷" },
+  { sprache:"Suaheli", satz:"Habari za asubuhi", lang:"sw-KE", flagge:"🇰🇪" },
+  { sprache:"Kroatisch", satz:"Dobro jutro", lang:"hr-HR", flagge:"🇭🇷" },
+];
+
+function woechentlicherSeed(){
+  const d = new Date();
+  const jahresanfang = new Date(d.getFullYear(),0,1);
+  const tage = Math.floor((d - jahresanfang) / 86400000);
+  const woche = Math.ceil((tage + jahresanfang.getDay() + 1) / 7);
+  return d.getFullYear() * 100 + woche;
+}
+
+function morgengrussVorlesen(gruss){
+  if(!("speechSynthesis" in window)){ alert("Sprachausgabe wird von diesem Browser leider nicht unterstützt."); return; }
+  window.speechSynthesis.cancel(); // vorherige Ansage abbrechen, falls noch aktiv
+  const utterance = new SpeechSynthesisUtterance(gruss.satz);
+  utterance.lang = gruss.lang;
+  utterance.rate = 0.9; // etwas langsamer – gut verständlich für Kinder
+  window.speechSynthesis.speak(utterance);
+}
+
+function renderMorgengruss(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);";
+    hinweis.textContent = "Wechselt automatisch jede Woche zu einer neuen Sprache (aktuell "+MORGENGRUESSE.length+" Sprachen hinterlegt). Mit 🔀 kann man zwischendurch auch selbst eine andere Sprache hören.";
+    inhalt.appendChild(hinweis);
+    return;
+  }
+  const index = mod._manuellerIndex !== undefined ? mod._manuellerIndex : (woechentlicherSeed() % MORGENGRUESSE.length);
+  const gruss = MORGENGRUESSE[index];
+  const wrap = document.createElement("div"); wrap.className="m-morgengruss";
+  wrap.innerHTML = `
+    <div class="mg-flagge">${gruss.flagge}</div>
+    <div class="mg-satz">${escapeHtml(gruss.satz)}</div>
+    <div class="mg-sprache">${escapeHtml(gruss.sprache)}</div>
+    <div class="mg-knopfreihe">
+      <button class="mg-hoeren">🔊 Anhören</button>
+      <button class="mg-shuffle" title="Andere Sprache ausprobieren">🔀</button>
+    </div>`;
+  wrap.querySelector(".mg-hoeren").onclick = () => morgengrussVorlesen(gruss);
+  wrap.querySelector(".mg-shuffle").onclick = () => {
+    let neuerIndex;
+    do { neuerIndex = Math.floor(Math.random()*MORGENGRUESSE.length); } while(neuerIndex === index && MORGENGRUESSE.length > 1);
+    mod._manuellerIndex = neuerIndex;
+    renderModulInhalt(inhalt, mod, bearbeitbar);
+  };
+  inhalt.appendChild(wrap);
+}
+
+/* ============================================================
+   12) INFO-ANZEIGE: liest automatisch aus den gemeinsamen
+   Einstellungen (Essen, Stundenplan, Geburtstage ...) – perfekt
+   für den Kinder-Bereich, da nichts doppelt gepflegt werden muss.
+   ============================================================ */
+const INFO_ARTEN = {
+  essen:{titel:"🍽️ Heute gibt es", emoji:"🍽️"}, nachtisch:{titel:"🍮 Nachtisch", emoji:"🍮"},
+  stundenplan:{titel:"📚 Fächer heute", emoji:"📚"}, geburtstage:{titel:"🎂 Geburtstagskinder", emoji:"🎂"},
+  wetter:{titel:"🌤️ Wetter", emoji:"🌤️"}, besonderheiten:{titel:"🎉 Besonderheiten", emoji:"🎉"},
+  ziel:{titel:"⭐ Tagesziel", emoji:"⭐"}, regeln:{titel:"🦊 Unsere Regeln", emoji:"🦊"},
+  countdown:{titel:"🎈 Countdown", emoji:"🎈"}, sterne:{titel:"⭐ Unsere Sterne", emoji:"⭐"},
+};
+
+function renderInfo(inhalt, mod, bearbeitbar){
+  if(bearbeitbar){
+    const label=document.createElement("div"); label.className="e-label"; label.textContent="Was soll angezeigt werden?";
+    const sel=document.createElement("select"); sel.className="e-input";
+    Object.entries(INFO_ARTEN).forEach(([k,v])=>{ const o=document.createElement("option"); o.value=k; o.textContent=v.titel; if(mod.daten.art===k) o.selected=true; sel.appendChild(o); });
+    sel.onchange=()=>{ mod.daten.art=sel.value; datenSpeichern(); renderModulInhalt(inhalt,mod,bearbeitbar); };
+    inhalt.append(label,sel);
+    const hinweis=document.createElement("div"); hinweis.style.cssText="font-size:12px;color:var(--weich);margin-top:6px;";
+    hinweis.textContent="Die Inhalte selbst pflegt ihr zentral in ⚙️ Einstellungen – hier wählt ihr nur aus, was angezeigt wird.";
+    inhalt.appendChild(hinweis);
+    return;
+  }
+  const art = mod.daten.art || "stundenplan";
+  const info = INFO_ARTEN[art];
+  const heute = heutigerWochentagName();
+  const t = document.createElement("div");
+  if(art === "stundenplan"){
+    // Wie im Vorbild: großer Wochentag als Überschrift statt generischem Titel
+    t.className = "sp-tag-titel"; t.textContent = "📅 " + heute;
+  } else {
+    t.className = "m-titel"; t.textContent = info.titel;
+  }
+  inhalt.appendChild(t);
+  const koerper = document.createElement("div");
+
+  if(art==="essen") koerper.innerHTML = `<div class="m-text">${escapeHtml(daten.essensplan[heute]||"Kein Eintrag für heute.")}</div>`;
+  else if(art==="nachtisch") koerper.innerHTML = `<div class="m-text">${escapeHtml(daten.nachtisch[heute]||"Kein Eintrag für heute.")}</div>`;
+  else if(art==="stundenplan") koerper.innerHTML = (daten.stundenplan[heute]||[]).map((f,i)=>`<span class="fach-chip" style="background:${wortFarbe(f)}">${i+1}. ${escapeHtml(f)}</span>`).join("") || '<div class="m-leer-hinweis">Heute kein Unterricht eingetragen.</div>';
+  else if(art==="wetter") koerper.innerHTML = `<div style="font-size:44px;text-align:center;">${daten.wetter.icon}</div><div class="m-text" style="text-align:center;">${escapeHtml(daten.wetter.text)}</div>`;
+  else if(art==="besonderheiten"){
+    const b = daten.besonderheiten||[];
+    koerper.innerHTML = b.length ? "<ul>"+b.map((x)=>`<li class="m-text">${escapeHtml(x.text)}</li>`).join("")+"</ul>" : '<div class="m-leer-hinweis">Nichts Besonderes heute. 🙂</div>';
+  }
+  else if(art==="ziel"){
+    const z = daten.ziele||[];
+    koerper.innerHTML = z.length ? "<ul>"+z.map((x)=>`<li class="m-text">${escapeHtml(x)}</li>`).join("")+"</ul>" : '<div class="m-leer-hinweis">Noch kein Ziel eingetragen.</div>';
+  }
+  else if(art==="regeln"){
+    const r = daten.klassenregeln||[];
+    koerper.innerHTML = "<ul>"+r.map((x)=>`<li class="m-text">${escapeHtml(x)}</li>`).join("")+"</ul>";
+  }
+  else if(art==="geburtstage"){
+    const now = new Date();
+    const geb = (daten.geburtstage||[]).filter((g)=>g.monat===now.getMonth()+1 && g.tag===now.getDate());
+    koerper.innerHTML = geb.length
+      ? geb.map((g)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">${g.foto?`<img class="foto" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid var(--gelb);" src="${g.foto}">`:'<div class="foto-platzhalter">🎂</div>'}<div class="m-text" style="font-weight:800;">${escapeHtml(g.name)}</div></div>`).join("")
+      : '<div class="m-leer-hinweis">Heute hat niemand Geburtstag. 🎂</div>';
+  }
+  else if(art==="sterne"){
+    const liste = (daten.schueler||[]).slice().sort((a,b)=>b.punkte-a.punkte);
+    koerper.innerHTML = liste.map((s)=>`<div style="display:flex;justify-content:space-between;font-weight:700;padding:3px 0;">${escapeHtml(s.name)}<span>${"⭐".repeat(Math.min(5,Math.ceil(s.punkte/5)))||"–"}</span></div>`).join("");
+  }
+  else if(art==="countdown"){
+    if(!daten.countdown.ziel){ koerper.innerHTML='<div class="m-leer-hinweis">Noch kein Zieldatum in den Einstellungen eingetragen.</div>'; }
+    else{
+      const heuteD = new Date(); heuteD.setHours(0,0,0,0);
+      const zielD = new Date(daten.countdown.ziel+"T00:00:00");
+      const tage = Math.max(0, Math.round((zielD-heuteD)/86400000));
+      koerper.innerHTML = `<div style="text-align:center;"><div style="font-size:44px;font-weight:800;">${tage}</div><div class="m-text">Tage bis ${escapeHtml(daten.countdown.bezeichnung||"")}</div></div>`;
+    }
+  }
+  inhalt.appendChild(koerper);
+}
+
+
+/* ============================================================
+   KINDERDIENST – einfache positive Vergabe auf dem iPad
+   Aufruf direkt über ?modus=dienst
+   ============================================================ */
+function oeffneDienstAnsicht(){
+  let overlay=document.getElementById("dienst-overlay");
+  if(!overlay){ overlay=document.createElement("div"); overlay.id="dienst-overlay"; document.body.appendChild(overlay); }
+  overlay.innerHTML=`<div class="dienst-kopf"><div style="font-size:46px">🌟</div><h1>Unser Sternchen-Dienst</h1><button class="dienst-schliessen" title="Schließen">✕</button></div><div class="dienst-hinweis">Tippt nur dann auf einen Stern, wenn ihr euch beide einig seid. Hier gibt es ausschließlich positive Rückmeldungen.</div><div class="dienst-raster"></div>`;
+  overlay.querySelector(".dienst-schliessen").onclick=()=>overlay.remove();
+  const raster=overlay.querySelector(".dienst-raster");
+  (daten.schueler||[]).forEach((kind,index)=>{
+    const karte=document.createElement("div"); karte.className="dienst-kind";
+    karte.innerHTML=`<div class="dienst-avatar">${kind.avatar||"🧒"}</div><div class="dienst-name">${escapeHtml(kind.name)}</div><div class="dienst-stand">Aktuell ${Number(kind.punkte)||0} Punkte</div><div class="dienst-aktionen"><button class="dienst-gruen">🟢 Grüner Stern<br><small>+1 Punkt</small></button><button class="dienst-gold">⭐ Besonderer Stern<br><small>+2 Punkte</small></button></div>`;
+    karte.querySelector(".dienst-gruen").onclick=()=>dienstPunkt(index,1,"Grüner Stern");
+    karte.querySelector(".dienst-gold").onclick=()=>dienstPunkt(index,2,"Besonderer Stern");
+    raster.appendChild(karte);
+  });
+}
+function dienstPunkt(index,wert,art){
+  const kind=daten.schueler[index]; if(!kind) return;
+  kind.punkte=(Number(kind.punkte)||0)+wert;
+  kind.auszeichnungen=kind.auszeichnungen||[];
+  kind.auszeichnungen.push({art,wert,zeit:new Date().toISOString()});
+  datenSpeichern();
+  zeigeToast(`${art} für ${kind.name} vergeben! 🎉`);
+  oeffneDienstAnsicht();
+}
+function zeigeToast(text){
+  document.querySelector(".toast")?.remove();
+  const t=document.createElement("div");t.className="toast";t.textContent=text;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);
+}
+
+
+/* ============================================================
+   STARTSEITEN-SICHERUNG
+   Stellt die sichtbaren Werkzeuge unabhängig von alten/leeren
+   Cloud-Daten wieder her und ordnet sie wie eine Klassentafel an.
+   ============================================================ */
+const HOME_LAYOUT_VERSION = 3;
+
+function sichereHomeStartseite(){
+  // Nur einmal migrieren. Danach bleiben Verschieben, Größe und Löschen dauerhaft erhalten.
+  daten.bereiche = daten.bereiche || {};
+  daten.einstellungen = daten.einstellungen || {};
+  const vorhandeneModule = daten.bereiche.home?.seiten?.[0]?.module;
+  if(daten.einstellungen.homeLayoutVersion === HOME_LAYOUT_VERSION &&
+     Array.isArray(vorhandeneModule) && vorhandeneModule.length > 0){
+    return false;
+  }
+
+  const homeBereich = daten.bereiche.home || standardBereich(["Start"]);
+  daten.bereiche.home = homeBereich;
+  homeBereich.seiten = [neueSeite("Start")];
+  homeBereich.seiteIndex = 0;
+  const home = homeBereich.seiten[0];
+  home.hintergrund = "tafel";
+  home.eigenerHintergrund = "";
+
+  const add=(typ,x,y,w,h,art)=>{
+    const m=neuesModul(typ,x,y); m.w=w; m.h=h; m.z=home.module.length+2;
+    if(art) m.daten.art=art; home.module.push(m); return m;
+  };
+  const welcome=add("text",390,25,700,78); welcome.daten={titel:"",inhalt:"Herzlich Willkommen!"};
+  add("info",35,125,300,590,"stundenplan");
+  add("ampel",365,145,170,300);
+  add("timer",565,145,245,300);
+  add("info",840,145,285,300,"geburtstage");
+  const notiz=add("text",365,480,330,220); notiz.daten={titel:"Notizen",inhalt:"Bitte an Sportzeug denken!\n\nHier ist Platz für wichtige Mitteilungen."};
+  add("info",725,480,220,220,"wetter");
+  add("info",975,480,300,220,"regeln");
+  add("uhr",1325,45,180,180);
+
+  daten.einstellungen.homeLayoutVersion = HOME_LAYOUT_VERSION;
+  try{ localStorage.setItem(SPEICHER_SCHLUESSEL,JSON.stringify(daten)); }catch(_){ }
+  datenSpeichern();
+  return true;
+}
+
+/* ============================================================
+   13) START DER ANWENDUNG
+   ============================================================ */
+async function starteApp(){
+  // WICHTIG: Die lokale Tafel wird SOFORT gerendert.
+  // Die Cloud darf die Startseite nicht mehr blockieren, wenn Apps Script langsam ist.
+  const cloudLaden = datenLaden();
+
+  sichereHomeStartseite();
+  buehneSkalieren();
+  renderHome();
+  zeigeAnsicht("home");
+
+  cloudLaden.then(() => {
+    sichereHomeStartseite();
+    renderHome();
+    zeigeAnsicht("home");
+  }).catch((e) => console.warn("Cloud-Nachladen fehlgeschlagen.", e));
+  const parameter = new URLSearchParams(location.search);
+  if(parameter.get("modus") === "dienst") setTimeout(oeffneDienstAnsicht, 80);
+
+  // Fenstergröße / Bildschirmdrehung berücksichtigen
+  window.addEventListener("orientationchange", () => setTimeout(buehneSkalieren, 200));
+
+  // Versehentliches Verlassen der Seite/Vollbild abfangen ist im Browser
+  // eingeschränkt möglich – daher: Doppel-Tipp auf Maskottchen = Vollbild an/aus
+  let letzterTipp = 0;
+  document.getElementById("home-maskottchen").addEventListener("click", () => {
+    const jetzt = Date.now();
+    if(jetzt - letzterTipp < 400){ vollbildUmschalten(); }
+    letzterTipp = jetzt;
+  });
+}
+
+function vollbildUmschalten(){
+  if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.().catch(()=>{}); }
+  else { document.exitFullscreen?.(); }
+}
+
+starteApp();
+</script></body></html>
